@@ -1,0 +1,37 @@
+{
+  "id" : "9afe0591-738d-4128-9c4d-ccd3119bf6ed",
+  "name" : "sw-runtime-resources-precache.js",
+  "request" : {
+    "url" : "/sw-runtime-resources-precache.js",
+    "method" : "GET"
+  },
+  "response" : {
+    "status" : 404,
+    "body" : "{\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest\",\"status\":\"404\"}",
+    "headers" : {
+      "X-RateLimit-Resource" : "core",
+      "Server" : "github.com",
+      "X-RateLimit-Used" : "2",
+      "Access-Control-Allow-Origin" : "*",
+      "X-Content-Type-Options" : "nosniff",
+      "X-RateLimit-Reset" : "1736532232",
+      "x-github-api-version-selected" : "2022-11-28",
+      "Date" : "Fri, 10 Jan 2025 17:03:52 GMT",
+      "Referrer-Policy" : "origin-when-cross-origin, strict-origin-when-cross-origin",
+      "X-Frame-Options" : "deny",
+      "Strict-Transport-Security" : "max-age=31536000; includeSubdomains; preload",
+      "Access-Control-Expose-Headers" : "ETag, Link, Location, Retry-After, X-GitHub-OTP, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Used, X-RateLimit-Resource, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes, X-Poll-Interval, X-GitHub-Media-Type, X-GitHub-SSO, X-GitHub-Request-Id, Deprecation, Sunset",
+      "X-RateLimit-Remaining" : "58",
+      "X-GitHub-Media-Type" : "github.v3; format=json",
+      "Content-Security-Policy" : "default-src 'none'",
+      "Vary" : "Accept-Encoding, Accept, X-Requested-With",
+      "X-RateLimit-Limit" : "60",
+      "X-XSS-Protection" : "0",
+      "X-GitHub-Request-Id" : "DE40:3A5356:43AA98F:4523664:678152F8",
+      "Content-Type" : "application/json; charset=utf-8"
+    }
+  },
+  "uuid" : "9afe0591-738d-4128-9c4d-ccd3119bf6ed",
+  "persistent" : true,
+  "insertionIndex" : 8
+}
