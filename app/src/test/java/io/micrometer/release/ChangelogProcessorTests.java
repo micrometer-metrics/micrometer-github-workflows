@@ -33,7 +33,7 @@ class ChangelogProcessorTests {
 
     File output = Files.createTempFile("output", ".md").toFile();
 
-    ChangelogProcessor processor = new ChangelogProcessor(input, output) {
+    ChangelogProcessor processor = new ChangelogProcessor(output) {
         @Override
         List<String> projectLines() throws Exception {
             URL resource = ChangelogGeneratorTests.class.getResource("/gradle/projects_output.txt");
@@ -52,7 +52,7 @@ class ChangelogProcessorTests {
 
     @Test
     void should_parse_changelog() throws Exception {
-        processor.processChangelog();
+        processor.processChangelog(input);
 
         BDDAssertions.then(output).hasSameTextualContentAs(expectedOutput);
     }

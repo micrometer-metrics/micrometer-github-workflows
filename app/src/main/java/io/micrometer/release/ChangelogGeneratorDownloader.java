@@ -15,6 +15,7 @@
  */
 package io.micrometer.release;
 
+import java.io.File;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -25,27 +26,31 @@ import java.nio.file.Paths;
 
 class ChangelogGeneratorDownloader {
 
-    static final String CHANGELOG_GENERATOR_JAR = "github-changelog-generator.jar";
+    private static final String CHANGELOG_GENERATOR_JAR = "github-changelog-generator.jar";
     private static final String CHANGELOG_GENERATOR_VERSION = "0.0.11";
     private static final String CHANGELOG_GENERATOR_URL = "https://github.com/spring-io/github-changelog-generator/releases/download/v%s/github-changelog-generator.jar";
 
     private final String changelogGeneratorUrl;
+    private final String changelogGeneratorJar;
 
     // for tests
-    ChangelogGeneratorDownloader(String changelogGeneratorUrl) {
+    ChangelogGeneratorDownloader(String changelogGeneratorUrl, String changelogGeneratorJar) {
         this.changelogGeneratorUrl = changelogGeneratorUrl;
+        this.changelogGeneratorJar = changelogGeneratorJar;
     }
 
     ChangelogGeneratorDownloader() {
         this.changelogGeneratorUrl = CHANGELOG_GENERATOR_URL;
+        this.changelogGeneratorJar = CHANGELOG_GENERATOR_JAR;
     }
 
-    void downloadChangelogGenerator() throws Exception {
-        if (!Files.exists(Paths.get(CHANGELOG_GENERATOR_JAR))) {
+    File downloadChangelogGenerator() throws Exception {
+        if (!Files.exists(Paths.get(changelogGeneratorJar))) {
             download();
         } else {
             System.out.println("GitHub Changelog Generator already downloaded.");
         }
+        return new File(changelogGeneratorJar);
     }
 
     void download() throws Exception {
@@ -60,7 +65,7 @@ class ChangelogGeneratorDownloader {
             .build();
         HttpClient client = HttpClient.newHttpClient();
         HttpResponse<Path> response = client.send(request,
-            HttpResponse.BodyHandlers.ofFile(Paths.get(CHANGELOG_GENERATOR_JAR)));
+            HttpResponse.BodyHandlers.ofFile(Paths.get(changelogGeneratorJar)));
 
         if (response.statusCode() != 200) {
             throw new RuntimeException("Failed to download GitHub Changelog Generator");

@@ -25,22 +25,19 @@ class ChangelogProcessor {
 
     static final String OUTPUT_FILE = "changelog-output.md";
 
-    private final File inputFile;
     private final File outputFile;
 
     ChangelogProcessor() {
-        this.inputFile = new File(ChangelogGenerator.INPUT_FILE);
         this.outputFile = new File(OUTPUT_FILE);
     }
 
-    ChangelogProcessor(File inputFile, File outputFile) {
-        this.inputFile = inputFile;
+    ChangelogProcessor(File outputFile) {
         this.outputFile = outputFile;
     }
 
-    void processChangelog() throws Exception {
+    void processChangelog(File changelog) throws Exception {
         Set<String> testAndOptional = fetchTestAndOptionalDependencies();
-        processChangelog(testAndOptional);
+        processChangelog(testAndOptional, changelog);
     }
 
     private Set<String> fetchTestAndOptionalDependencies() throws Exception {
@@ -99,9 +96,9 @@ class ChangelogProcessor {
         }
     }
 
-    private void processChangelog(Set<String> excludedDependencies) throws IOException {
+    private void processChangelog(Set<String> excludedDependencies, File changelog) throws IOException {
         System.out.println("Processing changelog...");
-        List<String> lines = Files.readAllLines(inputFile.toPath());
+        List<String> lines = Files.readAllLines(changelog.toPath());
         List<String> header = new ArrayList<>();
         List<String> dependencyLines = new ArrayList<>();
         List<String> footer = new ArrayList<>();
@@ -155,7 +152,7 @@ class ChangelogProcessor {
         Set<String> excludedDependencies) {
         Map<String, DependencyUpgrade> upgrades = new HashMap<>();
         Pattern pattern = Pattern.compile(
-            "- Bump (.+?) from ([\\d.]+) to ([\\d.]+) \\[#[\\d]+]\\((.+)\\)");
+            "- Bump (.+?) from ([\\d.]+) to ([\\d.]+) (\\[#[\\d]+])\\((.+)\\)");
 
         for (String line : dependencyLines) {
             Matcher matcher = pattern.matcher(line);
@@ -164,10 +161,11 @@ class ChangelogProcessor {
                 String oldVersion = matcher.group(2);
                 String newVersion = matcher.group(3);
                 String prNumber = matcher.group(4);
+                String url = matcher.group(5);
 
                 if (!excludedDependencies.contains(unit)) {
                     upgrades.putIfAbsent(unit,
-                        new DependencyUpgrade(unit, oldVersion, newVersion, prNumber));
+                        new DependencyUpgrade(unit, oldVersion, newVersion, url, prNumber));
                     DependencyUpgrade existing = upgrades.get(unit);
                     existing.updateVersions(oldVersion, newVersion);
                 }
@@ -185,13 +183,16 @@ class ChangelogProcessor {
         private final String unit;
         private String lowestVersion;
         private String highestVersion;
+        private final String url;
         private final String prNumber;
 
         public DependencyUpgrade(String unit, String lowestVersion, String highestVersion,
+            String url,
             String prNumber) {
             this.unit = unit;
             this.lowestVersion = lowestVersion;
             this.highestVersion = highestVersion;
+            this.url = url;
             this.prNumber = prNumber;
         }
 
@@ -211,7 +212,7 @@ class ChangelogProcessor {
         @Override
         public String toString() {
             return String.format("- Bump %s from %s to %s [%s](%s)", unit, lowestVersion,
-                highestVersion, prNumber);
+                highestVersion, prNumber, url);
         }
     }
 }

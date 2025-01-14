@@ -15,11 +15,12 @@
  */
 package io.micrometer.release;
 
+import java.io.File;
 import java.io.IOException;
 
 class ReleaseNotesUpdater {
 
-    void updateReleaseNotes() throws IOException, InterruptedException {
+    void updateReleaseNotes(File changelog) throws IOException, InterruptedException {
         System.out.println("Updating release notes...");
         Process process = new ProcessBuilder(
             "gh",
@@ -27,7 +28,7 @@ class ReleaseNotesUpdater {
             "edit",
             System.getenv("GITHUB_REF_NAME"),
             "--notes-file",
-            ChangelogProcessor.OUTPUT_FILE
+            changelog.getAbsolutePath()
         ).inheritIO().start();
         if (process.waitFor() != 0) {
             throw new RuntimeException("Failed to update release notes");

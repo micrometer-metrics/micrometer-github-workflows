@@ -44,14 +44,14 @@ class ChangelogGeneratorTests {
         File output = Files.createTempFile("github-changelog-generator", ".md").toFile();
 
         ChangelogGenerator generator = new ChangelogGenerator("http://localhost:60006", "1.14.0",
-            "micrometer-metrics/micrometer", new File(resource.toURI()).getAbsolutePath(), output.getAbsolutePath()) {
+            "micrometer-metrics/micrometer", output.getAbsolutePath()) {
             @Override
             String getJava() {
                 return findJavaInstallation();
             }
         };
 
-        generator.generateChangelog();
+        generator.generateChangelog(new File(resource.toURI()));
 
         String content = Files.readString(new File(ChangelogGeneratorTests.class.getResource(
             "/generator/micrometer.md").toURI()).toPath());

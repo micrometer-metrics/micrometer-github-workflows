@@ -16,6 +16,7 @@
 package io.micrometer.release;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
@@ -28,7 +29,6 @@ class ChangelogGenerator {
     private final String githubRefName;
     private final String githubRepository;
     private final String githubToken;
-    private final String jarPath;
     private final String outputFile;
 
     public ChangelogGenerator() {
@@ -36,27 +36,24 @@ class ChangelogGenerator {
         this.githubRepository = System.getenv("GITHUB_REPOSITORY");
         this.githubApi = GITHUB_API_URL;
         this.githubToken = System.getenv("GITHUB_TOKEN");
-        this.jarPath = ChangelogGeneratorDownloader.CHANGELOG_GENERATOR_JAR;
         this.outputFile = INPUT_FILE;
     }
 
     // for tests
-    ChangelogGenerator(String githubApi, String githubRefName, String githubRepository, String jarPath,
-        String outputFile) {
+    ChangelogGenerator(String githubApi, String githubRefName, String githubRepository, String outputFile) {
         this.githubApi = githubApi;
         this.githubRefName = githubRefName;
         this.githubRepository = githubRepository;
         this.outputFile = outputFile;
         this.githubToken = "";
-        this.jarPath = jarPath;
     }
 
-    void generateChangelog() throws IOException, InterruptedException {
+    File generateChangelog(File jarPath) throws IOException, InterruptedException {
         System.out.println("Generating changelog...");
         ProcessBuilder processBuilder = new ProcessBuilder(
             getJava(),
             "-jar",
-            jarPath,
+            jarPath.getAbsolutePath(),
             githubRefName.replace("v", ""),
             outputFile,
             "--changelog.repository=" + githubRepository,
@@ -76,6 +73,7 @@ class ChangelogGenerator {
         if (process.waitFor() != 0) {
             throw new RuntimeException("Failed to generate changelog");
         }
+        return new File(outputFile);
     }
 
     String getJava() {

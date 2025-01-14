@@ -15,7 +15,7 @@
  */
 package io.micrometer.release;
 
-import java.io.IOException;
+import java.io.File;
 
 public class PostReleaseWorkflow {
 
@@ -44,16 +44,16 @@ public class PostReleaseWorkflow {
             new ReleaseNotesUpdater(), new MilestoneUpdater(), new NotificationSender());
 
         // Step 1: Download GitHub Changelog Generator
-        workflow.downloadChangelogGenerator();
+        File outputJar = workflow.downloadChangelogGenerator();
 
         // Step 2: Generate changelog
-        workflow.generateChangelog();
+        File changelog = workflow.generateChangelog(outputJar);
 
         // Step 3: Process changelog
-        workflow.processChangelog();
+        workflow.processChangelog(changelog);
 
         // Step 4: Update release notes
-        workflow.updateReleaseNotes();
+        workflow.updateReleaseNotes(changelog);
 
         // Step 5: Close milestone
         workflow.closeMilestone();
@@ -62,20 +62,20 @@ public class PostReleaseWorkflow {
         workflow.sendNotifications();
     }
 
-    private void downloadChangelogGenerator() throws Exception {
-        changelogGeneratorDownloader.downloadChangelogGenerator();
+    private File downloadChangelogGenerator() throws Exception {
+        return changelogGeneratorDownloader.downloadChangelogGenerator();
     }
 
-    private void generateChangelog() throws Exception {
-        changelogGenerator.generateChangelog();
+    private File generateChangelog(File jarPath) throws Exception {
+        return changelogGenerator.generateChangelog(jarPath);
     }
 
-    private void processChangelog() throws Exception {
-        changelogProcessor.processChangelog();
+    private void processChangelog(File changelog) throws Exception {
+        changelogProcessor.processChangelog(changelog);
     }
 
-    private void updateReleaseNotes() throws Exception {
-        releaseNotesUpdater.updateReleaseNotes();
+    private void updateReleaseNotes(File changelog) throws Exception {
+        releaseNotesUpdater.updateReleaseNotes(changelog);
     }
 
     private void closeMilestone() throws Exception {
