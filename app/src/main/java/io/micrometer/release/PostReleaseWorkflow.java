@@ -20,16 +20,21 @@ import java.io.File;
 public class PostReleaseWorkflow {
 
     private final ChangelogGeneratorDownloader changelogGeneratorDownloader;
+
     private final ChangelogGenerator changelogGenerator;
+
     private final ChangelogProcessor changelogProcessor;
+
     private final ReleaseNotesUpdater releaseNotesUpdater;
+
     private final MilestoneUpdater milestoneUpdater;
+
     private final NotificationSender notificationSender;
 
     PostReleaseWorkflow(ChangelogGeneratorDownloader changelogGeneratorDownloader,
-        ChangelogGenerator changelogGenerator, ChangelogProcessor changelogProcessor,
-        ReleaseNotesUpdater releaseNotesUpdater, MilestoneUpdater milestoneUpdater,
-        NotificationSender notificationSender) {
+            ChangelogGenerator changelogGenerator, ChangelogProcessor changelogProcessor,
+            ReleaseNotesUpdater releaseNotesUpdater, MilestoneUpdater milestoneUpdater,
+            NotificationSender notificationSender) {
         this.changelogGeneratorDownloader = changelogGeneratorDownloader;
         this.changelogGenerator = changelogGenerator;
         this.changelogProcessor = changelogProcessor;
@@ -39,9 +44,9 @@ public class PostReleaseWorkflow {
     }
 
     public static void main(String[] args) throws Exception {
-        PostReleaseWorkflow workflow = new PostReleaseWorkflow(
-            new ChangelogGeneratorDownloader(), new ChangelogGenerator(), new ChangelogProcessor(),
-            new ReleaseNotesUpdater(), new MilestoneUpdater(), new NotificationSender());
+        PostReleaseWorkflow workflow = new PostReleaseWorkflow(new ChangelogGeneratorDownloader(),
+                new ChangelogGenerator(), new ChangelogProcessor(), new ReleaseNotesUpdater(), new MilestoneUpdater(),
+                new NotificationSender());
 
         // Step 1: Download GitHub Changelog Generator
         File outputJar = workflow.downloadChangelogGenerator();
@@ -85,4 +90,5 @@ public class PostReleaseWorkflow {
     private void sendNotifications() throws Exception {
         notificationSender.sendNotifications();
     }
+
 }

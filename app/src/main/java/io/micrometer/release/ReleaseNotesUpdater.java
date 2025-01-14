@@ -22,16 +22,13 @@ class ReleaseNotesUpdater {
 
     void updateReleaseNotes(File changelog) throws IOException, InterruptedException {
         System.out.println("Updating release notes...");
-        Process process = new ProcessBuilder(
-            "gh",
-            "release",
-            "edit",
-            System.getenv("GITHUB_REF_NAME"),
-            "--notes-file",
-            changelog.getAbsolutePath()
-        ).inheritIO().start();
+        Process process = new ProcessBuilder("gh", "release", "edit", System.getenv("GITHUB_REF_NAME"), "--notes-file",
+                changelog.getAbsolutePath())
+            .inheritIO()
+            .start();
         if (process.waitFor() != 0) {
             throw new RuntimeException("Failed to update release notes");
         }
     }
+
 }

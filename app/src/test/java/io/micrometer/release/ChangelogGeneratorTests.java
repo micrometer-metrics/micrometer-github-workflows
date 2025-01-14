@@ -33,18 +33,15 @@ import static org.assertj.core.api.BDDAssertions.then;
 class ChangelogGeneratorTests {
 
     @RegisterExtension
-    static WireMockExtension wm1 = WireMockExtension.newInstance()
-        .options(wireMockConfig().port(60006))
-        .build();
+    static WireMockExtension wm1 = WireMockExtension.newInstance().options(wireMockConfig().port(60006)).build();
 
     @Test
     void should_produce_changelog_output_for_micrometer() throws Exception {
-        URL resource = ChangelogGeneratorTests.class.getResource(
-            "/generator/github-changelog-generator.jar");
+        URL resource = ChangelogGeneratorTests.class.getResource("/generator/github-changelog-generator.jar");
         File output = Files.createTempFile("github-changelog-generator", ".md").toFile();
 
         ChangelogGenerator generator = new ChangelogGenerator("http://localhost:60006", "1.14.0",
-            "micrometer-metrics/micrometer", output.getAbsolutePath()) {
+                "micrometer-metrics/micrometer", output.getAbsolutePath()) {
             @Override
             String getJava() {
                 return findJavaInstallation();
@@ -53,8 +50,8 @@ class ChangelogGeneratorTests {
 
         generator.generateChangelog(new File(resource.toURI()));
 
-        String content = Files.readString(new File(ChangelogGeneratorTests.class.getResource(
-            "/generator/micrometer.md").toURI()).toPath());
+        String content = Files.readString(
+                new File(ChangelogGeneratorTests.class.getResource("/generator/micrometer.md").toURI()).toPath());
         then(output).hasContent(content);
     }
 
@@ -63,32 +60,29 @@ class ChangelogGeneratorTests {
             return "java";
         }
         try {
-            ProcessBuilder processBuilder = new ProcessBuilder(
-                "which",
-                "java"
-            );
+            ProcessBuilder processBuilder = new ProcessBuilder("which", "java");
             processBuilder.redirectErrorStream(true);
             Process process = processBuilder.start();
 
-            try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getInputStream()))) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 String line = reader.readLine();
                 if (line != null && !line.isEmpty()) {
                     return line.trim();
                 }
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             e.printStackTrace();
         }
         // Fallback to checking SDKMAN installation
         try {
             String userHome = System.getProperty("user.home");
-            Path sdkmanJavaPath = Paths.get(userHome, ".sdkman", "candidates", "java", "current",
-                "bin", "java");
+            Path sdkmanJavaPath = Paths.get(userHome, ".sdkman", "candidates", "java", "current", "bin", "java");
             if (Files.exists(sdkmanJavaPath)) {
                 return sdkmanJavaPath.toString();
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -97,16 +91,15 @@ class ChangelogGeneratorTests {
 
     private static boolean isJavaAvailable(String javaCommand) {
         try {
-            ProcessBuilder processBuilder = new ProcessBuilder(
-                javaCommand,
-                "-version"
-            );
+            ProcessBuilder processBuilder = new ProcessBuilder(javaCommand, "-version");
             processBuilder.redirectErrorStream(true);
             Process process = processBuilder.start();
             int exitCode = process.waitFor();
             return exitCode == 0;
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             return false;
         }
     }
+
 }

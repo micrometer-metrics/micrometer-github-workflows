@@ -25,6 +25,9 @@ class ChangelogProcessor {
 
     static final String OUTPUT_FILE = "changelog-output.md";
 
+    private final List<String> excludedDependencyScopes = List.of("testCompile", "testImplementation", "checkstyle",
+            "runtime", "nohttp", "testRuntime", "optional");
+
     private final File outputFile;
 
     ChangelogProcessor() {
@@ -43,10 +46,9 @@ class ChangelogProcessor {
     private Set<String> fetchTestAndOptionalDependencies() throws Exception {
         System.out.println("Fetching test and optional dependencies...");
         List<String> projectLines = projectLines();
-        List<String> subprojects = projectLines
-            .stream()
+        List<String> subprojects = projectLines.stream()
             .filter(line -> line.contains("Project"))
-            .map(line -> line.substring(line.indexOf(":") + 1).trim())
+            .map(line -> line.substring(line.indexOf(":") + 1, line.lastIndexOf("'")).trim())
             .toList();
 
         System.out.println("Subprojects: " + subprojects);
@@ -59,19 +61,28 @@ class ChangelogProcessor {
             gradleCommand.add("./gradlew");
             subprojects.forEach(subproject -> gradleCommand.add(subproject + ":dependencies"));
 
-            try (InputStream inputStream = dependenciesInputStream(
-                gradleCommand); BufferedReader reader = new BufferedReader(
-                new InputStreamReader(inputStream))) {
+            try (InputStream inputStream = dependenciesInputStream(gradleCommand);
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
                 String line;
+                boolean testOrOptional = false;
                 while ((line = reader.readLine()) != null) {
-                    if (line.startsWith("+---") || line.startsWith("\\---")) {
+                    final String readLine = line;
+                    if (readLine.startsWith("+---") || readLine.startsWith("\\---")) {
                         String[] parts = line.split("[: ]");
                         String dependency = parts[1] + ":" + parts[2];
-                        if (line.contains("testCompile") || line.contains("testImplementation")) {
+                        if (testOrOptional) {
                             testOptionalDependencies.add(dependency);
-                        } else {
+                        }
+                        else {
                             implementationDependencies.add(dependency);
                         }
+                    }
+                    else if (excludedDependencyScopes.stream()
+                        .anyMatch(string -> readLine.toLowerCase().contains(string.toLowerCase()))) {
+                        testOrOptional = true;
+                    }
+                    else if (readLine.isEmpty() || readLine.isBlank()) {
+                        testOrOptional = false;
                     }
                 }
             }
@@ -90,8 +101,7 @@ class ChangelogProcessor {
 
     List<String> projectLines() throws Exception {
         Process process = new ProcessBuilder("./gradlew", "projects").start();
-        try (BufferedReader bufferedReader = new BufferedReader(
-            new InputStreamReader(process.getInputStream()))) {
+        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             return bufferedReader.lines().toList();
         }
     }
@@ -131,8 +141,7 @@ class ChangelogProcessor {
             }
         }
 
-        List<String> processedDependencies = processDependencyUpgrades(dependencyLines,
-            excludedDependencies);
+        List<String> processedDependencies = processDependencyUpgrades(dependencyLines, excludedDependencies);
 
         try (BufferedWriter writer = Files.newBufferedWriter(outputFile.toPath())) {
             for (String line : header) {
@@ -148,11 +157,9 @@ class ChangelogProcessor {
         }
     }
 
-    private List<String> processDependencyUpgrades(List<String> dependencyLines,
-        Set<String> excludedDependencies) {
+    private List<String> processDependencyUpgrades(List<String> dependencyLines, Set<String> excludedDependencies) {
         Map<String, DependencyUpgrade> upgrades = new HashMap<>();
-        Pattern pattern = Pattern.compile(
-            "- Bump (.+?) from ([\\d.]+) to ([\\d.]+) (\\[#[\\d]+])\\((.+)\\)");
+        Pattern pattern = Pattern.compile("- Bump (.+?) from ([\\d.]+) to ([\\d.]+) \\[(#[\\d]+)]\\((.+)\\)");
 
         for (String line : dependencyLines) {
             Matcher matcher = pattern.matcher(line);
@@ -164,15 +171,15 @@ class ChangelogProcessor {
                 String url = matcher.group(5);
 
                 if (!excludedDependencies.contains(unit)) {
-                    upgrades.putIfAbsent(unit,
-                        new DependencyUpgrade(unit, oldVersion, newVersion, url, prNumber));
+                    upgrades.putIfAbsent(unit, new DependencyUpgrade(unit, oldVersion, newVersion, url, prNumber));
                     DependencyUpgrade existing = upgrades.get(unit);
                     existing.updateVersions(oldVersion, newVersion);
                 }
             }
         }
 
-        return upgrades.values().stream()
+        return upgrades.values()
+            .stream()
             .sorted(Comparator.comparing(DependencyUpgrade::getUnit))
             .map(DependencyUpgrade::toString)
             .toList();
@@ -181,14 +188,17 @@ class ChangelogProcessor {
     private static class DependencyUpgrade {
 
         private final String unit;
+
         private String lowestVersion;
+
         private String highestVersion;
+
         private final String url;
+
         private final String prNumber;
 
-        public DependencyUpgrade(String unit, String lowestVersion, String highestVersion,
-            String url,
-            String prNumber) {
+        public DependencyUpgrade(String unit, String lowestVersion, String highestVersion, String url,
+                String prNumber) {
             this.unit = unit;
             this.lowestVersion = lowestVersion;
             this.highestVersion = highestVersion;
@@ -211,8 +221,10 @@ class ChangelogProcessor {
 
         @Override
         public String toString() {
-            return String.format("- Bump %s from %s to %s [%s](%s)", unit, lowestVersion,
-                highestVersion, prNumber, url);
+            return String.format("- Bump %s from %s to %s [%s](%s)", unit, lowestVersion, highestVersion, prNumber,
+                    url);
         }
+
     }
+
 }

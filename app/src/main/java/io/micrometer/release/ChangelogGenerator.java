@@ -26,9 +26,13 @@ class ChangelogGenerator {
     static final String GITHUB_API_URL = "https://api.github.com";
 
     private final String githubApi;
+
     private final String githubRefName;
+
     private final String githubRepository;
+
     private final String githubToken;
+
     private final String outputFile;
 
     public ChangelogGenerator() {
@@ -50,16 +54,9 @@ class ChangelogGenerator {
 
     File generateChangelog(File jarPath) throws IOException, InterruptedException {
         System.out.println("Generating changelog...");
-        ProcessBuilder processBuilder = new ProcessBuilder(
-            getJava(),
-            "-jar",
-            jarPath.getAbsolutePath(),
-            githubRefName.replace("v", ""),
-            outputFile,
-            "--changelog.repository=" + githubRepository,
-            "--github.api-url=" + githubApi,
-            "--github.token=" + githubToken
-        );
+        ProcessBuilder processBuilder = new ProcessBuilder(getJava(), "-jar", jarPath.getAbsolutePath(),
+                githubRefName.replace("v", ""), outputFile, "--changelog.repository=" + githubRepository,
+                "--github.api-url=" + githubApi, "--github.token=" + githubToken);
         processBuilder.redirectErrorStream(true);
         Process process = processBuilder.start();
 
@@ -79,4 +76,5 @@ class ChangelogGenerator {
     String getJava() {
         return "java";
     }
+
 }

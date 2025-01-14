@@ -23,9 +23,10 @@ import java.net.http.HttpResponse;
 
 class NotificationSender {
 
-    private static final String SPRING_RELEASE_WEBHOOK = System.getenv(
-        "SPRING_RELEASE_GCHAT_WEBHOOK_URL");
+    private static final String SPRING_RELEASE_WEBHOOK = System.getenv("SPRING_RELEASE_GCHAT_WEBHOOK_URL");
+
     private static final String BLUESKY_IDENTIFIER = System.getenv("BLUESKY_HANDLE");
+
     private static final String BLUESKY_PASSWORD = System.getenv("BLUESKY_PASSWORD");
 
     void sendNotifications() throws IOException, InterruptedException {
@@ -43,12 +44,12 @@ class NotificationSender {
         HttpRequest blueskyRequest = HttpRequest.newBuilder()
             .uri(URI.create("https://bsky.social/xrpc/com.atproto.server.createSession"))
             .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(
-                "{\"identifier\":\"" + BLUESKY_IDENTIFIER + "\",\"password\":\"" + BLUESKY_PASSWORD
-                    + "\"}"))
+            .POST(HttpRequest.BodyPublishers
+                .ofString("{\"identifier\":\"" + BLUESKY_IDENTIFIER + "\",\"password\":\"" + BLUESKY_PASSWORD + "\"}"))
             .build();
         HttpResponse<String> blueskyResponse = HttpClient.newHttpClient()
             .send(blueskyRequest, HttpResponse.BodyHandlers.ofString());
         System.out.println("Bluesky response: " + blueskyResponse.body());
     }
+
 }

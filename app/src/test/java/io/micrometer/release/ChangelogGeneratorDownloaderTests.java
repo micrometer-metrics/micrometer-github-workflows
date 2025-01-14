@@ -30,9 +30,7 @@ import static org.assertj.core.api.BDDAssertions.then;
 class ChangelogGeneratorDownloaderTests {
 
     @RegisterExtension
-    static WireMockExtension wm1 = WireMockExtension.newInstance()
-        .options(wireMockConfig().dynamicPort())
-        .build();
+    static WireMockExtension wm1 = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
 
     File outputJar = new File("build", "output.jar");
 
@@ -47,7 +45,8 @@ class ChangelogGeneratorDownloaderTests {
 
     @Test
     void should_download_changelog_generator_when_jar_not_present() throws Exception {
-        ChangelogGeneratorDownloader downloader = new ChangelogGeneratorDownloader(wm1.baseUrl(), outputJar.getAbsolutePath());
+        ChangelogGeneratorDownloader downloader = new ChangelogGeneratorDownloader(wm1.baseUrl(),
+                outputJar.getAbsolutePath());
 
         downloader.downloadChangelogGenerator();
 
@@ -57,7 +56,8 @@ class ChangelogGeneratorDownloaderTests {
     @Test
     void should_not_download_changelog_generator_when_jar_present() throws Exception {
         outputJar.createNewFile();
-        ChangelogGeneratorDownloader downloader = new ChangelogGeneratorDownloader(wm1.baseUrl(), outputJar.getAbsolutePath()) {
+        ChangelogGeneratorDownloader downloader = new ChangelogGeneratorDownloader(wm1.baseUrl(),
+                outputJar.getAbsolutePath()) {
             @Override
             void download() throws IOException, InterruptedException {
                 throw new AssertionError("Should not be called");
@@ -68,4 +68,5 @@ class ChangelogGeneratorDownloaderTests {
 
         then(outputJar).exists();
     }
+
 }

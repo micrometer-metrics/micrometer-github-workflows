@@ -27,10 +27,13 @@ import java.nio.file.Paths;
 class ChangelogGeneratorDownloader {
 
     private static final String CHANGELOG_GENERATOR_JAR = "github-changelog-generator.jar";
+
     private static final String CHANGELOG_GENERATOR_VERSION = "0.0.11";
+
     private static final String CHANGELOG_GENERATOR_URL = "https://github.com/spring-io/github-changelog-generator/releases/download/v%s/github-changelog-generator.jar";
 
     private final String changelogGeneratorUrl;
+
     private final String changelogGeneratorJar;
 
     // for tests
@@ -47,7 +50,8 @@ class ChangelogGeneratorDownloader {
     File downloadChangelogGenerator() throws Exception {
         if (!Files.exists(Paths.get(changelogGeneratorJar))) {
             download();
-        } else {
+        }
+        else {
             System.out.println("GitHub Changelog Generator already downloaded.");
         }
         return new File(changelogGeneratorJar);
@@ -56,8 +60,7 @@ class ChangelogGeneratorDownloader {
     void download() throws Exception {
         System.out.println("Downloading GitHub Changelog Generator...");
         String changelogGeneratorVersion = System.getenv("CHANGELOG_GENERATOR_VERSION");
-        changelogGeneratorVersion =
-            changelogGeneratorVersion == null ? CHANGELOG_GENERATOR_VERSION
+        changelogGeneratorVersion = changelogGeneratorVersion == null ? CHANGELOG_GENERATOR_VERSION
                 : changelogGeneratorVersion;
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(changelogGeneratorUrl.formatted(changelogGeneratorVersion)))
@@ -65,7 +68,7 @@ class ChangelogGeneratorDownloader {
             .build();
         HttpClient client = HttpClient.newHttpClient();
         HttpResponse<Path> response = client.send(request,
-            HttpResponse.BodyHandlers.ofFile(Paths.get(changelogGeneratorJar)));
+                HttpResponse.BodyHandlers.ofFile(Paths.get(changelogGeneratorJar)));
 
         if (response.statusCode() != 200) {
             throw new RuntimeException("Failed to download GitHub Changelog Generator");
