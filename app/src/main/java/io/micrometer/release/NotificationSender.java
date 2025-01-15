@@ -15,41 +15,124 @@
  */
 package io.micrometer.release;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
+import java.util.List;
 
 class NotificationSender {
 
-    private static final String SPRING_RELEASE_WEBHOOK = System.getenv("SPRING_RELEASE_GCHAT_WEBHOOK_URL");
+    private static final Logger log = LoggerFactory.getLogger(NotificationSender.class);
 
-    private static final String BLUESKY_IDENTIFIER = System.getenv("BLUESKY_HANDLE");
+    private final List<Notifier> notifiers;
 
-    private static final String BLUESKY_PASSWORD = System.getenv("BLUESKY_PASSWORD");
-
-    void sendNotifications() throws IOException, InterruptedException {
-        System.out.println("Sending notifications...");
-
-        // Google Chat Notification
-        HttpRequest chatRequest = HttpRequest.newBuilder()
-            .uri(URI.create(SPRING_RELEASE_WEBHOOK))
-            .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString("{\"text\":\"Release has been announced!\"}"))
-            .build();
-        HttpClient.newHttpClient().send(chatRequest, HttpResponse.BodyHandlers.ofString());
-
-        // Bluesky Notification
-        HttpRequest blueskyRequest = HttpRequest.newBuilder()
-            .uri(URI.create("https://bsky.social/xrpc/com.atproto.server.createSession"))
-            .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers
-                .ofString("{\"identifier\":\"" + BLUESKY_IDENTIFIER + "\",\"password\":\"" + BLUESKY_PASSWORD + "\"}"))
-            .build();
-        HttpResponse<String> blueskyResponse = HttpClient.newHttpClient()
-            .send(blueskyRequest, HttpResponse.BodyHandlers.ofString());
-        System.out.println("Bluesky response: " + blueskyResponse.body());
+    NotificationSender() {
+        this.notifiers = List.of(googleChat(), blueSky());
     }
 
+    void sendNotifications(String repoName, String refName) {
+        notifiers
+            .forEach(notifier -> notifier.sendNotification(repoName, refName));
+    }
+
+    // for tests
+    BlueSkyNotifier blueSky() {
+        return new BlueSkyNotifier();
+    }
+
+    // for tests
+    GoogleChatNotifier googleChat() {
+        return new GoogleChatNotifier();
+    }
+
+    interface Notifier {
+
+        void sendNotification(String repoName, String refName);
+    }
+
+    static class GoogleChatNotifier implements Notifier {
+
+        private final String googleChatNotificationUrl;
+
+        GoogleChatNotifier(String googleChatNotificationUrl) {
+            this.googleChatNotificationUrl = googleChatNotificationUrl;
+        }
+
+        GoogleChatNotifier() {
+            this.googleChatNotificationUrl = System.getenv("SPRING_RELEASE_GCHAT_WEBHOOK_URL");
+        }
+
+        @Override
+        public void sendNotification(String repoName, String refName) {
+            log.info("Sending notification to ...");
+            String version = refName.startsWith("v") ? refName.substring(1) : refName;
+            String name = repoName.startsWith("micrometer") ? repoName : "micrometer-" + repoName;
+            String payload = String.format("{\"text\": \"%s-announcing %s\"}", name, version);
+
+            // Google Chat Notification
+            HttpRequest chatRequest = HttpRequest.newBuilder()
+                .uri(URI.create(googleChatNotificationUrl))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(payload))
+                .build();
+            try {
+                HttpResponse<String> send = HttpClient.newHttpClient()
+                    .send(chatRequest, BodyHandlers.ofString());
+                if (send.statusCode() >= 400) {
+                    throw new IllegalStateException(
+                        "Unexpected response code: " + send.statusCode());
+                }
+            } catch (IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    static class BlueSkyNotifier implements Notifier {
+
+        private final String uriRoot;
+        private final String identifier;
+        private final String password;
+
+        BlueSkyNotifier(String uriRoot, String identifier, String password) {
+            this.uriRoot = uriRoot;
+            this.identifier = identifier;
+            this.password = password;
+        }
+
+        BlueSkyNotifier() {
+            this.uriRoot = "https://bsky.social";
+            this.identifier = System.getenv("BLUESKY_HANDLE");
+            this.password = System.getenv("BLUESKY_PASSWORD");
+        }
+
+        @Override
+        public void sendNotification(String repoName, String refName) {
+            HttpRequest blueskyRequest = HttpRequest.newBuilder()
+                .uri(URI.create(uriRoot + "/xrpc/com.atproto.server.createSession"))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers
+                    .ofString("{\"identifier\":\"" + identifier + "\",\"password\":\"" + password
+                        + "\"}"))
+                .build();
+
+            try {
+                HttpResponse<String> blueskyResponse = HttpClient.newHttpClient()
+                    .send(blueskyRequest, HttpResponse.BodyHandlers.ofString());
+                log.info("Bluesky response: " + blueskyResponse.body());
+                if (blueskyResponse.statusCode() >= 400) {
+                    throw new IllegalStateException(
+                        "Unexpected response code: " + blueskyResponse.statusCode());
+                }
+            } catch (IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
 }

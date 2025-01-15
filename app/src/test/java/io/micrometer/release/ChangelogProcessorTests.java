@@ -81,7 +81,7 @@ class ChangelogProcessorTests {
     void should_parse_changelog() throws Exception {
         processor.processChangelog(input);
 
-        // Additional new line gets updated
+        // Additional new line gets added
         Files.writeString(expectedOutput.toPath(), Files.readString(expectedOutput.toPath()) + "\n");
         then(output).hasSameTextualContentAs(expectedOutput);
     }

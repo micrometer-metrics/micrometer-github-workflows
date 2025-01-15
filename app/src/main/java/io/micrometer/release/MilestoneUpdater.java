@@ -15,21 +15,31 @@
  */
 package io.micrometer.release;
 
-import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class MilestoneUpdater {
 
-    void closeMilestone() throws IOException, InterruptedException {
-        System.out.println("Closing milestone...");
-        String milestoneName = System.getenv("GITHUB_REF_NAME").replace("v", "");
-        Process process = new ProcessBuilder("gh", "api",
-                "/repos/" + System.getenv("GITHUB_REPOSITORY") + "/milestones?state=open", "--jq",
-                "\".[] | select(.title == \\\"" + milestoneName + "\\\").number\"")
-            .inheritIO()
-            .start();
-        if (process.waitFor() != 0) {
-            throw new RuntimeException("Failed to fetch milestone ID");
-        }
+    private static final Logger log = LoggerFactory.getLogger(MilestoneUpdater.class);
+    private final ProcessRunner processRunner;
+    private final String githubRepository;
+
+    MilestoneUpdater(ProcessRunner processRunner, String githubRepository) {
+        this.processRunner = processRunner;
+        this.githubRepository = githubRepository;
+    }
+
+    MilestoneUpdater() {
+        this.githubRepository = System.getenv("GITHUB_REPOSITORY");
+        this.processRunner = new ProcessRunner();
+    }
+
+    void closeMilestone(String githubRefName) {
+        log.info("Closing milestone...");
+        String milestoneName = githubRefName.replace("v", "");
+        processRunner.run("gh", "api",
+                "/repos/" + githubRepository + "/milestones?state=open", "--jq",
+                "\".[] | select(.title == \\\"" + milestoneName + "\\\").number\"");
     }
 
 }

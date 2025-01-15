@@ -15,28 +15,26 @@
  */
 package io.micrometer.release;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.nio.file.Files;
 
-class ReleaseNotesUpdater {
+import static org.assertj.core.api.BDDAssertions.then;
 
-    private static final Logger log = LoggerFactory.getLogger(ReleaseNotesUpdater.class);
-    private final ProcessRunner processRunner;
+class ProcessRunnerTests {
 
-    ReleaseNotesUpdater() {
-        this.processRunner = new ProcessRunner();
+    @Test
+    void should_run_process() throws IOException {
+        File tempFile = Files.createTempFile("micrometer-release", ".txt").toFile();
+        tempFile.delete();
+        then(tempFile).doesNotExist();
+
+        new ProcessRunner()
+            .run("touch", tempFile.getAbsolutePath());
+
+        then(tempFile).exists();
     }
-
-    ReleaseNotesUpdater(ProcessRunner processRunner) {
-        this.processRunner = processRunner;
-    }
-
-    void updateReleaseNotes(String githubRef, File changelog) {
-        log.info("Updating release notes...");
-        processRunner.run("gh", "release", "edit", githubRef, "--notes-file",
-            changelog.getAbsolutePath());
-    }
-
 }

@@ -24,7 +24,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 class ChangelogGeneratorDownloader {
+
+    private static final Logger log = LoggerFactory.getLogger(ChangelogGeneratorDownloader.class);
 
     private static final String CHANGELOG_GENERATOR_JAR = "github-changelog-generator.jar";
 
@@ -52,13 +57,13 @@ class ChangelogGeneratorDownloader {
             download();
         }
         else {
-            System.out.println("GitHub Changelog Generator already downloaded.");
+            log.info("GitHub Changelog Generator already downloaded.");
         }
         return new File(changelogGeneratorJar);
     }
 
     void download() throws Exception {
-        System.out.println("Downloading GitHub Changelog Generator...");
+        log.info("Downloading GitHub Changelog Generator...");
         String changelogGeneratorVersion = System.getenv("CHANGELOG_GENERATOR_VERSION");
         changelogGeneratorVersion = changelogGeneratorVersion == null ? CHANGELOG_GENERATOR_VERSION
                 : changelogGeneratorVersion;

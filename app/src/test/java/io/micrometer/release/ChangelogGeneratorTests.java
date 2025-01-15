@@ -32,6 +32,7 @@ import static org.assertj.core.api.BDDAssertions.then;
 
 class ChangelogGeneratorTests {
 
+    // Port fixed so it matches WireMock stubs
     @RegisterExtension
     static WireMockExtension wm1 = WireMockExtension.newInstance().options(wireMockConfig().port(60006)).build();
 

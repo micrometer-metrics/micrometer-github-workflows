@@ -21,7 +21,12 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 class ChangelogProcessor {
+
+    private static final Logger log = LoggerFactory.getLogger(ChangelogProcessor.class);
 
     static final String OUTPUT_FILE = "changelog-output.md";
 
@@ -44,14 +49,14 @@ class ChangelogProcessor {
     }
 
     private Set<String> fetchTestAndOptionalDependencies() throws Exception {
-        System.out.println("Fetching test and optional dependencies...");
+        log.info("Fetching test and optional dependencies...");
         List<String> projectLines = projectLines();
         List<String> subprojects = projectLines.stream()
             .filter(line -> line.contains("Project"))
             .map(line -> line.substring(line.indexOf(":") + 1, line.lastIndexOf("'")).trim())
             .toList();
 
-        System.out.println("Subprojects: " + subprojects);
+        log.info("Subprojects: " + subprojects);
 
         Set<String> testOptionalDependencies = new HashSet<>();
         Set<String> implementationDependencies = new HashSet<>();
@@ -88,7 +93,7 @@ class ChangelogProcessor {
             }
 
             testOptionalDependencies.removeAll(implementationDependencies);
-            System.out.println("Excluded dependencies: " + testOptionalDependencies);
+            log.info("Excluded dependencies: " + testOptionalDependencies);
         }
 
         return testOptionalDependencies;
@@ -107,7 +112,7 @@ class ChangelogProcessor {
     }
 
     private void processChangelog(Set<String> excludedDependencies, File changelog) throws IOException {
-        System.out.println("Processing changelog...");
+        log.info("Processing changelog...");
         List<String> lines = Files.readAllLines(changelog.toPath());
         List<String> header = new ArrayList<>();
         List<String> dependencyLines = new ArrayList<>();

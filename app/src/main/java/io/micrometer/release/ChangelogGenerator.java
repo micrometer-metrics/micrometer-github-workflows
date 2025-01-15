@@ -20,7 +20,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 class ChangelogGenerator {
+
+    private static final Logger log = LoggerFactory.getLogger(ChangelogGenerator.class);
 
     static final String INPUT_FILE = "changelog.md";
     static final String GITHUB_API_URL = "https://api.github.com";
@@ -53,7 +58,7 @@ class ChangelogGenerator {
     }
 
     File generateChangelog(File jarPath) throws IOException, InterruptedException {
-        System.out.println("Generating changelog...");
+        log.info("Generating changelog...");
         ProcessBuilder processBuilder = new ProcessBuilder(getJava(), "-jar", jarPath.getAbsolutePath(),
                 githubRefName.replace("v", ""), outputFile, "--changelog.repository=" + githubRepository,
                 "--github.api-url=" + githubApi, "--github.token=" + githubToken);
@@ -63,7 +68,7 @@ class ChangelogGenerator {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                System.out.println(line);
+                log.info(line);
             }
         }
 

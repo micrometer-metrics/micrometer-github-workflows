@@ -27,9 +27,13 @@ repositories {
 
 dependencies {
     // Use JUnit Jupiter for testing.
+    implementation 'org.slf4j:slf4j-api:2.0.16'
+    implementation 'ch.qos.logback:logback-classic:1.5.16'
+
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
     testImplementation 'org.assertj:assertj-core:3.26.3'
     testImplementation "org.wiremock:wiremock:3.10.0"
+    testImplementation "org.mockito:mockito-core:5.15.2"
 
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 

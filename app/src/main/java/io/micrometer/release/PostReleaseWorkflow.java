@@ -44,9 +44,12 @@ public class PostReleaseWorkflow {
     }
 
     public static void main(String[] args) throws Exception {
-        PostReleaseWorkflow workflow = new PostReleaseWorkflow(new ChangelogGeneratorDownloader(),
-                new ChangelogGenerator(), new ChangelogProcessor(), new ReleaseNotesUpdater(), new MilestoneUpdater(),
-                new NotificationSender());
+
+        String githubOrgRepo = System.getenv("GITHUB_REPOSITORY"); // micrometer-metrics/tracing
+        String githubRepo = githubOrgRepo.contains("/") ? githubOrgRepo.split("/")[1] : githubOrgRepo;
+        String githubRefName = System.getenv("GITHUB_REF_NAME");
+
+        PostReleaseWorkflow workflow = newWorkflow();
 
         // Step 1: Download GitHub Changelog Generator
         File outputJar = workflow.downloadChangelogGenerator();
@@ -58,13 +61,20 @@ public class PostReleaseWorkflow {
         workflow.processChangelog(changelog);
 
         // Step 4: Update release notes
-        workflow.updateReleaseNotes(changelog);
+        workflow.updateReleaseNotes(githubRefName, changelog);
 
         // Step 5: Close milestone
-        workflow.closeMilestone();
+        workflow.closeMilestone(githubRefName);
 
         // Step 6: Send notifications
-        workflow.sendNotifications();
+        workflow.sendNotifications(githubRepo, githubRefName);
+    }
+
+    private static PostReleaseWorkflow newWorkflow() {
+        return new PostReleaseWorkflow(new ChangelogGeneratorDownloader(),
+            new ChangelogGenerator(), new ChangelogProcessor(), new ReleaseNotesUpdater(),
+            new MilestoneUpdater(),
+            new NotificationSender());
     }
 
     private File downloadChangelogGenerator() throws Exception {
@@ -79,16 +89,16 @@ public class PostReleaseWorkflow {
         changelogProcessor.processChangelog(changelog);
     }
 
-    private void updateReleaseNotes(File changelog) throws Exception {
-        releaseNotesUpdater.updateReleaseNotes(changelog);
+    private void updateReleaseNotes(String refName, File changelog) {
+        releaseNotesUpdater.updateReleaseNotes(refName, changelog);
     }
 
-    private void closeMilestone() throws Exception {
-        milestoneUpdater.closeMilestone();
+    private void closeMilestone(String refName) {
+        milestoneUpdater.closeMilestone(refName);
     }
 
-    private void sendNotifications() throws Exception {
-        notificationSender.sendNotifications();
+    private void sendNotifications(String repoName, String refName) {
+        notificationSender.sendNotifications(repoName, refName);
     }
 
 }
