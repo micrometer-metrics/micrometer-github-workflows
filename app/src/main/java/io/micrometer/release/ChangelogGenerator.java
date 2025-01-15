@@ -32,38 +32,32 @@ class ChangelogGenerator {
 
     private final String githubApi;
 
-    private final String githubRefName;
-
-    private final String githubRepository;
-
     private final String githubToken;
 
-    private final String outputFile;
+    private final File outputFile;
 
     public ChangelogGenerator() {
-        this.githubRefName = System.getenv("GITHUB_REF_NAME");
-        this.githubRepository = System.getenv("GITHUB_REPOSITORY");
         this.githubApi = GITHUB_API_URL;
         this.githubToken = System.getenv("GITHUB_TOKEN");
-        this.outputFile = INPUT_FILE;
+        this.outputFile = new File(INPUT_FILE);
     }
 
     // for tests
-    ChangelogGenerator(String githubApi, String githubRefName, String githubRepository, String outputFile) {
+    ChangelogGenerator(String githubApi, File outputFile) {
         this.githubApi = githubApi;
-        this.githubRefName = githubRefName;
-        this.githubRepository = githubRepository;
         this.outputFile = outputFile;
         this.githubToken = "";
     }
 
-    File generateChangelog(File jarPath) throws IOException, InterruptedException {
+    File generateChangelog(String githubRefName, String githubOrgRepo, File jarPath) throws IOException, InterruptedException {
         log.info("Generating changelog...");
         ProcessBuilder processBuilder = new ProcessBuilder(getJava(), "-jar", jarPath.getAbsolutePath(),
-                githubRefName.replace("v", ""), outputFile, "--changelog.repository=" + githubRepository,
+                githubRefName.replace("v", ""), outputFile.getAbsolutePath(), "--changelog.repository=" + githubOrgRepo,
                 "--github.api-url=" + githubApi, "--github.token=" + githubToken);
         processBuilder.redirectErrorStream(true);
         Process process = processBuilder.start();
+
+        log.info("Printing out process logs:\n\n");
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             String line;
@@ -75,7 +69,7 @@ class ChangelogGenerator {
         if (process.waitFor() != 0) {
             throw new RuntimeException("Failed to generate changelog");
         }
-        return new File(outputFile);
+        return outputFile;
     }
 
     String getJava() {

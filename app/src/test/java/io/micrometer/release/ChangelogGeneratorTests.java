@@ -41,19 +41,23 @@ class ChangelogGeneratorTests {
         URL resource = ChangelogGeneratorTests.class.getResource("/generator/github-changelog-generator.jar");
         File output = Files.createTempFile("github-changelog-generator", ".md").toFile();
 
-        ChangelogGenerator generator = new ChangelogGenerator("http://localhost:60006", "1.14.0",
-                "micrometer-metrics/micrometer", output.getAbsolutePath()) {
+        ChangelogGenerator generator = testChangelogGenerator(output);
+
+        generator.generateChangelog("v1.14.0",
+            "micrometer-metrics/micrometer", new File(resource.toURI()));
+
+        String content = Files.readString(
+                new File(ChangelogGeneratorTests.class.getResource("/generator/micrometer.md").toURI()).toPath());
+        then(output).hasContent(content);
+    }
+
+    static ChangelogGenerator testChangelogGenerator(File changelogOutput) {
+        return new ChangelogGenerator("http://localhost:60006", changelogOutput) {
             @Override
             String getJava() {
                 return findJavaInstallation();
             }
         };
-
-        generator.generateChangelog(new File(resource.toURI()));
-
-        String content = Files.readString(
-                new File(ChangelogGeneratorTests.class.getResource("/generator/micrometer.md").toURI()).toPath());
-        then(output).hasContent(content);
     }
 
     private static String findJavaInstallation() {
@@ -73,7 +77,7 @@ class ChangelogGeneratorTests {
             }
         }
         catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
         // Fallback to checking SDKMAN installation
         try {
@@ -84,7 +88,7 @@ class ChangelogGeneratorTests {
             }
         }
         catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
 
         throw new UnsupportedOperationException("Java not found!!");

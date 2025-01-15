@@ -29,21 +29,29 @@ class NotificationSenderTests {
 
     @Test
     void should_send_a_message_to_notifiers() {
-        NotificationSender sender = new NotificationSender() {
+        NotificationSender sender = testNotificationSender(wm1);
+
+        sender.sendNotifications("micrometer", "v1.14.0");
+
+        assertThatNotificationGotSent(wm1);
+    }
+
+    static void assertThatNotificationGotSent(WireMockExtension wireMockExtension) {
+        wireMockExtension.verify(WireMock.postRequestedFor(WireMock.urlEqualTo("/xrpc/com.atproto.server.createSession")));
+        wireMockExtension.verify(WireMock.postRequestedFor(WireMock.urlEqualTo("/")));
+    }
+
+    static NotificationSender testNotificationSender(WireMockExtension extension) {
+        return new NotificationSender() {
             @Override
             BlueSkyNotifier blueSky() {
-                return new BlueSkyNotifier(wm1.baseUrl(), "identifier", "password");
+                return new BlueSkyNotifier(extension.baseUrl(), "identifier", "password");
             }
 
             @Override
             GoogleChatNotifier googleChat() {
-                return new GoogleChatNotifier(wm1.baseUrl());
+                return new GoogleChatNotifier(extension.baseUrl());
             }
         };
-
-        sender.sendNotifications("micrometer", "v1.2.3");
-
-        wm1.verify(WireMock.postRequestedFor(WireMock.urlEqualTo("/xrpc/com.atproto.server.createSession")));
-        wm1.verify(WireMock.postRequestedFor(WireMock.urlEqualTo("/")));
     }
 }

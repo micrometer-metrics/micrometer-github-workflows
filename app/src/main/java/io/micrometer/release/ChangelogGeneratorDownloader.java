@@ -35,35 +35,35 @@ class ChangelogGeneratorDownloader {
 
     private static final String CHANGELOG_GENERATOR_VERSION = "0.0.11";
 
-    private static final String CHANGELOG_GENERATOR_URL = "https://github.com/spring-io/github-changelog-generator/releases/download/v%s/github-changelog-generator.jar";
+    static final String CHANGELOG_GENERATOR_URL = "https://github.com/spring-io/github-changelog-generator/releases/download/v%s/github-changelog-generator.jar";
 
     private final String changelogGeneratorUrl;
 
-    private final String changelogGeneratorJar;
+    private final File changelogGeneratorJar;
 
     // for tests
-    ChangelogGeneratorDownloader(String changelogGeneratorUrl, String changelogGeneratorJar) {
+    ChangelogGeneratorDownloader(String changelogGeneratorUrl, File changelogGeneratorJar) {
         this.changelogGeneratorUrl = changelogGeneratorUrl;
         this.changelogGeneratorJar = changelogGeneratorJar;
     }
 
     ChangelogGeneratorDownloader() {
         this.changelogGeneratorUrl = CHANGELOG_GENERATOR_URL;
-        this.changelogGeneratorJar = CHANGELOG_GENERATOR_JAR;
+        this.changelogGeneratorJar = new File(CHANGELOG_GENERATOR_JAR);
     }
 
     File downloadChangelogGenerator() throws Exception {
-        if (!Files.exists(Paths.get(changelogGeneratorJar))) {
+        if (!Files.exists(changelogGeneratorJar.toPath())) {
             download();
         }
         else {
             log.info("GitHub Changelog Generator already downloaded.");
         }
-        return new File(changelogGeneratorJar);
+        return changelogGeneratorJar;
     }
 
     void download() throws Exception {
-        log.info("Downloading GitHub Changelog Generator...");
+        log.info("Downloading GitHub Changelog Generator to [{}]...", changelogGeneratorJar.getAbsolutePath());
         String changelogGeneratorVersion = System.getenv("CHANGELOG_GENERATOR_VERSION");
         changelogGeneratorVersion = changelogGeneratorVersion == null ? CHANGELOG_GENERATOR_VERSION
                 : changelogGeneratorVersion;
@@ -71,11 +71,13 @@ class ChangelogGeneratorDownloader {
             .uri(URI.create(changelogGeneratorUrl.formatted(changelogGeneratorVersion)))
             .GET()
             .build();
-        HttpClient client = HttpClient.newHttpClient();
+        HttpClient client = HttpClient.newBuilder()
+            .followRedirects(HttpClient.Redirect.NORMAL)  // This will follow redirects
+            .build();
         HttpResponse<Path> response = client.send(request,
-                HttpResponse.BodyHandlers.ofFile(Paths.get(changelogGeneratorJar)));
+                HttpResponse.BodyHandlers.ofFile(changelogGeneratorJar.toPath()));
 
-        if (response.statusCode() != 200) {
+        if (response.statusCode() >= 400) {
             throw new RuntimeException("Failed to download GitHub Changelog Generator");
         }
     }

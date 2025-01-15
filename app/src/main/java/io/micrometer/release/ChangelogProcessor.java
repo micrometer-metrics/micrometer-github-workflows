@@ -39,8 +39,8 @@ class ChangelogProcessor {
         this.outputFile = new File(OUTPUT_FILE);
     }
 
-    ChangelogProcessor(File outputFile) {
-        this.outputFile = outputFile;
+    ChangelogProcessor(File changelogOutput) {
+        this.outputFile = changelogOutput;
     }
 
     void processChangelog(File changelog) throws Exception {

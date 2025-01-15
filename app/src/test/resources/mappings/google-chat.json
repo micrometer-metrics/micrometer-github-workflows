@@ -5,7 +5,7 @@
     "url" : "/",
     "method" : "POST",
     "bodyPatterns" : [ {
-      "equalToJson" : "{\"text\": \"micrometer-announcing 1.2.3\"}",
+      "equalToJson" : "{\"text\": \"micrometer-announcing 1.14.0\"}",
       "ignoreArrayOrder" : true,
       "ignoreExtraElements" : true
     } ]

@@ -43,46 +43,44 @@ public class PostReleaseWorkflow {
         this.notificationSender = notificationSender;
     }
 
-    public static void main(String[] args) throws Exception {
-
-        String githubOrgRepo = System.getenv("GITHUB_REPOSITORY"); // micrometer-metrics/tracing
+    public void run() throws Exception {
+        String githubOrgRepo = ghOrgRepo(); // micrometer-metrics/tracing
         String githubRepo = githubOrgRepo.contains("/") ? githubOrgRepo.split("/")[1] : githubOrgRepo;
-        String githubRefName = System.getenv("GITHUB_REF_NAME");
-
-        PostReleaseWorkflow workflow = newWorkflow();
+        String githubRefName = ghRef();
 
         // Step 1: Download GitHub Changelog Generator
-        File outputJar = workflow.downloadChangelogGenerator();
+        File outputJar = downloadChangelogGenerator();
 
         // Step 2: Generate changelog
-        File changelog = workflow.generateChangelog(outputJar);
+        File changelog = generateChangelog(githubRefName, githubOrgRepo, outputJar);
 
         // Step 3: Process changelog
-        workflow.processChangelog(changelog);
+        processChangelog(changelog);
 
         // Step 4: Update release notes
-        workflow.updateReleaseNotes(githubRefName, changelog);
+        updateReleaseNotes(githubRefName, changelog);
 
         // Step 5: Close milestone
-        workflow.closeMilestone(githubRefName);
+        closeMilestone(githubRefName);
 
         // Step 6: Send notifications
-        workflow.sendNotifications(githubRepo, githubRefName);
+        sendNotifications(githubRepo, githubRefName);
     }
 
-    private static PostReleaseWorkflow newWorkflow() {
-        return new PostReleaseWorkflow(new ChangelogGeneratorDownloader(),
-            new ChangelogGenerator(), new ChangelogProcessor(), new ReleaseNotesUpdater(),
-            new MilestoneUpdater(),
-            new NotificationSender());
+    String ghRef() {
+        return System.getenv("GITHUB_REF_NAME");
+    }
+
+    String ghOrgRepo() {
+        return System.getenv("GITHUB_REPOSITORY");
     }
 
     private File downloadChangelogGenerator() throws Exception {
         return changelogGeneratorDownloader.downloadChangelogGenerator();
     }
 
-    private File generateChangelog(File jarPath) throws Exception {
-        return changelogGenerator.generateChangelog(jarPath);
+    private File generateChangelog(String githubRefName, String githubOrgRepo, File jarPath) throws Exception {
+        return changelogGenerator.generateChangelog(githubRefName, githubOrgRepo, jarPath);
     }
 
     private void processChangelog(File changelog) throws Exception {
