@@ -79,7 +79,8 @@ class ChangelogSection {
                 addAuthors(handles, entries);
                 addAuthors(handles, other.getEntries());
                 entries.clear();
-                entries.add(joinHandles(new ArrayList<>(handles)));
+                String handlesText = joinHandles(new ArrayList<>(handles));
+                entries.add(CONTRIBUTORS_TEXT + "\n\n" + handlesText);
         }
     }
 
