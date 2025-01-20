@@ -37,7 +37,8 @@ class NotificationSenderTests {
     }
 
     static void assertThatNotificationGotSent(WireMockExtension wireMockExtension) {
-        wireMockExtension.verify(WireMock.postRequestedFor(WireMock.urlEqualTo("/xrpc/com.atproto.server.createSession")));
+        wireMockExtension
+            .verify(WireMock.postRequestedFor(WireMock.urlEqualTo("/xrpc/com.atproto.server.createSession")));
         wireMockExtension.verify(WireMock.postRequestedFor(WireMock.urlEqualTo("/")));
     }
 
@@ -54,4 +55,5 @@ class NotificationSenderTests {
             }
         };
     }
+
 }

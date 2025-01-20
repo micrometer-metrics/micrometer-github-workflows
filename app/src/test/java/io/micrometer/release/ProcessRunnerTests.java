@@ -32,9 +32,9 @@ class ProcessRunnerTests {
         tempFile.delete();
         then(tempFile).doesNotExist();
 
-        new ProcessRunner()
-            .run("touch", tempFile.getAbsolutePath());
+        new ProcessRunner().run("touch", tempFile.getAbsolutePath());
 
         then(tempFile).exists();
     }
+
 }

@@ -21,7 +21,9 @@ import org.slf4j.LoggerFactory;
 class MilestoneUpdater {
 
     private static final Logger log = LoggerFactory.getLogger(MilestoneUpdater.class);
+
     private final ProcessRunner processRunner;
+
     private final String githubRepository;
 
     MilestoneUpdater(ProcessRunner processRunner, String githubRepository) {
@@ -37,8 +39,7 @@ class MilestoneUpdater {
     void closeMilestone(String githubRefName) {
         log.info("Closing milestone...");
         String milestoneName = githubRefName.replace("v", "");
-        processRunner.run("gh", "api",
-                "/repos/" + githubRepository + "/milestones?state=open", "--jq",
+        processRunner.run("gh", "api", "/repos/" + githubRepository + "/milestones?state=open", "--jq",
                 "\".[] | select(.title == \\\"" + milestoneName + "\\\").number\"");
     }
 

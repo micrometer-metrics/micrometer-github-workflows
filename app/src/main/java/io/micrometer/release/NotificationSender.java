@@ -37,8 +37,7 @@ class NotificationSender {
     }
 
     void sendNotifications(String repoName, String refName) {
-        notifiers
-            .forEach(notifier -> notifier.sendNotification(repoName, refName));
+        notifiers.forEach(notifier -> notifier.sendNotification(repoName, refName));
     }
 
     // for tests
@@ -54,6 +53,7 @@ class NotificationSender {
     interface Notifier {
 
         void sendNotification(String repoName, String refName);
+
     }
 
     static class GoogleChatNotifier implements Notifier {
@@ -82,22 +82,24 @@ class NotificationSender {
                 .POST(HttpRequest.BodyPublishers.ofString(payload))
                 .build();
             try {
-                HttpResponse<String> send = HttpClient.newHttpClient()
-                    .send(chatRequest, BodyHandlers.ofString());
+                HttpResponse<String> send = HttpClient.newHttpClient().send(chatRequest, BodyHandlers.ofString());
                 if (send.statusCode() >= 400) {
-                    throw new IllegalStateException(
-                        "Unexpected response code: " + send.statusCode());
+                    throw new IllegalStateException("Unexpected response code: " + send.statusCode());
                 }
-            } catch (IOException | InterruptedException e) {
+            }
+            catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
+
     }
 
     static class BlueSkyNotifier implements Notifier {
 
         private final String uriRoot;
+
         private final String identifier;
+
         private final String password;
 
         BlueSkyNotifier(String uriRoot, String identifier, String password) {
@@ -118,8 +120,7 @@ class NotificationSender {
                 .uri(URI.create(uriRoot + "/xrpc/com.atproto.server.createSession"))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers
-                    .ofString("{\"identifier\":\"" + identifier + "\",\"password\":\"" + password
-                        + "\"}"))
+                    .ofString("{\"identifier\":\"" + identifier + "\",\"password\":\"" + password + "\"}"))
                 .build();
 
             try {
@@ -127,12 +128,14 @@ class NotificationSender {
                     .send(blueskyRequest, HttpResponse.BodyHandlers.ofString());
                 log.info("Bluesky response: " + blueskyResponse.body());
                 if (blueskyResponse.statusCode() >= 400) {
-                    throw new IllegalStateException(
-                        "Unexpected response code: " + blueskyResponse.statusCode());
+                    throw new IllegalStateException("Unexpected response code: " + blueskyResponse.statusCode());
                 }
-            } catch (IOException | InterruptedException e) {
+            }
+            catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
+
     }
+
 }

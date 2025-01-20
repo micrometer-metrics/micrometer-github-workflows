@@ -72,7 +72,7 @@ class ChangelogGeneratorDownloader {
             .GET()
             .build();
         HttpClient client = HttpClient.newBuilder()
-            .followRedirects(HttpClient.Redirect.NORMAL)  // This will follow redirects
+            .followRedirects(HttpClient.Redirect.NORMAL) // This will follow redirects
             .build();
         HttpResponse<Path> response = client.send(request,
                 HttpResponse.BodyHandlers.ofFile(changelogGeneratorJar.toPath()));

@@ -15,10 +15,8 @@
  */
 package io.micrometer.release;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,10 +34,13 @@ class ChangelogGenerator {
 
     private final File outputFile;
 
+    private final ProcessRunner processRunner;
+
     public ChangelogGenerator() {
         this.githubApi = GITHUB_API_URL;
         this.githubToken = System.getenv("GITHUB_TOKEN");
         this.outputFile = new File(INPUT_FILE);
+        this.processRunner = new ProcessRunner();
     }
 
     // for tests
@@ -47,28 +48,14 @@ class ChangelogGenerator {
         this.githubApi = githubApi;
         this.outputFile = outputFile;
         this.githubToken = "";
+        this.processRunner = new ProcessRunner();
     }
 
-    File generateChangelog(String githubRefName, String githubOrgRepo, File jarPath) throws IOException, InterruptedException {
+    File generateChangelog(String githubRefName, String githubOrgRepo, File jarPath) {
         log.info("Generating changelog...");
-        ProcessBuilder processBuilder = new ProcessBuilder(getJava(), "-jar", jarPath.getAbsolutePath(),
-                githubRefName.replace("v", ""), outputFile.getAbsolutePath(), "--changelog.repository=" + githubOrgRepo,
+        processRunner.run(getJava(), "-jar", jarPath.getAbsolutePath(), githubRefName.replace("v", ""),
+                outputFile.getAbsolutePath(), "--changelog.repository=" + githubOrgRepo,
                 "--github.api-url=" + githubApi, "--github.token=" + githubToken);
-        processBuilder.redirectErrorStream(true);
-        Process process = processBuilder.start();
-
-        log.info("Printing out process logs:\n\n");
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                log.info(line);
-            }
-        }
-
-        if (process.waitFor() != 0) {
-            throw new RuntimeException("Failed to generate changelog");
-        }
         return outputFile;
     }
 

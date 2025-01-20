@@ -34,8 +34,7 @@ import static org.mockito.Mockito.verify;
 class PostReleaseWorkflowAcceptanceTests {
 
     @RegisterExtension
-    static WireMockExtension wm1 = WireMockExtension.newInstance()
-        .options(wireMockConfig().port(60006)).build();
+    static WireMockExtension wm1 = WireMockExtension.newInstance().options(wireMockConfig().port(60006)).build();
 
     Path tmpDir = Files.createTempDirectory("micrometer-release");
 
@@ -43,19 +42,33 @@ class PostReleaseWorkflowAcceptanceTests {
 
     File outputChangelog = new File(tmpDir.toFile(), "output.md");
 
+    File oldOutputChangelog = new File(
+            AssertingReleaseNotesUpdater.class.getResource("/processor/micrometer-1.13.9-output.md").toURI());
+
     MilestoneUpdater milestoneUpdater = mock();
 
-    PostReleaseWorkflowAcceptanceTests() throws IOException {
+    PostReleaseWorkflowAcceptanceTests() throws IOException, URISyntaxException {
     }
 
     @Test
     void should_perform_full_post_release_process() throws Exception {
         AssertingReleaseNotesUpdater updater = new AssertingReleaseNotesUpdater();
-        PostReleaseWorkflow postReleaseWorkflow = new PostReleaseWorkflow(
-            new ChangelogGeneratorDownloader(ChangelogGeneratorDownloader.CHANGELOG_GENERATOR_URL,
-                outputJar), ChangelogGeneratorTests.testChangelogGenerator(outputChangelog),
-            ChangelogProcessorTests.testChangelogProcessor(outputChangelog),
-            updater, milestoneUpdater, NotificationSenderTests.testNotificationSender(wm1)) {
+        PostReleaseWorkflow postReleaseWorkflow = testPostReleaseWorkflow(updater);
+
+        postReleaseWorkflow.run();
+
+        then(updater.wasCalled).as("ReleaseNotesUpdater must be called").isTrue();
+        verify(milestoneUpdater).closeMilestone("v1.14.0");
+        NotificationSenderTests.assertThatNotificationGotSent(wm1);
+    }
+
+    private PostReleaseWorkflow testPostReleaseWorkflow(AssertingReleaseNotesUpdater updater) {
+        return new PostReleaseWorkflow(
+                new ChangelogGeneratorDownloader(ChangelogGeneratorDownloader.CHANGELOG_GENERATOR_URL, outputJar),
+                ChangelogGeneratorTests.testChangelogGenerator(outputChangelog),
+                ChangelogFetcherTests.testChangelogFetcher(oldOutputChangelog),
+                ChangelogProcessorTests.testChangelogProcessor(outputChangelog), updater, milestoneUpdater,
+                NotificationSenderTests.testNotificationSender(wm1)) {
             @Override
             String ghRef() {
                 return "v1.14.0";
@@ -65,20 +78,18 @@ class PostReleaseWorkflowAcceptanceTests {
             String ghOrgRepo() {
                 return "micrometer-metrics/micrometer";
             }
+
+            @Override
+            String previousRefName() {
+                return "v1.13.9";
+            }
         };
-
-        postReleaseWorkflow.run();
-
-        then(updater.wasCalled).as("ReleaseNotesUpdater must be called").isTrue();
-        verify(milestoneUpdater).closeMilestone("v1.14.0");
-        NotificationSenderTests.assertThatNotificationGotSent(wm1);
     }
 
     static class AssertingReleaseNotesUpdater extends ReleaseNotesUpdater {
 
         File expectedOutput = new File(
-            AssertingReleaseNotesUpdater.class.getResource("/processor/micrometer-1.14.0-output.md")
-                .toURI());
+                AssertingReleaseNotesUpdater.class.getResource("/processor/micrometer-1.14.0-output.md").toURI());
 
         private boolean wasCalled;
 
@@ -90,10 +101,14 @@ class PostReleaseWorkflowAcceptanceTests {
             wasCalled = true;
 
             try {
-                then(Files.readString(changelog.toPath())).isEqualToIgnoringNewLines(Files.readString(expectedOutput.toPath()));
-            } catch (IOException e) {
+                then(Files.readString(changelog.toPath()))
+                    .isEqualToIgnoringNewLines(Files.readString(expectedOutput.toPath()));
+            }
+            catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
+
     }
+
 }

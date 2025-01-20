@@ -17,7 +17,8 @@ class ReleaseNotesUpdaterTests {
 
         releaseNotesUpdater.updateReleaseNotes("v1.0.0", changelog);
 
-        Mockito.verify(processRunner).run("gh", "release", "edit", "v1.0.0", "--notes-file",
-            changelog.getAbsolutePath());
+        Mockito.verify(processRunner)
+            .run("gh", "release", "edit", "v1.0.0", "--notes-file", changelog.getAbsolutePath());
     }
+
 }

@@ -23,6 +23,7 @@ import java.io.File;
 class ReleaseNotesUpdater {
 
     private static final Logger log = LoggerFactory.getLogger(ReleaseNotesUpdater.class);
+
     private final ProcessRunner processRunner;
 
     ReleaseNotesUpdater() {
@@ -35,8 +36,7 @@ class ReleaseNotesUpdater {
 
     void updateReleaseNotes(String githubRef, File changelog) {
         log.info("Updating release notes...");
-        processRunner.run("gh", "release", "edit", githubRef, "--notes-file",
-            changelog.getAbsolutePath());
+        processRunner.run("gh", "release", "edit", githubRef, "--notes-file", changelog.getAbsolutePath());
     }
 
 }

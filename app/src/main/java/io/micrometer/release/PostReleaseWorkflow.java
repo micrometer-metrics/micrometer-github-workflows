@@ -23,6 +23,8 @@ public class PostReleaseWorkflow {
 
     private final ChangelogGenerator changelogGenerator;
 
+    private final ChangelogFetcher changelogFetcher;
+
     private final ChangelogProcessor changelogProcessor;
 
     private final ReleaseNotesUpdater releaseNotesUpdater;
@@ -32,11 +34,12 @@ public class PostReleaseWorkflow {
     private final NotificationSender notificationSender;
 
     PostReleaseWorkflow(ChangelogGeneratorDownloader changelogGeneratorDownloader,
-            ChangelogGenerator changelogGenerator, ChangelogProcessor changelogProcessor,
-            ReleaseNotesUpdater releaseNotesUpdater, MilestoneUpdater milestoneUpdater,
-            NotificationSender notificationSender) {
+            ChangelogGenerator changelogGenerator, ChangelogFetcher changelogFetcher,
+            ChangelogProcessor changelogProcessor, ReleaseNotesUpdater releaseNotesUpdater,
+            MilestoneUpdater milestoneUpdater, NotificationSender notificationSender) {
         this.changelogGeneratorDownloader = changelogGeneratorDownloader;
         this.changelogGenerator = changelogGenerator;
+        this.changelogFetcher = changelogFetcher;
         this.changelogProcessor = changelogProcessor;
         this.releaseNotesUpdater = releaseNotesUpdater;
         this.milestoneUpdater = milestoneUpdater;
@@ -47,15 +50,22 @@ public class PostReleaseWorkflow {
         String githubOrgRepo = ghOrgRepo(); // micrometer-metrics/tracing
         String githubRepo = githubOrgRepo.contains("/") ? githubOrgRepo.split("/")[1] : githubOrgRepo;
         String githubRefName = ghRef();
+        String previousRefName = previousRefName();
 
         // Step 1: Download GitHub Changelog Generator
-        File outputJar = downloadChangelogGenerator();
+        File changelogJar = downloadChangelogGenerator();
 
-        // Step 2: Generate changelog
-        File changelog = generateChangelog(githubRefName, githubOrgRepo, outputJar);
+        // Step 2: Generate current changelog
+        File changelog = generateChangelog(githubRefName, githubOrgRepo, changelogJar);
+
+        File oldChangelog = null;
+        // Step 2a: If previousRefName present - fetch its changelog
+        if (previousRefName != null && !previousRefName.isBlank()) {
+            oldChangelog = generateOldChangelog(githubRefName, githubOrgRepo);
+        }
 
         // Step 3: Process changelog
-        processChangelog(changelog);
+        processChangelog(changelog, oldChangelog);
 
         // Step 4: Update release notes
         updateReleaseNotes(githubRefName, changelog);
@@ -75,16 +85,24 @@ public class PostReleaseWorkflow {
         return System.getenv("GITHUB_REPOSITORY");
     }
 
+    String previousRefName() {
+        return System.getenv("PREVIOUS_REF_NAME");
+    }
+
     private File downloadChangelogGenerator() throws Exception {
         return changelogGeneratorDownloader.downloadChangelogGenerator();
     }
 
-    private File generateChangelog(String githubRefName, String githubOrgRepo, File jarPath) throws Exception {
+    private File generateOldChangelog(String githubRefName, String githubOrgRepo) {
+        return changelogFetcher.fetchChangelog(githubRefName, githubOrgRepo);
+    }
+
+    private File generateChangelog(String githubRefName, String githubOrgRepo, File jarPath) {
         return changelogGenerator.generateChangelog(githubRefName, githubOrgRepo, jarPath);
     }
 
-    private void processChangelog(File changelog) throws Exception {
-        changelogProcessor.processChangelog(changelog);
+    private void processChangelog(File changelog, File oldChangelog) throws Exception {
+        changelogProcessor.processChangelog(changelog, oldChangelog);
     }
 
     private void updateReleaseNotes(String refName, File changelog) {

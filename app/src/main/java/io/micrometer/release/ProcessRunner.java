@@ -15,20 +15,36 @@
  */
 package io.micrometer.release;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 class ProcessRunner {
 
+    private static final Logger log = LoggerFactory.getLogger(ProcessRunner.class);
+
     void run(String... command) {
         try {
-            Process process = new ProcessBuilder(command)
-                .inheritIO()
-                .start();
+            Process process = new ProcessBuilder(command).inheritIO().start();
+
+            log.info("Printing out process logs:\n\n");
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    log.info(line);
+                }
+            }
             if (process.waitFor() != 0) {
                 throw new RuntimeException("Failed to run the command [" + command + "]");
             }
-        } catch (IOException | InterruptedException e) {
+        }
+        catch (IOException | InterruptedException e) {
             throw new RuntimeException("A failure around the process execution happened", e);
         }
     }
+
 }

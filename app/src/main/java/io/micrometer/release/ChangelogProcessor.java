@@ -15,11 +15,15 @@
  */
 package io.micrometer.release;
 
+import io.micrometer.release.ChangelogSection.Section;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,9 +47,44 @@ class ChangelogProcessor {
         this.outputFile = changelogOutput;
     }
 
-    void processChangelog(File changelog) throws Exception {
+    void processChangelog(File changelog, File oldChangelog) throws Exception {
         Set<String> testAndOptional = fetchTestAndOptionalDependencies();
-        processChangelog(testAndOptional, changelog);
+
+        Changelog currentChangelog = Changelog.parse(changelog);
+        Changelog oldChangelogContent = oldChangelog != null ? Changelog.parse(oldChangelog) : new Changelog();
+
+        // Merge changelogs
+        for (ChangelogSection oldSection : oldChangelogContent.getSections()) {
+            ChangelogSection currentSection = currentChangelog.getSection(oldSection.getSection());
+            currentSection.merge(oldSection);
+        }
+
+        // Process dependencies section specially
+        ChangelogSection depsSection = currentChangelog.getSection(Section.UPGRADES);
+        Collection<String> processedDeps = processDependencyUpgrades(depsSection.getEntries(), testAndOptional);
+        depsSection.clear();
+        processedDeps.forEach(depsSection::addEntry);
+
+        // Write the result
+        try (BufferedWriter writer = Files.newBufferedWriter(outputFile.toPath())) {
+            // Write header
+            for (String line : currentChangelog.getHeader()) {
+                writer.write(line + "\n");
+            }
+
+            // Write sections
+            for (ChangelogSection section : currentChangelog.getSections()) {
+                writer.write("## " + section.getTitle() + "\n\n");
+
+                List<String> sortedEntries = new ArrayList<>(section.getEntries());
+                Collections.sort(sortedEntries);
+
+                for (String entry : sortedEntries) {
+                    writer.write(entry + "\n");
+                }
+                writer.write("\n");
+            }
+        }
     }
 
     private Set<String> fetchTestAndOptionalDependencies() throws Exception {
@@ -111,58 +150,8 @@ class ChangelogProcessor {
         }
     }
 
-    private void processChangelog(Set<String> excludedDependencies, File changelog) throws IOException {
-        log.info("Processing changelog...");
-        List<String> lines = Files.readAllLines(changelog.toPath());
-        List<String> header = new ArrayList<>();
-        List<String> dependencyLines = new ArrayList<>();
-        List<String> footer = new ArrayList<>();
-
-        boolean inDependencySection = false;
-
-        for (String line : lines) {
-            if (line.startsWith("## :hammer: Dependency Upgrades")) {
-                inDependencySection = true;
-                header.add(line);
-                header.add("");
-                break;
-            }
-            header.add(line);
-        }
-
-        if (inDependencySection) {
-            for (String line : lines.subList(header.size(), lines.size())) {
-                if (line.startsWith("## :heart: Contributors")) {
-                    break;
-                }
-                dependencyLines.add(line);
-            }
-        }
-
-        for (String line : lines) {
-            if (line.startsWith("## :heart: Contributors")) {
-                footer = lines.subList(lines.indexOf(line), lines.size());
-                break;
-            }
-        }
-
-        List<String> processedDependencies = processDependencyUpgrades(dependencyLines, excludedDependencies);
-
-        try (BufferedWriter writer = Files.newBufferedWriter(outputFile.toPath())) {
-            for (String line : header) {
-                writer.write(line + "\n");
-            }
-            for (String line : processedDependencies) {
-                writer.write(line + "\n");
-            }
-            writer.write("\n");
-            for (String line : footer) {
-                writer.write(line + "\n");
-            }
-        }
-    }
-
-    private List<String> processDependencyUpgrades(List<String> dependencyLines, Set<String> excludedDependencies) {
+    private Collection<String> processDependencyUpgrades(Iterable<String> dependencyLines,
+            Set<String> excludedDependencies) {
         Map<String, DependencyUpgrade> upgrades = new HashMap<>();
         Pattern pattern = Pattern.compile("- Bump (.+?) from ([\\d.]+) to ([\\d.]+) \\[(#[\\d]+)]\\((.+)\\)");
 
@@ -187,6 +176,7 @@ class ChangelogProcessor {
             .stream()
             .sorted(Comparator.comparing(DependencyUpgrade::getUnit))
             .map(DependencyUpgrade::toString)
+            .distinct()
             .toList();
     }
 

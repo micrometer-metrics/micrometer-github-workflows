@@ -43,8 +43,7 @@ class ChangelogGeneratorTests {
 
         ChangelogGenerator generator = testChangelogGenerator(output);
 
-        generator.generateChangelog("v1.14.0",
-            "micrometer-metrics/micrometer", new File(resource.toURI()));
+        generator.generateChangelog("v1.14.0", "micrometer-metrics/micrometer", new File(resource.toURI()));
 
         String content = Files.readString(
                 new File(ChangelogGeneratorTests.class.getResource("/generator/micrometer.md").toURI()).toPath());

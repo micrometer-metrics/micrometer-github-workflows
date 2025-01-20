@@ -15,22 +15,32 @@
  */
 package io.micrometer.release;
 
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import java.io.File;
+
 import org.junit.jupiter.api.Test;
 
-class MilestoneUpdaterTests {
+class ChangelogFetcherTests {
 
     @Test
-    void should_call_gh_api_to_close_a_milestone() {
+    void should_fetch_changelog() {
         ProcessRunner processRunner = mock();
-        MilestoneUpdater milestoneUpdater = new MilestoneUpdater(processRunner, "micrometer-metrics");
+        File output = new File(".");
+        ChangelogFetcher changelogFetcher = new ChangelogFetcher(output, processRunner);
 
-        milestoneUpdater.closeMilestone("v1.2.3");
+        File changelog = changelogFetcher.fetchChangelog("v1.13.8", "micrometer-metrics/micrometer");
 
-        verify(processRunner).run("gh", "api", "/repos/micrometer-metrics/milestones?state=open", "--jq",
-                "\".[] | select(.title == \\\"1.2.3\\\").number\"");
+        then(changelog).isSameAs(output);
+        verify(processRunner).run("sh", "-c",
+                String.format("gh release view %s --repo %s/%s --json body --jq .body > %s", "v1.13.8",
+                        "micrometer-metrics", "micrometer", changelog.getAbsolutePath()));
+    }
+
+    static ChangelogFetcher testChangelogFetcher(File output) {
+        return new ChangelogFetcher(output, mock(ProcessRunner.class));
     }
 
 }

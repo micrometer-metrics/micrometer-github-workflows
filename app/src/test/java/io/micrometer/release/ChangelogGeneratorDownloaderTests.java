@@ -45,8 +45,7 @@ class ChangelogGeneratorDownloaderTests {
 
     @Test
     void should_download_changelog_generator_when_jar_not_present() throws Exception {
-        ChangelogGeneratorDownloader downloader = new ChangelogGeneratorDownloader(wm1.baseUrl(),
-                outputJar);
+        ChangelogGeneratorDownloader downloader = new ChangelogGeneratorDownloader(wm1.baseUrl(), outputJar);
 
         downloader.downloadChangelogGenerator();
 
@@ -56,8 +55,7 @@ class ChangelogGeneratorDownloaderTests {
     @Test
     void should_not_download_changelog_generator_when_jar_present() throws Exception {
         outputJar.createNewFile();
-        ChangelogGeneratorDownloader downloader = new ChangelogGeneratorDownloader(wm1.baseUrl(),
-                outputJar) {
+        ChangelogGeneratorDownloader downloader = new ChangelogGeneratorDownloader(wm1.baseUrl(), outputJar) {
             @Override
             void download() throws IOException, InterruptedException {
                 throw new AssertionError("Should not be called");
