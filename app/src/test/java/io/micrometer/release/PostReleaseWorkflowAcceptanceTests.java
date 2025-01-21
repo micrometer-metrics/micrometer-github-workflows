@@ -47,12 +47,13 @@ class PostReleaseWorkflowAcceptanceTests {
 
     MilestoneUpdater milestoneUpdater = mock();
 
+    AssertingReleaseNotesUpdater updater = new AssertingReleaseNotesUpdater();
+
     PostReleaseWorkflowAcceptanceTests() throws IOException, URISyntaxException {
     }
 
     @Test
     void should_perform_full_post_release_process() throws Exception {
-        AssertingReleaseNotesUpdater updater = new AssertingReleaseNotesUpdater();
         PostReleaseWorkflow postReleaseWorkflow = testPostReleaseWorkflow(updater);
 
         postReleaseWorkflow.run();

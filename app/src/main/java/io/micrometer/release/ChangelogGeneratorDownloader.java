@@ -22,7 +22,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +32,7 @@ class ChangelogGeneratorDownloader {
 
     private static final String CHANGELOG_GENERATOR_JAR = "github-changelog-generator.jar";
 
-    private static final String CHANGELOG_GENERATOR_VERSION = "0.0.11";
+    private static final String CHANGELOG_GENERATOR_VERSION = "0.0.11"; // TODO: Env Var
 
     static final String CHANGELOG_GENERATOR_URL = "https://github.com/spring-io/github-changelog-generator/releases/download/v%s/github-changelog-generator.jar";
 

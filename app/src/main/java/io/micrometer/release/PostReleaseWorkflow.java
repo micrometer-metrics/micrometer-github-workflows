@@ -49,8 +49,8 @@ public class PostReleaseWorkflow {
     public void run() throws Exception {
         String githubOrgRepo = ghOrgRepo(); // micrometer-metrics/tracing
         String githubRepo = githubOrgRepo.contains("/") ? githubOrgRepo.split("/")[1] : githubOrgRepo;
-        String githubRefName = ghRef();
-        String previousRefName = previousRefName();
+        String githubRefName = ghRef(); // v1.3.1
+        String previousRefName = previousRefName(); // v1.2.5
 
         // Step 1: Download GitHub Changelog Generator
         File changelogJar = downloadChangelogGenerator();

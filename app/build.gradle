@@ -9,33 +9,50 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.43")
+        classpath libs.plugin.license
+        classpath libs.plugin.noHttp
+        classpath libs.plugin.javaformat
+        classpath libs.plugin.pitest
     }
 }
 
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
+    id 'pmd'
 }
 
 apply plugin: 'io.spring.javaformat'
+apply plugin: 'com.github.hierynomus.license'
+apply plugin: 'checkstyle'
+apply plugin: 'io.spring.nohttp'
+apply plugin: 'info.solidsoft.pitest'
+apply from: '../dependencies.gradle'
 
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
 }
 
-dependencies {
-    // Use JUnit Jupiter for testing.
-    implementation 'org.slf4j:slf4j-api:2.0.16'
-    implementation 'ch.qos.logback:logback-classic:1.5.16'
+group = 'io.micrometer'
+println "I'm configuring $project.name with version $project.version"
 
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
-    testImplementation 'org.assertj:assertj-core:3.26.3'
-    testImplementation "org.wiremock:wiremock-standalone:3.10.0"
-    testImplementation "org.mockito:mockito-core:5.15.2"
+dependencies {
+    checkstyle libs.javaFormatForPlugins
+
+    // Use JUnit Jupiter for testing.
+    implementation libs.slf4j
+    implementation libs.logback
+
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation libs.assertj
+    testImplementation libs.wiremock
+    testImplementation libs.mockitoCore
 
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // PIT JUnit 5 plugin
+    testImplementation libs.pitestJunit5
 
 }
 
@@ -55,3 +72,45 @@ tasks.named('test') {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
 }
+
+
+license {
+    header rootProject.file('gradle/licenseHeader.txt')
+    strictCheck true
+    mapping {
+        kt = 'SLASHSTAR_STYLE'
+    }
+    sourceSets = project.sourceSets
+
+    ext.year = Calendar.getInstance().get(Calendar.YEAR)
+    skipExistingHeaders = true
+    exclude '**/*.json' // comments not supported
+    exclude '**/*.txt' // comments not supported
+}
+
+// PMD plugin configuration
+pmd {
+    consoleOutput = true
+    toolVersion = libs.versions.pmdTool.get()
+    ruleSetFiles = files("${projectDir}/src/test/resources/ruleset.xml")
+}
+
+tasks.withType(Pmd) {
+    reports {
+        xml.required.set(false) // Disable XML reports
+        html.required.set(true) // Enable HTML reports
+    }
+}
+
+tasks.check {
+    dependsOn(tasks.withType(Pmd))
+}
+
+pitest {
+    junit5PluginVersion = libs.versions.pitestJunit5
+    threads = 4 // Parallel threads for mutation testing
+    outputFormats = ['HTML'] // Generate an HTML report
+    timestampedReports = false // Avoid timestamped reports for consistent file paths
+}
+
+build.dependsOn("pitest")
