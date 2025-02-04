@@ -20,6 +20,7 @@ plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
     id 'pmd'
+    id 'com.google.cloud.tools.jib' version '3.4.4'
 }
 
 apply plugin: 'io.spring.javaformat'
@@ -34,8 +35,14 @@ repositories {
     mavenCentral()
 }
 
-group = 'io.micrometer'
+group = 'io.micrometer.release'
 println "I'm configuring $project.name with version $project.version"
+
+tasks.register('printVersion') {
+    doLast {
+        println project.version
+    }
+}
 
 dependencies {
     checkstyle libs.javaFormatForPlugins
@@ -72,7 +79,6 @@ tasks.named('test') {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
 }
-
 
 license {
     header rootProject.file('gradle/licenseHeader.txt')
@@ -111,6 +117,27 @@ pitest {
     threads = 4 // Parallel threads for mutation testing
     outputFormats = ['HTML'] // Generate an HTML report
     timestampedReports = false // Avoid timestamped reports for consistent file paths
+    testStrengthThreshold.set(95)
+    mutationThreshold.set(80)
+    setCoverageThreshold(80)
 }
 
 build.dependsOn("pitest")
+
+jib {
+    from {
+        image = "eclipse-temurin:17-jdk"
+    }
+    to {
+        image = System.getenv("DOCKER_HUB_REPO") ?: ''
+        tags = [project.version]
+        auth {
+            username = System.getenv("DOCKER_HUB_USERNAME") ?: ""
+            password = System.getenv("DOCKER_HUB_TOKEN") ?: ""
+        }
+    }
+    container {
+        jvmFlags = ["-Xms512m", "-Xmx1024m"]
+        mainClass = "io.micrometer.release.Main"
+    }
+}
