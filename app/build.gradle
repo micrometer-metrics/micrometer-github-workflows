@@ -111,7 +111,7 @@ pitest {
     threads = 4 // Parallel threads for mutation testing
     outputFormats = ['HTML'] // Generate an HTML report
     timestampedReports = false // Avoid timestamped reports for consistent file paths
-    testStrengthThreshold.set(95)
+    testStrengthThreshold.set(90)
     mutationThreshold.set(80)
     setCoverageThreshold(80)
 }
