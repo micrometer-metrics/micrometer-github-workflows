@@ -38,12 +38,6 @@ repositories {
 group = 'io.micrometer.release'
 println "I'm configuring $project.name with version $project.version"
 
-tasks.register('printVersion') {
-    doLast {
-        println project.version
-    }
-}
-
 dependencies {
     checkstyle libs.javaFormatForPlugins
 

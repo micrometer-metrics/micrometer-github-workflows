@@ -48,10 +48,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Get project version from Gradle
-        id: project_version
-        run: echo "VERSION=$(./gradlew -q printVersion)" >> $GITHUB_ENV
-
       - name: Login to Docker Hub
         run: echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
 
