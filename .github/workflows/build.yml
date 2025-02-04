@@ -54,5 +54,6 @@ jobs:
       - name: Build and push Docker image with Jib
         run: ./gradlew jib
         env:
+          DOCKER_HUB_REPO: "mgrzejszczak/micrometer-release"
           DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
           DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
