@@ -15,11 +15,10 @@
  */
 package io.micrometer.release;
 
+import java.io.*;
+
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.List;
@@ -61,19 +60,33 @@ class ChangelogProcessorTests {
 
     ChangelogProcessor processor = testChangelogProcessor(output);
 
+    static ChangelogProcessor testChangelogProcessor() {
+        return testChangelogProcessor(new File(ChangelogProcessor.OUTPUT_FILE));
+    }
+
     static ChangelogProcessor testChangelogProcessor(File output) {
-        return new ChangelogProcessor(output) {
+        return new ChangelogProcessor(new ProcessRunner(), output) {
             @Override
-            List<String> projectLines() throws Exception {
+            List<String> projectLines() {
                 URL resource = ChangelogGeneratorTests.class.getResource("/gradle/projects_output.txt");
-                return Files.readAllLines(new File(resource.toURI()).toPath());
+                try {
+                    return Files.readAllLines(new File(resource.toURI()).toPath());
+                }
+                catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
             }
 
             @Override
-            InputStream dependenciesInputStream(List<String> gradleCommand) throws Exception {
+            List<String> dependenciesLines(List<String> gradleCommand) {
                 then(gradleCommand).isEqualTo(expectedGradleCommand);
                 URL resource = ChangelogGeneratorTests.class.getResource("/gradle/dependencies_output.txt");
-                return new FileInputStream(new File(resource.toURI()));
+                try {
+                    return Files.readAllLines(new File(resource.toURI()).toPath());
+                }
+                catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
             }
         };
     }

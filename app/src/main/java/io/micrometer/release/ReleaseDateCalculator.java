@@ -15,24 +15,22 @@
  */
 package io.micrometer.release;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.time.LocalDate;
 
-import java.io.File;
+/**
+ * Always second Monday of the next month
+ */
+class ReleaseDateCalculator {
 
-class ReleaseNotesUpdater {
+    static LocalDate calculateDueDate(LocalDate now) {
+        // Go to first day of the next month
+        LocalDate nextMonth = now.withDayOfMonth(1).plusMonths(1);
 
-    private static final Logger log = LoggerFactory.getLogger(ReleaseNotesUpdater.class);
+        // Find first Monday
+        LocalDate firstMonday = nextMonth.plusDays((8 - nextMonth.getDayOfWeek().getValue()) % 7);
 
-    private final ProcessRunner processRunner;
-
-    ReleaseNotesUpdater(ProcessRunner processRunner) {
-        this.processRunner = processRunner;
-    }
-
-    void updateReleaseNotes(String githubRef, File changelog) {
-        log.info("Updating release notes...");
-        processRunner.run("gh", "release", "edit", githubRef, "--notes-file", changelog.getAbsolutePath());
+        // Add a week to get to second Monday
+        return firstMonday.plusWeeks(1);
     }
 
 }

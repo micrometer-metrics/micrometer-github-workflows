@@ -25,7 +25,9 @@ class MilestoneUpdaterTests {
     @Test
     void should_call_gh_api_to_close_a_milestone() {
         ProcessRunner processRunner = mock();
-        MilestoneUpdater milestoneUpdater = new MilestoneUpdater(processRunner, "micrometer-metrics");
+        String ghRepo = "micrometer-metrics";
+        MilestoneUpdater milestoneUpdater = new MilestoneUpdater(processRunner, ghRepo,
+                new MilestoneMigrator(processRunner, ghRepo, new MilestoneIssueReassigner(processRunner, ghRepo)));
 
         milestoneUpdater.closeMilestone("v1.2.3");
 

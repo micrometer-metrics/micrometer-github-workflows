@@ -15,6 +15,8 @@
  */
 package io.micrometer.release;
 
+import java.time.format.DateTimeFormatter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,8 +38,8 @@ class NotificationSender {
         this.notifiers = List.of(googleChat(), blueSky());
     }
 
-    void sendNotifications(String repoName, String refName) {
-        notifiers.forEach(notifier -> notifier.sendNotification(repoName, refName));
+    void sendNotifications(String repoName, String refName, MilestoneWithDeadline newMilestoneId) {
+        notifiers.forEach(notifier -> notifier.sendNotification(repoName, refName, newMilestoneId));
     }
 
     // for tests
@@ -52,7 +54,7 @@ class NotificationSender {
 
     interface Notifier {
 
-        void sendNotification(String repoName, String refName);
+        void sendNotification(String repoName, String refName, MilestoneWithDeadline newMilestoneId);
 
     }
 
@@ -69,12 +71,30 @@ class NotificationSender {
         }
 
         @Override
-        public void sendNotification(String repoName, String refName) {
+        public void sendNotification(String repoName, String refName, MilestoneWithDeadline newMilestone) {
             log.info("Sending notification to ...");
             String version = refName.startsWith("v") ? refName.substring(1) : refName;
             String name = repoName.startsWith("micrometer") ? repoName : "micrometer-" + repoName;
-            String payload = String.format("{\"text\": \"%s-announcing %s\"}", name, version);
+            sendAnnouncingNotificationToReleaseChannel(name, version);
+            sendPlanningNotificationToReleaseChannel(name, version, newMilestone);
+        }
 
+        private void sendAnnouncingNotificationToReleaseChannel(String name, String version) {
+            String payload = String.format("{\"text\": \"%s-announcing %s\"}", name, version);
+            notifyGoogleChat(payload);
+        }
+
+        private void sendPlanningNotificationToReleaseChannel(String name, String version,
+                MilestoneWithDeadline milestone) {
+            if (milestone == null) {
+                return;
+            }
+            String formattedDate = milestone.deadline().format(DateTimeFormatter.ofPattern("MMMM d"));
+            String payload = String.format("{\"text\": \"%s-planning %s on %s\"}", name, version, formattedDate);
+            notifyGoogleChat(payload);
+        }
+
+        private void notifyGoogleChat(String payload) {
             // Google Chat Notification
             HttpRequest chatRequest = HttpRequest.newBuilder()
                 .uri(URI.create(googleChatNotificationUrl))
@@ -115,7 +135,7 @@ class NotificationSender {
         }
 
         @Override
-        public void sendNotification(String repoName, String refName) {
+        public void sendNotification(String repoName, String refName, MilestoneWithDeadline newMilestoneId) {
             HttpRequest blueskyRequest = HttpRequest.newBuilder()
                 .uri(URI.create(uriRoot + "/xrpc/com.atproto.server.createSession"))
                 .header("Content-Type", "application/json")

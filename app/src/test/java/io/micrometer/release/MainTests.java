@@ -15,7 +15,7 @@
  */
 package io.micrometer.release;
 
-public class Main {
+class MainTests {
 
     public static void main(String[] args) throws Exception {
         // Env Vars
@@ -28,10 +28,11 @@ public class Main {
     }
 
     private static PostReleaseWorkflow newWorkflow() {
-        ProcessRunner processRunner = new ProcessRunner();
-        return new PostReleaseWorkflow(new ChangelogGeneratorDownloader(), new ChangelogGenerator(processRunner),
-                new ChangelogFetcher(processRunner), new ChangelogProcessor(processRunner),
-                new ReleaseNotesUpdater(processRunner), new MilestoneUpdater(processRunner), new NotificationSender());
+        ProcessRunner processRunner = new ProcessRunner(System.getenv("GITHUB_REPOSITORY"));
+        return new PostReleaseWorkflow(new ChangelogGeneratorDownloader(),
+                ChangelogGeneratorTests.testChangelogGenerator(), new ChangelogFetcher(processRunner),
+                ChangelogProcessorTests.testChangelogProcessor(), new ReleaseNotesUpdater(processRunner),
+                new MilestoneUpdater(processRunner), new NotificationSender());
     }
 
 }

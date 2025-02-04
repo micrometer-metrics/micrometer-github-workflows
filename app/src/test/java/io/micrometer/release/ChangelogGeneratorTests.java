@@ -50,13 +50,21 @@ class ChangelogGeneratorTests {
         then(output).hasContent(content);
     }
 
-    static ChangelogGenerator testChangelogGenerator(File changelogOutput) {
-        return new ChangelogGenerator("http://localhost:60006", changelogOutput) {
+    static ChangelogGenerator testChangelogGenerator(String ghApi, File changelogOutput) {
+        return new ChangelogGenerator(ghApi, changelogOutput) {
             @Override
             String getJava() {
                 return findJavaInstallation();
             }
         };
+    }
+
+    static ChangelogGenerator testChangelogGenerator() {
+        return testChangelogGenerator(ChangelogGenerator.GITHUB_API_URL, new File(ChangelogGenerator.INPUT_FILE));
+    }
+
+    static ChangelogGenerator testChangelogGenerator(File changelogOutput) {
+        return testChangelogGenerator("http://localhost:60006", changelogOutput);
     }
 
     private static String findJavaInstallation() {

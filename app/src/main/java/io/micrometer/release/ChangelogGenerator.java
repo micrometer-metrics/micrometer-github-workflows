@@ -25,6 +25,7 @@ class ChangelogGenerator {
     private static final Logger log = LoggerFactory.getLogger(ChangelogGenerator.class);
 
     static final String INPUT_FILE = "changelog.md";
+
     static final String GITHUB_API_URL = "https://api.github.com";
 
     private final String githubApi;
@@ -35,18 +36,18 @@ class ChangelogGenerator {
 
     private final ProcessRunner processRunner;
 
-    public ChangelogGenerator() {
+    public ChangelogGenerator(ProcessRunner processRunner) {
         this.githubApi = GITHUB_API_URL;
-        this.githubToken = System.getenv("GITHUB_TOKEN");
+        this.githubToken = System.getenv("GH_TOKEN");
         this.outputFile = new File(INPUT_FILE);
-        this.processRunner = new ProcessRunner();
+        this.processRunner = processRunner;
     }
 
     // for tests
     ChangelogGenerator(String githubApi, File outputFile) {
         this.githubApi = githubApi;
         this.outputFile = outputFile;
-        this.githubToken = "";
+        this.githubToken = System.getenv("GH_TOKEN");
         this.processRunner = new ProcessRunner();
     }
 

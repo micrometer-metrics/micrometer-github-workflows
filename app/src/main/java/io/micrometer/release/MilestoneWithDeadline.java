@@ -15,24 +15,8 @@
  */
 package io.micrometer.release;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.time.LocalDate;
 
-import java.io.File;
-
-class ReleaseNotesUpdater {
-
-    private static final Logger log = LoggerFactory.getLogger(ReleaseNotesUpdater.class);
-
-    private final ProcessRunner processRunner;
-
-    ReleaseNotesUpdater(ProcessRunner processRunner) {
-        this.processRunner = processRunner;
-    }
-
-    void updateReleaseNotes(String githubRef, File changelog) {
-        log.info("Updating release notes...");
-        processRunner.run("gh", "release", "edit", githubRef, "--notes-file", changelog.getAbsolutePath());
-    }
+record MilestoneWithDeadline(int id, String title, LocalDate deadline) {
 
 }

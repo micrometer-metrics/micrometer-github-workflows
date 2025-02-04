@@ -31,7 +31,7 @@ class NotificationSenderTests {
     void should_send_a_message_to_notifiers() {
         NotificationSender sender = testNotificationSender(wm1);
 
-        sender.sendNotifications("micrometer", "v1.14.0");
+        sender.sendNotifications("micrometer", "v1.14.0", null);
 
         assertThatNotificationGotSent(wm1);
     }

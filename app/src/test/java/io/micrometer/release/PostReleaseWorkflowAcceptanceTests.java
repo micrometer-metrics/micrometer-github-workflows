@@ -95,6 +95,7 @@ class PostReleaseWorkflowAcceptanceTests {
         private boolean wasCalled;
 
         AssertingReleaseNotesUpdater() throws URISyntaxException {
+            super(new ProcessRunner());
         }
 
         @Override

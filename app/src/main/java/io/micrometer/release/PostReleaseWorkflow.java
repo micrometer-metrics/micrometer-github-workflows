@@ -17,7 +17,7 @@ package io.micrometer.release;
 
 import java.io.File;
 
-public class PostReleaseWorkflow {
+class PostReleaseWorkflow {
 
     private final ChangelogGeneratorDownloader changelogGeneratorDownloader;
 
@@ -61,20 +61,20 @@ public class PostReleaseWorkflow {
         File oldChangelog = null;
         // Step 2a: If previousRefName present - fetch its changelog
         if (previousRefName != null && !previousRefName.isBlank()) {
-            oldChangelog = generateOldChangelog(githubRefName, githubOrgRepo);
+            oldChangelog = generateOldChangelog(previousRefName, githubOrgRepo);
         }
 
         // Step 3: Process changelog
-        processChangelog(changelog, oldChangelog);
+        File outputChangelog = processChangelog(changelog, oldChangelog);
 
         // Step 4: Update release notes
-        updateReleaseNotes(githubRefName, changelog);
+        updateReleaseNotes(githubRefName, outputChangelog);
 
         // Step 5: Close milestone
-        closeMilestone(githubRefName);
+        MilestoneWithDeadline newMilestoneId = updateMilestones(githubRefName);
 
         // Step 6: Send notifications
-        sendNotifications(githubRepo, githubRefName);
+        sendNotifications(githubRepo, githubRefName, newMilestoneId);
     }
 
     String ghRef() {
@@ -101,20 +101,22 @@ public class PostReleaseWorkflow {
         return changelogGenerator.generateChangelog(githubRefName, githubOrgRepo, jarPath);
     }
 
-    private void processChangelog(File changelog, File oldChangelog) throws Exception {
-        changelogProcessor.processChangelog(changelog, oldChangelog);
+    private File processChangelog(File changelog, File oldChangelog) throws Exception {
+        return changelogProcessor.processChangelog(changelog, oldChangelog);
     }
 
     private void updateReleaseNotes(String refName, File changelog) {
         releaseNotesUpdater.updateReleaseNotes(refName, changelog);
     }
 
-    private void closeMilestone(String refName) {
+    private MilestoneWithDeadline updateMilestones(String refName) {
+        MilestoneWithDeadline newMilestone = milestoneUpdater.updateMilestones(refName);
         milestoneUpdater.closeMilestone(refName);
+        return newMilestone;
     }
 
-    private void sendNotifications(String repoName, String refName) {
-        notificationSender.sendNotifications(repoName, refName);
+    private void sendNotifications(String repoName, String refName, MilestoneWithDeadline newMilestoneId) {
+        notificationSender.sendNotifications(repoName, refName, newMilestoneId);
     }
 
 }

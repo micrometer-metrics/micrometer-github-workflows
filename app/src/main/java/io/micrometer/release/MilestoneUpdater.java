@@ -26,14 +26,23 @@ class MilestoneUpdater {
 
     private final String githubRepository;
 
-    MilestoneUpdater(ProcessRunner processRunner, String githubRepository) {
+    private final MilestoneMigrator milestoneMigrator;
+
+    MilestoneUpdater(ProcessRunner processRunner, String githubRepository, MilestoneMigrator milestoneMigrator) {
         this.processRunner = processRunner;
         this.githubRepository = githubRepository;
+        this.milestoneMigrator = milestoneMigrator;
     }
 
-    MilestoneUpdater() {
+    MilestoneUpdater(ProcessRunner processRunner) {
         this.githubRepository = System.getenv("GITHUB_REPOSITORY");
-        this.processRunner = new ProcessRunner();
+        this.processRunner = processRunner;
+        this.milestoneMigrator = new MilestoneMigrator(this.processRunner, this.githubRepository,
+                new MilestoneIssueReassigner(processRunner, githubRepository));
+    }
+
+    MilestoneWithDeadline updateMilestones(String githubRefName) {
+        return this.milestoneMigrator.migrateMilestones(githubRefName);
     }
 
     void closeMilestone(String githubRefName) {

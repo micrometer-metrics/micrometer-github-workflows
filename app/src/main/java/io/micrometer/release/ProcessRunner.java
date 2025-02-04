@@ -15,6 +15,11 @@
  */
 package io.micrometer.release;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,9 +31,25 @@ class ProcessRunner {
 
     private static final Logger log = LoggerFactory.getLogger(ProcessRunner.class);
 
-    void run(String... command) {
+    private final String repo;
+
+    ProcessRunner() {
+        this.repo = null;
+    }
+
+    ProcessRunner(String repo) {
+        this.repo = repo;
+    }
+
+    List<String> run(List<String> command) {
+        return run(command.toArray(new String[0]));
+    }
+
+    List<String> run(String... command) {
+        List<String> lines = new ArrayList<>();
+        String[] processedCommand = processCommand(command);
         try {
-            Process process = new ProcessBuilder(command).inheritIO().start();
+            Process process = new ProcessBuilder(processedCommand).start();
 
             log.info("Printing out process logs:\n\n");
 
@@ -36,15 +57,29 @@ class ProcessRunner {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     log.info(line);
+                    lines.add(line);
                 }
             }
             if (process.waitFor() != 0) {
-                throw new RuntimeException("Failed to run the command [" + command + "]");
+                throw new RuntimeException("Failed to run the command [" + Arrays.toString(processedCommand) + "]");
             }
         }
         catch (IOException | InterruptedException e) {
             throw new RuntimeException("A failure around the process execution happened", e);
         }
+        return lines;
+    }
+
+    private String[] processCommand(String[] command) {
+        String[] processedCommand = command;
+        if (repo != null && command.length > 2 && command[0].equalsIgnoreCase("gh")
+                && !command[1].equalsIgnoreCase("api")) {
+            List<String> commands = new LinkedList<>(Arrays.stream(command).toList());
+            commands.add("--repo");
+            commands.add(repo);
+            processedCommand = commands.toArray(new String[0]);
+        }
+        return processedCommand;
     }
 
 }

@@ -30,9 +30,9 @@ class ChangelogFetcher {
 
     private final ProcessRunner processRunner;
 
-    public ChangelogFetcher() {
+    public ChangelogFetcher(ProcessRunner processRunner) {
         this.outputFile = new File(OUTPUT_FILE);
-        this.processRunner = new ProcessRunner();
+        this.processRunner = processRunner;
     }
 
     // for tests
