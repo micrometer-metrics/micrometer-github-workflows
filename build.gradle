@@ -69,7 +69,7 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = 'io.micrometer.release.App'
+    mainClass = 'io.micrometer.release.Main'
 }
 
 tasks.named('test') {

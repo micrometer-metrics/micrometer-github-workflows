@@ -27,6 +27,7 @@ import java.nio.file.Path;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -50,6 +51,47 @@ class PostReleaseWorkflowAcceptanceTests {
     AssertingReleaseNotesUpdater updater = new AssertingReleaseNotesUpdater();
 
     PostReleaseWorkflowAcceptanceTests() throws IOException, URISyntaxException {
+    }
+
+    @Test
+    void should_fail_when_repo_not_passed() {
+        PostReleaseWorkflow postReleaseWorkflow = new PostReleaseWorkflow(
+                new ChangelogGeneratorDownloader(ChangelogGeneratorDownloader.CHANGELOG_GENERATOR_URL, outputJar),
+                ChangelogGeneratorTests.testChangelogGenerator(outputChangelog),
+                ChangelogFetcherTests.testChangelogFetcher(oldOutputChangelog),
+                ChangelogProcessorTests.testChangelogProcessor(outputChangelog), updater, milestoneUpdater,
+                NotificationSenderTests.testNotificationSender(wm1)) {
+            @Override
+            String ghOrgRepo() {
+                return null;
+            }
+        };
+
+        thenThrownBy(postReleaseWorkflow::run)
+            .hasMessageContaining("No repo found, please provide the GITHUB_REPOSITORY env variable");
+    }
+
+    @Test
+    void should_fail_when_ref_not_passed() {
+        PostReleaseWorkflow postReleaseWorkflow = new PostReleaseWorkflow(
+                new ChangelogGeneratorDownloader(ChangelogGeneratorDownloader.CHANGELOG_GENERATOR_URL, outputJar),
+                ChangelogGeneratorTests.testChangelogGenerator(outputChangelog),
+                ChangelogFetcherTests.testChangelogFetcher(oldOutputChangelog),
+                ChangelogProcessorTests.testChangelogProcessor(outputChangelog), updater, milestoneUpdater,
+                NotificationSenderTests.testNotificationSender(wm1)) {
+            @Override
+            String ghOrgRepo() {
+                return "foo/bar";
+            }
+
+            @Override
+            String ghRef() {
+                return null;
+            }
+        };
+
+        thenThrownBy(postReleaseWorkflow::run)
+            .hasMessageContaining("No github ref found, please provide the GITHUB_REF_NAME env variable");
     }
 
     @Test
