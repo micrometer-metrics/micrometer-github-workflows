@@ -1,0 +1,19 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "main"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: daily
+    target-branch: "main"
+    milestone: 277
+    ignore:
+      # upgrade minor and patch versions on main
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+    open-pull-requests-limit: 50
