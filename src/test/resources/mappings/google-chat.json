@@ -1,0 +1,19 @@
+{
+  "id" : "2ccca497-c2dc-47c1-8e6b-3b0fbcfd8af1",
+  "name" : "google-chat",
+  "request" : {
+    "url" : "/",
+    "method" : "POST",
+    "bodyPatterns" : [ {
+      "equalToJson" : "{\"text\": \"micrometer-announcing 1.14.0\"}",
+      "ignoreArrayOrder" : true,
+      "ignoreExtraElements" : true
+    } ]
+  },
+  "response" : {
+    "status" : 200
+  },
+  "uuid" : "2ccca497-c2dc-47c1-8e6b-3b0fbcfd8af1",
+  "persistent" : true,
+  "insertionIndex" : 8
+}

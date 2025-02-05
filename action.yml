@@ -1,0 +1,55 @@
+name: "Micrometer Post Release Docker Action"
+description: "A GitHub Action that runs a Java application using Docker to do post release tasks"
+author: "micrometer.io team"
+
+inputs:
+  gh_token:
+    description: "GitHub Token for authentication"
+    required: false
+    default: ${{ secrets.GITHUB_TOKEN }}
+  changelog_generator_version:
+    description: "Spring GitHub Changelog Generator version (https://github.com/spring-io/github-changelog-generator/)"
+    required: false
+    default: ""
+  github_repository:
+    description: "GitHub repository (auto-detected from build)"
+    required: false
+    default: ${{ github.repository }}
+  github_ref_name:
+    description: "Current release version in this train (e.g., 1.15.3)"
+    required: true
+  previous_ref_name:
+    description: "Previous release version in this train (e.g., 1.14.8)"
+    required: false
+    default: ""
+  spring_release_gchat_webhook_url:
+    description: "URL to GChat to post notifications about the release"
+    required: false
+    default: ${{ secrets.SPRING_RELEASE_GCHAT_WEBHOOK_URL }}
+  bluesky_handle:
+    description: "Bluesky handle where release notification will be posted"
+    required: false
+    default: ${{ secrets.BLUESKY_HANDLE }}
+  bluesky_password:
+    description: "Bluesky handle password"
+    required: false
+    default: ${{ secrets.BLUESKY_PASSWORD }}
+
+outputs: {}
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  env:
+    GH_TOKEN: ${{ inputs.gh_token }}
+    CHANGELOG_GENERATOR_VERSION: ${{ inputs.changelog_generator_version }}
+    GITHUB_REPOSITORY: ${{ inputs.github_repository }}
+    GITHUB_REF_NAME: ${{ inputs.github_ref_name }}
+    PREVIOUS_REF_NAME: ${{ inputs.previous_ref_name }}
+    SPRING_RELEASE_GCHAT_WEBHOOK_URL: ${{ inputs.spring_release_gchat_webhook_url }}
+    BLUESKY_HANDLE: ${{ inputs.bluesky_handle }}
+    BLUESKY_PASSWORD: ${{ inputs.bluesky_password }}
+
+branding:
+  icon: "activity"
+  color: "green"

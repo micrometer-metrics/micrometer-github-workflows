@@ -1,0 +1,19 @@
+{
+  "id" : "24cf4f03-2eaf-4cdc-9586-79887467f38d",
+  "name" : "bluesky",
+  "request" : {
+    "url" : "/xrpc/com.atproto.server.createSession",
+    "method" : "POST",
+    "bodyPatterns" : [ {
+      "equalToJson" : "{\"identifier\":\"identifier\",\"password\":\"password\"}",
+      "ignoreArrayOrder" : true,
+      "ignoreExtraElements" : true
+    } ]
+  },
+  "response" : {
+    "status" : 200
+  },
+  "uuid" : "24cf4f03-2eaf-4cdc-9586-79887467f38d",
+  "persistent" : true,
+  "insertionIndex" : 9
+}
