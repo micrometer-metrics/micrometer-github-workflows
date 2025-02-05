@@ -37,6 +37,7 @@ jobs:
   docker:
     needs: build
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' # Don't run for PRs
 
     steps:
       - name: Checkout code
