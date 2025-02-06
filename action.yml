@@ -6,7 +6,6 @@ inputs:
   gh_token:
     description: "GitHub Token for authentication"
     required: true
-    default: ${{ secrets.GITHUB_TOKEN }}
   changelog_generator_version:
     description: "Spring GitHub Changelog Generator version (https://github.com/spring-io/github-changelog-generator/)"
     required: false
@@ -25,15 +24,12 @@ inputs:
   spring_release_gchat_webhook_url:
     description: "URL to GChat to post notifications about the release"
     required: false
-    default: ${{ secrets.SPRING_RELEASE_GCHAT_WEBHOOK_URL }}
   bluesky_handle:
     description: "Bluesky handle where release notification will be posted"
     required: false
-    default: ${{ secrets.BLUESKY_HANDLE }}
   bluesky_password:
     description: "Bluesky handle password"
     required: false
-    default: ${{ secrets.BLUESKY_PASSWORD }}
 
 outputs: {}
 
