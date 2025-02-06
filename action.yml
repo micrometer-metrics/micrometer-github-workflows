@@ -15,10 +15,10 @@ inputs:
     required: false
     default: ${{ github.repository }}
   github_ref_name:
-    description: "Current release version in this train (e.g., 1.15.3)"
+    description: "Current release version in this train (e.g., v1.15.3)"
     required: true
   previous_ref_name:
-    description: "Previous release version in this train (e.g., 1.14.8)"
+    description: "Previous release version in this train (e.g., v1.14.8)"
     required: false
     default: ""
   spring_release_gchat_webhook_url:
