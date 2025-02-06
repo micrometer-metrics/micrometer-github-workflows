@@ -58,26 +58,26 @@ class PostReleaseWorkflow {
         }
         String previousRefName = previousRefName(); // v1.2.5
 
-        // Step 1: Download GitHub Changelog Generator
+        // Step 1: Close milestone and move issues around
+        MilestoneWithDeadline newMilestoneId = updateMilestones(githubRefName);
+
+        // Step 2: Download GitHub Changelog Generator
         File changelogJar = downloadChangelogGenerator();
 
-        // Step 2: Generate current changelog
+        // Step 3: Generate current changelog
         File changelog = generateChangelog(githubRefName, githubOrgRepo, changelogJar);
 
         File oldChangelog = null;
-        // Step 2a: If previousRefName present - fetch its changelog
+        // Step 3a: If previousRefName present - fetch its changelog
         if (previousRefName != null && !previousRefName.isBlank()) {
             oldChangelog = generateOldChangelog(previousRefName, githubOrgRepo);
         }
 
-        // Step 3: Process changelog
+        // Step 4: Process changelog
         File outputChangelog = processChangelog(changelog, oldChangelog);
 
-        // Step 4: Update release notes
+        // Step 5: Update release notes
         updateReleaseNotes(githubRefName, outputChangelog);
-
-        // Step 5: Close milestone
-        MilestoneWithDeadline newMilestoneId = updateMilestones(githubRefName);
 
         // Step 6: Send notifications
         sendNotifications(githubRepo, githubRefName, newMilestoneId);
