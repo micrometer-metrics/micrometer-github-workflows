@@ -19,7 +19,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Post Release Tasks
-        uses: marcingrzejszczak/micrometer-release@latest # Pick a concrete value
+        uses: marcingrzejszczak/micrometer-release@v1
         with:
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
           github_ref_name: ${{ github.event.inputs.github_ref_name }}
           previous_ref_name: ${{ github.event.inputs.previous_ref_name }}
+          spring_release_gchat_webhook_url: ${{ secrets.SPRING_RELEASE_GCHAT_WEBHOOK_URL }}
+          bluesky_handle: ${{ secrets.BLUESKY_HANDLE }}
+          bluesky_password: ${{ secrets.BLUESKY_PASSWORD }}

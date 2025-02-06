@@ -5,7 +5,7 @@ author: "micrometer.io team"
 inputs:
   gh_token:
     description: "GitHub Token for authentication"
-    required: false
+    required: true
     default: ${{ secrets.GITHUB_TOKEN }}
   changelog_generator_version:
     description: "Spring GitHub Changelog Generator version (https://github.com/spring-io/github-changelog-generator/)"
