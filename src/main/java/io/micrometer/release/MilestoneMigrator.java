@@ -106,10 +106,6 @@ class MilestoneMigrator {
         List<String> lines = processRunner.run("gh", "api",
                 String.format("/repos/%s/issues?milestone=%d&state=all", ghRepo, milestoneNumber), "--jq",
                 ".[] | {number: .number, state: .state}");
-
-        if (lines.isEmpty()) {
-            throw new IllegalStateException("Could not find milestone " + milestoneNumber);
-        }
         List<Issue> issues = new ArrayList<>();
         for (String line : lines) {
             if (!line.isBlank()) {
