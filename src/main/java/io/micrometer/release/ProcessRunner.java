@@ -15,17 +15,16 @@
  */
 package io.micrometer.release;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 class ProcessRunner {
 
@@ -53,15 +52,46 @@ class ProcessRunner {
 
             log.info("Printing out process logs:\n\n");
 
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    log.info(line);
-                    lines.add(line);
+            List<String> errorLines = new ArrayList<>();
+
+            Thread outputThread = new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        log.info(line);
+                        lines.add(line);
+                    }
                 }
-            }
-            if (process.waitFor() != 0) {
-                throw new RuntimeException("Failed to run the command " + Arrays.toString(processedCommand));
+                catch (IOException e) {
+                    log.error("Error reading process output", e);
+                }
+            });
+
+            Thread errorThread = new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        log.error(line);
+                        errorLines.add(line);
+                    }
+                }
+                catch (IOException e) {
+                    log.error("Error reading process error stream", e);
+                }
+            });
+
+            outputThread.start();
+            errorThread.start();
+
+            // Wait for both streams to be fully read
+            outputThread.join();
+            errorThread.join();
+
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                String errorMessage = String.format("Failed to run the command %s. Exit code: %d.%nError output:%n%s",
+                        Arrays.toString(processedCommand), exitCode, String.join("\n", errorLines));
+                throw new RuntimeException(errorMessage);
             }
         }
         catch (IOException | InterruptedException e) {
@@ -71,7 +101,7 @@ class ProcessRunner {
     }
 
     Process startProcess(String[] processedCommand) throws IOException {
-        return new ProcessBuilder(processedCommand).start();
+        return new ProcessBuilder(processedCommand).redirectErrorStream(false).start();
     }
 
     private String[] processCommand(String[] command) {
