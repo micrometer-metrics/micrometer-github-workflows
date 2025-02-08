@@ -106,16 +106,14 @@ class ProcessRunner {
     }
 
     Process doStartProcess(ProcessBuilder processBuilder) throws IOException {
+        // TODO: Need to figure out a better way
+        processBuilder.environment().put("JAVA_HOME", "/opt/java/openjdk");
         return processBuilder.start();
     }
 
     void runGitConfig() throws InterruptedException, IOException {
         doStartProcess(new ProcessBuilder("git", "config", "--global", "--add", "safe.directory", "/github/workspace"))
             .waitFor();
-    }
-
-    String getJavaHome() {
-        return System.getenv("JAVA_HOME");
     }
 
     private boolean isGradleCommand(String[] command) {
