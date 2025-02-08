@@ -171,11 +171,6 @@ class ProcessRunnerTests {
             gitConfigRan = true;
         }
 
-        @Override
-        String getJavaHome() {
-            return "java/home";
-        }
-
     }
 
 }

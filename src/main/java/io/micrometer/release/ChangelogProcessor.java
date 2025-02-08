@@ -94,7 +94,7 @@ class ChangelogProcessor {
         log.info("Fetching test and optional dependencies...");
         List<String> projectLines = projectLines();
         List<String> subprojects = projectLines.stream()
-            .filter(line -> line.contains("Project") && line.contains(":"))
+            .filter(line -> line.contains("Project") && line.contains(":") && line.contains("'"))
             .map(line -> line.substring(line.indexOf(":") + 1, line.lastIndexOf("'")).trim())
             .toList();
 
