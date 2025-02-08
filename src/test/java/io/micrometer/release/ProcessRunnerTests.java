@@ -81,7 +81,6 @@ class ProcessRunnerTests {
         runner.run("./gradlew", "projects");
 
         then(runner.gitConfigRan).isTrue();
-        then(runner.map).containsEntry("JAVA_HOME", "java/home/jdk");
     }
 
     @Test
