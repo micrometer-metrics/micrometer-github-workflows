@@ -5,7 +5,7 @@ COPY config /app/config/
 COPY build.gradle settings.gradle gradle.properties dependencies.gradle /app/
 RUN cd /app && gradle -Dorg.gradle.welcome=never --no-daemon shadowJar
 
-FROM ghcr.io/bell-sw/liberica-openjre-debian:17.0.10-13
+FROM eclipse-temurin:17-jdk
 COPY --from=build /app/build/libs/micrometer-release.jar /opt/action/micrometer-release.jar
 RUN (type -p wget >/dev/null || (apt update && apt-get install wget -y)) \
 	&& mkdir -p -m 755 /etc/apt/keyrings \

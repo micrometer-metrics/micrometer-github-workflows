@@ -102,11 +102,6 @@ class ProcessRunner {
             runGitConfig();
         }
         ProcessBuilder processBuilder = new ProcessBuilder(processedCommand).redirectErrorStream(false);
-        Map<String, String> env = getProcessEnvironment(processBuilder);
-        String javaHome = getJavaHome();
-        if (javaHome != null) {
-            env.put("JAVA_HOME", javaHome);
-        }
         return doStartProcess(processBuilder);
     }
 
