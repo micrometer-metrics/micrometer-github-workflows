@@ -15,9 +15,7 @@
  */
 package io.micrometer.release;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.AfterEach;
@@ -154,8 +152,6 @@ class ProcessRunnerTests {
 
     static class StubReturningGradleProcessRunner extends ProcessRunner {
 
-        private final Map<String, String> map = new HashMap<>();
-
         private final Process process;
 
         private boolean gitConfigRan;
@@ -173,11 +169,6 @@ class ProcessRunnerTests {
         @Override
         void runGitConfig() throws InterruptedException, IOException {
             gitConfigRan = true;
-        }
-
-        @Override
-        Map<String, String> getProcessEnvironment(ProcessBuilder processBuilder) {
-            return map;
         }
 
         @Override

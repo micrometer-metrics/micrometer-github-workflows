@@ -102,7 +102,6 @@ class ProcessRunner {
             runGitConfig();
         }
         ProcessBuilder processBuilder = new ProcessBuilder(processedCommand).redirectErrorStream(false);
-        Map<String, String> env = getProcessEnvironment(processBuilder);
         return doStartProcess(processBuilder);
     }
 
@@ -113,10 +112,6 @@ class ProcessRunner {
     void runGitConfig() throws InterruptedException, IOException {
         doStartProcess(new ProcessBuilder("git", "config", "--global", "--add", "safe.directory", "/github/workspace"))
             .waitFor();
-    }
-
-    Map<String, String> getProcessEnvironment(ProcessBuilder processBuilder) {
-        return processBuilder.environment();
     }
 
     String getJavaHome() {
