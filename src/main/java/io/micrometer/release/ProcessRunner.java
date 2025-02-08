@@ -21,10 +21,7 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 class ProcessRunner {
 
@@ -100,8 +97,39 @@ class ProcessRunner {
         return lines;
     }
 
-    Process startProcess(String[] processedCommand) throws IOException {
-        return new ProcessBuilder(processedCommand).redirectErrorStream(false).start();
+    Process startProcess(String[] processedCommand) throws IOException, InterruptedException {
+        if (isGradleCommand(processedCommand)) {
+            runGitConfig();
+        }
+        ProcessBuilder processBuilder = new ProcessBuilder(processedCommand).redirectErrorStream(false);
+        Map<String, String> env = getProcessEnvironment(processBuilder);
+        String javaHome = getJavaHome();
+        if (javaHome != null) {
+            env.put("JAVA_HOME", javaHome);
+        }
+        return doStartProcess(processBuilder);
+    }
+
+    Process doStartProcess(ProcessBuilder processBuilder) throws IOException {
+        return processBuilder.start();
+    }
+
+    void runGitConfig() throws InterruptedException, IOException {
+        doStartProcess(new ProcessBuilder("git", "config", "--global", "--add", "safe.directory", "/github/workspace"))
+            .waitFor();
+    }
+
+    Map<String, String> getProcessEnvironment(ProcessBuilder processBuilder) {
+        return processBuilder.environment();
+    }
+
+    String getJavaHome() {
+        return System.getenv("JAVA_HOME");
+    }
+
+    private boolean isGradleCommand(String[] command) {
+        return command != null && command.length > 0
+                && (command[0].endsWith("gradlew") || command[0].endsWith("gradle"));
     }
 
     private String[] processCommand(String[] command) {

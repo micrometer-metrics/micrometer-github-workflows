@@ -15,7 +15,9 @@
  */
 package io.micrometer.release;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.AfterEach;
@@ -40,9 +42,12 @@ class ProcessRunnerTests {
 
     ByteArrayInputStream stream = new ByteArrayInputStream("Hello".getBytes());
 
+    ByteArrayInputStream errorStream = new ByteArrayInputStream(new byte[0]);
+
     @BeforeEach
     void setUp() {
         given(process.getInputStream()).willReturn(stream);
+        given(process.getErrorStream()).willReturn(errorStream);
     }
 
     @AfterEach
@@ -66,6 +71,17 @@ class ProcessRunnerTests {
         given(process.waitFor()).willReturn(0);
 
         then(stubReturingProcessRunner().run("whatever")).containsExactly("Hello");
+    }
+
+    @Test
+    void should_run_git_for_gradle_command() throws InterruptedException {
+        given(process.waitFor()).willReturn(0);
+        StubReturningGradleProcessRunner runner = new StubReturningGradleProcessRunner(process);
+
+        runner.run("./gradlew", "projects");
+
+        then(runner.gitConfigRan).isTrue();
+        then(runner.map).containsEntry("JAVA_HOME", "java/home");
     }
 
     @Test
@@ -118,6 +134,15 @@ class ProcessRunnerTests {
         };
     }
 
+    private ProcessRunner stubReturingGradlewProcessRunner() {
+        return new ProcessRunner(REPO) {
+            @Override
+            Process startProcess(String[] processedCommand) throws IOException {
+                return process;
+            }
+        };
+    }
+
     private ProcessRunner stubReturingCommandAssertingProcessRunner(Consumer<String[]> assertion) {
         return new ProcessRunner(REPO) {
             @Override
@@ -126,6 +151,41 @@ class ProcessRunnerTests {
                 return process;
             }
         };
+    }
+
+    static class StubReturningGradleProcessRunner extends ProcessRunner {
+
+        private final Map<String, String> map = new HashMap<>();
+
+        private final Process process;
+
+        private boolean gitConfigRan;
+
+        StubReturningGradleProcessRunner(Process process) {
+            super(REPO);
+            this.process = process;
+        }
+
+        @Override
+        Process doStartProcess(ProcessBuilder processBuilder) throws IOException {
+            return process;
+        }
+
+        @Override
+        void runGitConfig() throws InterruptedException, IOException {
+            gitConfigRan = true;
+        }
+
+        @Override
+        Map<String, String> getProcessEnvironment(ProcessBuilder processBuilder) {
+            return map;
+        }
+
+        @Override
+        String getJavaHome() {
+            return "java/home";
+        }
+
     }
 
 }
