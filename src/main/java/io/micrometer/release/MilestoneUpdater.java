@@ -18,6 +18,8 @@ package io.micrometer.release;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 class MilestoneUpdater {
 
     private static final Logger log = LoggerFactory.getLogger(MilestoneUpdater.class);
@@ -48,8 +50,18 @@ class MilestoneUpdater {
     void closeMilestone(String githubRefName) {
         log.info("Closing milestone...");
         String milestoneName = githubRefName.replace("v", "");
-        processRunner.run("gh", "api", "/repos/" + githubRepository + "/milestones?state=open", "--jq",
-                "\".[] | select(.title == \\\"" + milestoneName + "\\\").number\"");
+        List<String> output = processRunner.run("gh", "api", "/repos/" + githubRepository + "/milestones?state=open",
+                "--jq", "\".[] | select(.title == \\\"" + milestoneName + "\\\").number\"");
+
+        if (!output.isEmpty()) {
+            String milestoneNumber = output.get(0);
+            processRunner.run("gh", "api", "-X", "PATCH",
+                    "/repos/" + githubRepository + "/milestones/" + milestoneNumber, "-f", "state=closed");
+            log.info("Successfully closed milestone {}", milestoneName);
+        }
+        else {
+            log.warn("No open milestone found with name {}", milestoneName);
+        }
     }
 
 }

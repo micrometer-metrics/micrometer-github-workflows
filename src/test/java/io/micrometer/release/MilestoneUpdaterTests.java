@@ -15,8 +15,11 @@
  */
 package io.micrometer.release;
 
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -25,14 +28,17 @@ class MilestoneUpdaterTests {
     @Test
     void should_call_gh_api_to_close_a_milestone() {
         ProcessRunner processRunner = mock();
+        given(processRunner.run("gh", "api", "/repos/micrometer-metrics/milestones?state=open", "--jq",
+                "\".[] | select(.title == \\\"1.2.3\\\").number\""))
+            .willReturn(List.of("100"));
         String ghRepo = "micrometer-metrics";
         MilestoneUpdater milestoneUpdater = new MilestoneUpdater(processRunner, ghRepo,
                 new MilestoneMigrator(processRunner, ghRepo, new MilestoneIssueReassigner(processRunner, ghRepo)));
 
         milestoneUpdater.closeMilestone("v1.2.3");
 
-        verify(processRunner).run("gh", "api", "/repos/micrometer-metrics/milestones?state=open", "--jq",
-                "\".[] | select(.title == \\\"1.2.3\\\").number\"");
+        verify(processRunner).run("gh", "api", "-X", "PATCH", "/repos/micrometer-metrics/milestones/100", "-f",
+                "state=closed");
     }
 
 }

@@ -19,13 +19,9 @@ import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.BDDAssertions.then;
@@ -54,7 +50,7 @@ class ChangelogGeneratorTests {
         return new ChangelogGenerator(ghApi, changelogOutput) {
             @Override
             String getJava() {
-                return findJavaInstallation();
+                return JavaHomeFinder.findJavaExecutablePath();
             }
         };
     }
@@ -65,53 +61,6 @@ class ChangelogGeneratorTests {
 
     static ChangelogGenerator testChangelogGenerator(File changelogOutput) {
         return testChangelogGenerator("http://localhost:60006", changelogOutput);
-    }
-
-    private static String findJavaInstallation() {
-        if (isJavaAvailable("java")) {
-            return "java";
-        }
-        try {
-            ProcessBuilder processBuilder = new ProcessBuilder("which", "java");
-            processBuilder.redirectErrorStream(true);
-            Process process = processBuilder.start();
-
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                String line = reader.readLine();
-                if (line != null && !line.isEmpty()) {
-                    return line.trim();
-                }
-            }
-        }
-        catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        // Fallback to checking SDKMAN installation
-        try {
-            String userHome = System.getProperty("user.home");
-            Path sdkmanJavaPath = Paths.get(userHome, ".sdkman", "candidates", "java", "current", "bin", "java");
-            if (Files.exists(sdkmanJavaPath)) {
-                return sdkmanJavaPath.toString();
-            }
-        }
-        catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        throw new UnsupportedOperationException("Java not found!!");
-    }
-
-    private static boolean isJavaAvailable(String javaCommand) {
-        try {
-            ProcessBuilder processBuilder = new ProcessBuilder(javaCommand, "-version");
-            processBuilder.redirectErrorStream(true);
-            Process process = processBuilder.start();
-            int exitCode = process.waitFor();
-            return exitCode == 0;
-        }
-        catch (Exception e) {
-            return false;
-        }
     }
 
 }

@@ -18,6 +18,8 @@ package io.micrometer.release;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,45 +55,24 @@ class PostReleaseWorkflowAcceptanceTests {
     PostReleaseWorkflowAcceptanceTests() throws IOException, URISyntaxException {
     }
 
-    @Test
-    void should_fail_when_repo_not_passed() {
+    @ParameterizedTest
+    @CsvSource(textBlock = """
+            ,v1.2.3,,No repo found, please provide the GITHUB_REPOSITORY env variable
+            foo/bar,,,No github ref found, please provide the GITHUB_REF_NAME env variable
+            foo/bar,1.2.3,,Github ref must be a tag (must start with 'v'): 1.2.3
+            foo/bar,v1.2.3,2.3.4,Previous github ref must be a tag (must start with 'v'): 2.3.4
+            """)
+    void should_fail_assertions(String githubOrgRepo, String githubRefName, String previousRefName,
+            String expectedErrorMsg) {
         PostReleaseWorkflow postReleaseWorkflow = new PostReleaseWorkflow(
                 new ChangelogGeneratorDownloader(ChangelogGeneratorDownloader.CHANGELOG_GENERATOR_URL, outputJar),
                 ChangelogGeneratorTests.testChangelogGenerator(outputChangelog),
                 ChangelogFetcherTests.testChangelogFetcher(oldOutputChangelog),
                 ChangelogProcessorTests.testChangelogProcessor(outputChangelog), updater, milestoneUpdater,
-                NotificationSenderTests.testNotificationSender(wm1)) {
-            @Override
-            String ghOrgRepo() {
-                return null;
-            }
-        };
+                NotificationSenderTests.testNotificationSender(wm1));
 
-        thenThrownBy(postReleaseWorkflow::run)
-            .hasMessageContaining("No repo found, please provide the GITHUB_REPOSITORY env variable");
-    }
-
-    @Test
-    void should_fail_when_ref_not_passed() {
-        PostReleaseWorkflow postReleaseWorkflow = new PostReleaseWorkflow(
-                new ChangelogGeneratorDownloader(ChangelogGeneratorDownloader.CHANGELOG_GENERATOR_URL, outputJar),
-                ChangelogGeneratorTests.testChangelogGenerator(outputChangelog),
-                ChangelogFetcherTests.testChangelogFetcher(oldOutputChangelog),
-                ChangelogProcessorTests.testChangelogProcessor(outputChangelog), updater, milestoneUpdater,
-                NotificationSenderTests.testNotificationSender(wm1)) {
-            @Override
-            String ghOrgRepo() {
-                return "foo/bar";
-            }
-
-            @Override
-            String ghRef() {
-                return null;
-            }
-        };
-
-        thenThrownBy(postReleaseWorkflow::run)
-            .hasMessageContaining("No github ref found, please provide the GITHUB_REF_NAME env variable");
+        thenThrownBy(() -> postReleaseWorkflow.assertInputs(githubOrgRepo, githubRefName, previousRefName))
+            .hasMessageContaining(expectedErrorMsg);
     }
 
     @Test

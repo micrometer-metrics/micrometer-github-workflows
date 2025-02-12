@@ -14,9 +14,6 @@ inputs:
     description: "GitHub repository (auto-detected from build)"
     required: false
     default: ${{ github.repository }}
-  github_ref_name:
-    description: "Current release version in this train (e.g., v1.15.3)"
-    required: true
   previous_ref_name:
     description: "Previous release version in this train (e.g., v1.14.8)"
     required: false
@@ -40,7 +37,6 @@ runs:
     GH_TOKEN: ${{ inputs.gh_token }}
     CHANGELOG_GENERATOR_VERSION: ${{ inputs.changelog_generator_version }}
     GITHUB_REPOSITORY: ${{ inputs.github_repository }}
-    GITHUB_REF_NAME: ${{ inputs.github_ref_name }}
     PREVIOUS_REF_NAME: ${{ inputs.previous_ref_name }}
     SPRING_RELEASE_GCHAT_WEBHOOK_URL: ${{ inputs.spring_release_gchat_webhook_url }}
     BLUESKY_HANDLE: ${{ inputs.bluesky_handle }}

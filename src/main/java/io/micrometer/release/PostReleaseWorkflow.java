@@ -48,15 +48,11 @@ class PostReleaseWorkflow {
 
     public void run() throws Exception {
         String githubOrgRepo = ghOrgRepo(); // micrometer-metrics/tracing
-        if (githubOrgRepo == null) {
-            throw new IllegalStateException("No repo found, please provide the GITHUB_REPOSITORY env variable");
-        }
-        String githubRepo = githubOrgRepo.contains("/") ? githubOrgRepo.split("/")[1] : githubOrgRepo;
         String githubRefName = ghRef(); // v1.3.1
-        if (githubRefName == null) {
-            throw new IllegalStateException("No github ref found, please provide the GITHUB_REF_NAME env variable");
-        }
         String previousRefName = previousRefName(); // v1.2.5
+        assertInputs(githubOrgRepo, githubRefName, previousRefName);
+
+        String githubRepo = githubOrgRepo.contains("/") ? githubOrgRepo.split("/")[1] : githubOrgRepo;
 
         // Step 1: Close milestone and move issues around
         MilestoneWithDeadline newMilestoneId = updateMilestones(githubRefName);
@@ -81,6 +77,22 @@ class PostReleaseWorkflow {
 
         // Step 6: Send notifications
         sendNotifications(githubRepo, githubRefName, newMilestoneId);
+    }
+
+    void assertInputs(String githubOrgRepo, String githubRefName, String previousRefName) {
+        if (githubOrgRepo == null) {
+            throw new IllegalStateException("No repo found, please provide the GITHUB_REPOSITORY env variable");
+        }
+        if (githubRefName == null) {
+            throw new IllegalStateException("No github ref found, please provide the GITHUB_REF_NAME env variable");
+        }
+        if (!githubRefName.startsWith("v")) {
+            throw new IllegalStateException("Github ref must be a tag (must start with 'v'): " + githubRefName);
+        }
+        if (previousRefName != null && !previousRefName.isBlank() && !previousRefName.startsWith("v")) {
+            throw new IllegalStateException(
+                    "Previous github ref must be a tag (must start with 'v'): " + previousRefName);
+        }
     }
 
     String ghRef() {

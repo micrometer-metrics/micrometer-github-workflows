@@ -52,6 +52,11 @@ jobs:
       - name: Login to Docker Hub
         run: echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
 
+      - name: Build with Gradle including acceptance tests
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: ./gradlew build
+
       - name: Build and push Docker image with Jib
         run: ./gradlew jib
         env:

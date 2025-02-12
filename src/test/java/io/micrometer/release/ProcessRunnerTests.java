@@ -125,16 +125,7 @@ class ProcessRunnerTests {
     private ProcessRunner stubReturingProcessRunner() {
         return new ProcessRunner(REPO) {
             @Override
-            Process startProcess(String[] processedCommand) throws IOException {
-                return process;
-            }
-        };
-    }
-
-    private ProcessRunner stubReturingGradlewProcessRunner() {
-        return new ProcessRunner(REPO) {
-            @Override
-            Process startProcess(String[] processedCommand) throws IOException {
+            Process startProcess(String[] processedCommand) {
                 return process;
             }
         };
@@ -143,7 +134,7 @@ class ProcessRunnerTests {
     private ProcessRunner stubReturingCommandAssertingProcessRunner(Consumer<String[]> assertion) {
         return new ProcessRunner(REPO) {
             @Override
-            Process startProcess(String[] processedCommand) throws IOException {
+            Process startProcess(String[] processedCommand) {
                 assertion.accept(processedCommand);
                 return process;
             }
@@ -162,12 +153,12 @@ class ProcessRunnerTests {
         }
 
         @Override
-        Process doStartProcess(ProcessBuilder processBuilder) throws IOException {
+        Process doStartProcess(ProcessBuilder processBuilder) {
             return process;
         }
 
         @Override
-        void runGitConfig() throws InterruptedException, IOException {
+        void runGitConfig() {
             gitConfigRan = true;
         }
 

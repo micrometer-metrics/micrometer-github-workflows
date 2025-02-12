@@ -50,8 +50,11 @@ dependencies {
 
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation libs.assertj
-    testImplementation libs.wiremock
     testImplementation libs.mockitoCore
+    testImplementation libs.jacksonDatabind
+    testImplementation libs.jacksonDatatype
+    testImplementation libs.wiremock
+
 
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
