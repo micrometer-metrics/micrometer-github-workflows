@@ -1,4 +1,4 @@
-FROM gradle:8.5.0-jdk17-alpine as build
+FROM gradle:8.12.1-jdk17-alpine as build
 COPY gradle /app/gradle/
 COPY src /app/src/
 COPY config /app/config/
