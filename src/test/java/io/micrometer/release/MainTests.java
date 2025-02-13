@@ -15,24 +15,87 @@
  */
 package io.micrometer.release;
 
+import io.micrometer.release.common.ProcessRunner;
+import io.micrometer.release.single.PostReleaseWorkflow;
+import io.micrometer.release.train.ProjectTrainReleaseWorkflow;
+import org.junit.jupiter.api.Test;
+
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.mock;
+
 class MainTests {
 
-    public static void main(String[] args) throws Exception {
-        // Env Vars
-        // GH_TOKEN
-        // CHANGELOG_GENERATOR_VERSION
-        // GITHUB_REPOSITORY
-        // GITHUB_REF_NAME
-        // PREVIOUS_REF_NAME
-        newWorkflow().run();
+    ProjectTrainReleaseWorkflow projectTrainReleaseWorkflow = mock();
+
+    PostReleaseWorkflow postReleaseWorkflow = mock();
+
+    @Test
+    void should_pick_train_when_train_env_var_set() {
+        Main main = new Main() {
+
+            @Override
+            ProjectTrainReleaseWorkflow trainReleaseWorkflow(String githubOrgRepo, String artifactToCheck,
+                    PostReleaseWorkflow postReleaseWorkflow, ProcessRunner processRunner) {
+                return projectTrainReleaseWorkflow;
+            }
+
+            @Override
+            PostReleaseWorkflow newPostReleaseWorkflow(ProcessRunner processRunner) {
+                return postReleaseWorkflow;
+            }
+
+            @Override
+            String getTrainVersions() {
+                return "1.0.0,1.1.0";
+            }
+        };
+
+        main.run();
+
+        then(projectTrainReleaseWorkflow).should().run("1.0.0,1.1.0");
+        then(postReleaseWorkflow).shouldHaveNoInteractions();
     }
 
-    private static PostReleaseWorkflow newWorkflow() {
-        ProcessRunner processRunner = new ProcessRunner(System.getenv("GITHUB_REPOSITORY"));
-        return new PostReleaseWorkflow(new ChangelogGeneratorDownloader(),
-                ChangelogGeneratorTests.testChangelogGenerator(), new ChangelogFetcher(processRunner),
-                ChangelogProcessorTests.testChangelogProcessor(), new ReleaseNotesUpdater(processRunner),
-                new MilestoneUpdater(processRunner), new NotificationSender());
+    @Test
+    void should_pick_single_project_post_release_when_no_train_env_var() {
+        Main main = new Main() {
+
+            @Override
+            ProjectTrainReleaseWorkflow trainReleaseWorkflow(String githubOrgRepo, String artifactToCheck,
+                    PostReleaseWorkflow postReleaseWorkflow, ProcessRunner processRunner) {
+                return projectTrainReleaseWorkflow;
+            }
+
+            @Override
+            PostReleaseWorkflow newPostReleaseWorkflow(ProcessRunner processRunner) {
+                return postReleaseWorkflow;
+            }
+
+            @Override
+            String getTrainVersions() {
+                return "";
+            }
+
+            @Override
+            String getGithubRepository() {
+                return "micrometer-metrics/micrometer";
+            }
+
+            @Override
+            String getPreviousRefName() {
+                return "v1.0.0";
+            }
+
+            @Override
+            String getGithubRefName() {
+                return "v1.1.0";
+            }
+        };
+
+        main.run();
+
+        then(projectTrainReleaseWorkflow).shouldHaveNoInteractions();
+        then(postReleaseWorkflow).should().run("micrometer-metrics/micrometer", "v1.1.0", "v1.0.0");
     }
 
 }

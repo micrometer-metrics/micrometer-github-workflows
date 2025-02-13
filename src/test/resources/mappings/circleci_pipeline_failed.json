@@ -1,0 +1,18 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/v2/project/github/micrometer-metrics/micrometer/pipeline",
+    "headers": {
+      "Circle-Token": {
+        "equalTo": "foo"
+      },
+      "Test-Status": {
+        "equalTo": "failed"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "bodyFileName": "circleci_pipeline_body_for_failed_workflow.json"
+  }
+}

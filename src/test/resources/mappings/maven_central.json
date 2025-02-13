@@ -1,0 +1,9 @@
+{
+  "request": {
+    "method": "HEAD",
+    "url": "/maven2/io/micrometer/micrometer-core/1.14.9/"
+  },
+  "response": {
+    "status": 200
+  }
+}

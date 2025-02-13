@@ -1,0 +1,15 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/v2/pipeline/in-progress/workflow",
+    "headers": {
+      "Circle-Token": {
+        "equalTo": "foo"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "bodyFileName": "circleci_pipeline_in_progress_workflow_body.json"
+  }
+}

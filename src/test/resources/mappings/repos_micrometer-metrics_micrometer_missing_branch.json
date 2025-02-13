@@ -1,0 +1,17 @@
+{
+  "request" : {
+    "url" : "/repos/micrometer-metrics/micrometer/branches/1.1.x",
+    "method" : "GET",
+    "headers": {
+      "Authorization": {
+        "equalTo": "Bearer foo"
+      },
+      "Accept": {
+        "equalTo": "application/vnd.github.v3+json"
+      }
+    }
+  },
+  "response" : {
+    "status" : 404
+    }
+}

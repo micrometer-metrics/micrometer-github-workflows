@@ -44,17 +44,16 @@ println "I'm configuring $project.name with version $project.version"
 dependencies {
     checkstyle libs.javaFormatForPlugins
 
-    // Use JUnit Jupiter for testing.
     implementation libs.slf4j
     implementation libs.logback
+    implementation libs.jacksonDatabind
 
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation libs.assertj
+    testImplementation libs.archunit
     testImplementation libs.mockitoCore
-    testImplementation libs.jacksonDatabind
     testImplementation libs.jacksonDatatype
     testImplementation libs.wiremock
-
 
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
@@ -76,7 +75,6 @@ application {
 }
 
 tasks.named('test') {
-    // Use JUnit Platform for unit tests.
     useJUnitPlatform()
 }
 

@@ -22,13 +22,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-class JavaHomeFinder {
+public class JavaHomeFinder {
 
-    static String findJavaExecutablePath() {
+    public static String findJavaExecutablePath() {
         return findJavaHomePath() + "/bin/java";
     }
 
-    static String findJavaHomePath() {
+    public static String findJavaHomePath() {
         if (isJavaAvailable("java")) {
             return System.getProperty("java.home");
         }

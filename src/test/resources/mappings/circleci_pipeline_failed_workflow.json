@@ -1,0 +1,15 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/v2/pipeline/failed/workflow",
+    "headers": {
+      "Circle-Token": {
+        "equalTo": "foo"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "bodyFileName": "circleci_pipeline_failed_workflow_body.json"
+  }
+}

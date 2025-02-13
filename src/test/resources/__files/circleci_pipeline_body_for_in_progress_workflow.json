@@ -1,0 +1,45 @@
+{
+  "items": [
+    {
+      "id": "in-progress",
+      "errors": [
+        {
+          "type": "config",
+          "message": "string"
+        }
+      ],
+      "project_slug": "gh/micrometer-metrics/micrometer",
+      "updated_at": "2019-08-24T14:15:22Z",
+      "number": 25,
+      "trigger_parameters": {
+        "property1": "string",
+        "property2": "string"
+      },
+      "state": "created",
+      "created_at": "2019-08-24T14:15:22Z",
+      "trigger": {
+        "type": "scheduled_pipeline",
+        "received_at": "2019-08-24T14:15:22Z",
+        "actor": {
+          "login": "string",
+          "avatar_url": "string"
+        }
+      },
+      "vcs": {
+        "provider_name": "GitHub",
+        "target_repository_url": "https://github.com/micrometer-metrics/micrometer",
+        "branch": "feature/design-new-api",
+        "review_id": "123",
+        "review_url": "https://github.com/micrometer-metrics/micrometer/pull/123",
+        "revision": "f454a02b5d10fcccfd7d9dd7608a76d6493a98b4",
+        "tag": "v1.14.9",
+        "commit": {
+          "subject": "string",
+          "body": "string"
+        },
+        "origin_repository_url": "https://github.com/micrometer-metrics/micrometer"
+      }
+    }
+  ],
+  "next_page_token": null
+}

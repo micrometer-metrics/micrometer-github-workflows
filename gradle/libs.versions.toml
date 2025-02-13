@@ -1,5 +1,6 @@
 [versions]
 assertj = "3.27.3"
+archunit = "1.4.0"
 jackson = "2.18.2"
 javaFormatForPlugins = "0.0.43"
 junit = "5.11.4"
@@ -12,6 +13,7 @@ wiremock = "3.12.0"
 
 [libraries]
 assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+archunit = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 jacksonDatabind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 jacksonDatatype = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" }
 javaFormatForPlugins = { module = "io.spring.javaformat:spring-javaformat-checkstyle", version.ref = "javaFormatForPlugins" }
