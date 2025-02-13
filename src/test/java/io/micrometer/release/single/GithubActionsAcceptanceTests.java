@@ -17,6 +17,7 @@ package io.micrometer.release.single;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.micrometer.release.common.GithubActions;
+import io.micrometer.release.common.ReleaseDateCalculator;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
