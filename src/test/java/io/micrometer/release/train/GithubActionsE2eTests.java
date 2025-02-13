@@ -29,7 +29,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class GithubActionsAcceptanceTests implements GithubActions {
+class GithubActionsE2eTests implements GithubActions {
 
     @BeforeAll
     static void should_go_through_whole_flow() {
