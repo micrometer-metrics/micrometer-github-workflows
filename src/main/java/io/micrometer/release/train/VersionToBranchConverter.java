@@ -80,6 +80,7 @@ class VersionToBranchConverter {
             .header("Authorization", "Bearer " + githubToken)
             .header("Accept", "application/vnd.github.v3+json")
             .build();
+        log.info("Will send a GET request to {}", branchUrl);
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         log.info("Got the following response status code: {}", response.statusCode());
         log.info("Got the following response: {}", response.body());
