@@ -31,9 +31,7 @@ jobs:
       - name: Grant execute permission for Gradle
         run: chmod +x gradlew
 
-      - name: Build with Gradle including acceptance tests
-        env:
-          GH_TOKEN: ""
+      - name: Build with Gradle
         run: ./gradlew build
 
   acceptanceTests:
@@ -54,4 +52,4 @@ jobs:
       - name: Run e2e tests
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: ./gradlew test --tests "*E2eTests"
+        run: ./gradlew e2e

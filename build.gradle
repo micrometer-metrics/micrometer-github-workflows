@@ -78,6 +78,18 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
+test {
+    useJUnitPlatform() {
+        excludeTags("e2e")
+    }
+}
+
+tasks.register('e2e', Test) {
+    useJUnitPlatform() {
+        includeTags("e2e")
+    }
+}
+
 license {
     header rootProject.file('gradle/licenseHeader.txt')
     strictCheck true

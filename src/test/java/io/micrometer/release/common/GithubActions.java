@@ -15,6 +15,8 @@
  */
 package io.micrometer.release.common;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -28,11 +30,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.junit.jupiter.api.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@EnabledIfEnvironmentVariable(named = "GH_TOKEN", matches = ".*\\S.*")
+@Tag("e2e")
 public interface GithubActions {
 
     Logger log = LoggerFactory.getLogger(GithubActions.class);
@@ -45,6 +47,7 @@ public interface GithubActions {
 
     @BeforeAll
     static void resetsMilestones() throws InterruptedException {
+        assertThat(System.getenv("GH_TOKEN")).as("GH_TOKEN env var must be set!").isNotBlank();
         log.info(
                 "This test requires GH connection and will operate on [{}] repository. It's quite slow because it runs GH actions so please be patient...",
                 REPO);
