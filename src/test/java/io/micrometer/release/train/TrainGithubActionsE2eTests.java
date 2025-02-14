@@ -62,7 +62,7 @@ class TrainGithubActionsE2eTests implements GithubActions {
     @ParameterizedTest
     @CsvSource(textBlock = """
             0.1.2,0.1.1
-            0.2.0-RC1,0.2.0-M2
+            0.2.0-M3,0.2.0-M2
             1.0.0,1.0.0-RC1
             """)
     void should_verify_next_milestone(String next, String previous) throws JsonProcessingException {

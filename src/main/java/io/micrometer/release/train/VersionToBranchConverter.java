@@ -81,6 +81,8 @@ class VersionToBranchConverter {
             .header("Accept", "application/vnd.github.v3+json")
             .build();
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        log.info("Got the following response status code: {}", response.statusCode());
+        log.info("Got the following response: {}", response.body());
         return response.statusCode() == 200;
     }
 
