@@ -60,8 +60,8 @@ class ProjectTrainReleaseWorkflowAcceptanceTests {
     VersionToBranchConverter versionToBranchConverter = new VersionToBranchConverter("foo",
             wm1.url("/repos/micrometer-metrics/micrometer/branches/"), HttpClient.newBuilder().build());
 
-    ProjectTrainReleaseWorkflow workflow = new ProjectTrainReleaseWorkflow(GITHUB_ORG_REPO, releaseScheduler,
-            versionToBranchConverter, postReleaseTaskScheduler, mavenCentralSyncChecker);
+    ProjectTrainReleaseWorkflow workflow = new ProjectTrainReleaseWorkflow(releaseScheduler, versionToBranchConverter,
+            postReleaseTaskScheduler, mavenCentralSyncChecker);
 
     @Test
     void should_perform_the_release() {

@@ -17,9 +17,8 @@ package io.micrometer.release.train;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.micrometer.release.single.PostReleaseWorkflow;
 import io.micrometer.release.common.ProcessRunner;
+import io.micrometer.release.single.PostReleaseWorkflow;
 
 import java.net.http.HttpClient;
 import java.util.Arrays;
@@ -33,8 +32,6 @@ public class ProjectTrainReleaseWorkflow {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-    private final String githubRepo;
-
     private final ReleaseScheduler releaseScheduler;
 
     private final VersionToBranchConverter versionToBranchConverter;
@@ -45,21 +42,18 @@ public class ProjectTrainReleaseWorkflow {
 
     public ProjectTrainReleaseWorkflow(String githubOrgRepo, String artifactToCheck, ProcessRunner processRunner,
             PostReleaseWorkflow postReleaseWorkflow) {
-        this.githubRepo = githubOrgRepo.split("/")[0];
         this.releaseScheduler = new ReleaseScheduler(
                 new CircleCiChecker(System.getenv("CIRCLE_CI_TOKEN"), githubOrgRepo, HTTP_CLIENT, OBJECT_MAPPER),
                 processRunner);
         this.versionToBranchConverter = new VersionToBranchConverter(System.getenv("GH_TOKEN"),
-                "https://api.github.com/repos/" + githubRepo + "/branches/", HTTP_CLIENT);
+                "https://api.github.com/repos/" + githubOrgRepo + "/branches/", HTTP_CLIENT);
         this.postReleaseTaskScheduler = new PostReleaseTaskScheduler(postReleaseWorkflow, githubOrgRepo);
         this.mavenCentralSyncChecker = new MavenCentralSyncChecker(artifactToCheck);
     }
 
     // For tests
-    ProjectTrainReleaseWorkflow(String githubOrgRepo, ReleaseScheduler releaseScheduler,
-            VersionToBranchConverter versionToBranchConverter, PostReleaseTaskScheduler postReleaseTaskScheduler,
-            MavenCentralSyncChecker mavenCentralSyncChecker) {
-        this.githubRepo = githubOrgRepo.split("/")[0];
+    ProjectTrainReleaseWorkflow(ReleaseScheduler releaseScheduler, VersionToBranchConverter versionToBranchConverter,
+            PostReleaseTaskScheduler postReleaseTaskScheduler, MavenCentralSyncChecker mavenCentralSyncChecker) {
         this.releaseScheduler = releaseScheduler;
         this.versionToBranchConverter = versionToBranchConverter;
         this.postReleaseTaskScheduler = postReleaseTaskScheduler;
