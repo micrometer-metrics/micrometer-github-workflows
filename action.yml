@@ -35,6 +35,9 @@ inputs:
   bluesky_password:
     description: "Bluesky handle password"
     required: false
+  circle_ci_token:
+    description: "Circle CI Token to query for build status"
+    required: false
 
 outputs: {}
 
@@ -51,6 +54,7 @@ runs:
     BLUESKY_PASSWORD: ${{ inputs.bluesky_password }}
     TRAIN_VERSIONS: ${{ inputs.train_versions }}
     ARTIFACT_TO_CHECK: ${{ inputs.artifact_to_check }}
+    CIRCLE_CI_TOKEN: ${{ inputs.circle_ci_token }}
 
 branding:
   icon: "activity"
