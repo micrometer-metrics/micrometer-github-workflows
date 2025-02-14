@@ -109,9 +109,7 @@ public class ProcessRunner {
     }
 
     Process startProcess(String... processedCommand) throws IOException, InterruptedException {
-        if (isGradleCommand(processedCommand)) {
-            runGitConfig();
-        }
+        runGitConfig();
         ProcessBuilder processBuilder = new ProcessBuilder(processedCommand).redirectErrorStream(false);
         return doStartProcess(processBuilder);
     }
@@ -128,11 +126,6 @@ public class ProcessRunner {
     void runGitConfig() throws InterruptedException, IOException {
         doStartProcess(new ProcessBuilder("git", "config", "--global", "--add", "safe.directory", "/github/workspace"))
             .waitFor();
-    }
-
-    private boolean isGradleCommand(String[] command) {
-        return command != null && command.length > 0
-                && (command[0].endsWith("gradlew") || command[0].endsWith("gradle"));
     }
 
     private String[] processCommand(String[] command) {
