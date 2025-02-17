@@ -37,12 +37,63 @@ class TrainGithubActionsE2eTests implements GithubActions {
     }
 
     @Test
-    void should_verify_release_notes_content() throws JsonProcessingException {
+    void should_verify_release_notes_content_for_ga() throws JsonProcessingException {
         Release release = githubClient.getRelease("v0.1.1");
 
-        assertThat(release.body()).isEqualToIgnoringWhitespace("""
-                TODO
-                """);
+        assertThat(release.body()).isEqualToIgnoringWhitespace(
+                """
+                        ## :star: New Features
+
+                        - Closed enhancement in generic 0.1.x [#8](https://github.com/marcingrzejszczak/gh-actions-test/issues/8)
+
+                        ## :lady_beetle: Bug Fixes
+
+                        - Closed bug in concrete 0.1.1 [#12](https://github.com/marcingrzejszczak/gh-actions-test/issues/12)
+                        - Closed bug in generic 0.1.x [#9](https://github.com/marcingrzejszczak/gh-actions-test/issues/9)
+                        """);
+    }
+
+    @Test
+    void should_verify_release_notes_content_for_M2() throws JsonProcessingException {
+        Release release = githubClient.getRelease("v0.2.0-M2");
+
+        assertThat(release.body()).isEqualToIgnoringWhitespace(
+                """
+                        ## :star: New Features
+
+                        - Closed enhancement in generic 0.1.x [#8](https://github.com/marcingrzejszczak/gh-actions-test/issues/8)
+                        - Closed enhancement in generic 0.2.x [#14](https://github.com/marcingrzejszczak/gh-actions-test/issues/14)
+
+                        ## :lady_beetle: Bug Fixes
+
+                        - Closed bug in concrete 0.1.1 [#12](https://github.com/marcingrzejszczak/gh-actions-test/issues/12)
+                        - Closed bug in concrete 0.2.0-M2 [#18](https://github.com/marcingrzejszczak/gh-actions-test/issues/18)
+                        - Closed bug in generic 0.1.x [#9](https://github.com/marcingrzejszczak/gh-actions-test/issues/9)
+                        - Closed bug in generic 0.2.x [#15](https://github.com/marcingrzejszczak/gh-actions-test/issues/15)
+                        """);
+    }
+
+    @Test
+    void should_verify_release_notes_content_for_RC1() throws JsonProcessingException {
+        Release release = githubClient.getRelease("v1.0.0-RC1");
+
+        assertThat(release.body()).isEqualToIgnoringWhitespace(
+                """
+                        ## :star: New Features
+
+                        - Closed enhancement in generic 0.1.x [#8](https://github.com/marcingrzejszczak/gh-actions-test/issues/8)
+                        - Closed enhancement in generic 0.2.x [#14](https://github.com/marcingrzejszczak/gh-actions-test/issues/14)
+                        - Closed enhancement in generic 1.0.x [#5](https://github.com/marcingrzejszczak/gh-actions-test/issues/5)
+
+                        ## :lady_beetle: Bug Fixes
+
+                        - Closed bug in concrete 0.1.1 [#12](https://github.com/marcingrzejszczak/gh-actions-test/issues/12)
+                        - Closed bug in concrete 0.2.0-M2 [#18](https://github.com/marcingrzejszczak/gh-actions-test/issues/18)
+                        - Closed bug in concrete 1.0.0-RC1 [#3](https://github.com/marcingrzejszczak/gh-actions-test/issues/3)
+                        - Closed bug in generic 0.1.x [#9](https://github.com/marcingrzejszczak/gh-actions-test/issues/9)
+                        - Closed bug in generic 0.2.x [#15](https://github.com/marcingrzejszczak/gh-actions-test/issues/15)
+                        - Closed bug in generic 1.0.x [#4](https://github.com/marcingrzejszczak/gh-actions-test/issues/4)
+                        """);
     }
 
     @ParameterizedTest

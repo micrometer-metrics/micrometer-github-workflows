@@ -63,7 +63,7 @@ class MilestoneIssueReassigner {
 
         // Using 17:00 UTC for consistency
         List<String> lines = processRunner.run("gh", "api", "/repos/" + ghRepo + "/milestones", "-X", "POST", "-f",
-                "title=" + version, "-f", "due_on=" + dueDate.toString() + "T17:00:00Z");
+                "title=" + version, "-f", "due_on=" + dueDate + "T17:00:00Z");
 
         if (lines.isEmpty()) {
             throw new IllegalStateException("Could not create milestone " + version);

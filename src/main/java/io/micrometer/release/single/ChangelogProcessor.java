@@ -68,20 +68,19 @@ class ChangelogProcessor {
         depsSection.clear();
         processedDeps.forEach(depsSection::addEntry);
 
-        // Write the result
         try (BufferedWriter writer = Files.newBufferedWriter(outputFile.toPath())) {
-            // Write header
+
             for (String line : currentChangelog.getHeader()) {
                 writer.write(line + "\n");
             }
 
-            // Write sections
             for (ChangelogSection section : currentChangelog.getSections()) {
-                writer.write("## " + section.getTitle() + "\n\n");
-
                 List<String> sortedEntries = new ArrayList<>(section.getEntries());
+                if (sortedEntries.isEmpty()) {
+                    continue;
+                }
                 Collections.sort(sortedEntries);
-
+                writer.write("## " + section.getTitle() + "\n\n");
                 for (String entry : sortedEntries) {
                     writer.write(entry + "\n");
                 }

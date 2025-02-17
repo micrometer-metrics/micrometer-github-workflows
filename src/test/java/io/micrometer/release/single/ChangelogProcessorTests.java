@@ -62,10 +62,6 @@ class ChangelogProcessorTests {
 
     ChangelogProcessor processor = testChangelogProcessor(output);
 
-    static ChangelogProcessor testChangelogProcessor() {
-        return testChangelogProcessor(new File(ChangelogProcessor.OUTPUT_FILE));
-    }
-
     static ChangelogProcessor testChangelogProcessor(File output) {
         return new ChangelogProcessor(new ProcessRunner(), output) {
             @Override
