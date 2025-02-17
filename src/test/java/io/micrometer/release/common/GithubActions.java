@@ -48,8 +48,8 @@ public interface GithubActions {
     static void resetsMilestones() throws InterruptedException {
         assertThat(System.getenv("GH_TOKEN")).as("GH_TOKEN env var must be set!").isNotBlank();
         log.info(
-            "This test requires GH connection and will operate on [{}] repository. It's quite slow because it runs GH actions so please be patient...",
-            REPO);
+                "This test requires GH connection and will operate on [{}] repository. It's quite slow because it runs GH actions so please be patient...",
+                REPO);
         resetMilestones();
     }
 
@@ -64,7 +64,8 @@ public interface GithubActions {
         processRunner.run(commands);
         try {
             waitForWorkflowCompletion(workflowName);
-        } catch (InterruptedException e) {
+        }
+        catch (InterruptedException e) {
             throw new IllegalStateException(e);
         }
     }
@@ -77,10 +78,8 @@ public interface GithubActions {
         int maxAttempts = 30;
         int attempts = 0;
         while (!completed && attempts < maxAttempts) { // 5 minute timeout
-            List<String> status = processRunner.run("gh", "run", "list", "--workflow", workflowFile,
-                "--limit", "1");
-            log.info("Workflow [{}] not completed yet - attempt [{}]/[{}]", workflowFile,
-                attempts + 1, maxAttempts);
+            List<String> status = processRunner.run("gh", "run", "list", "--workflow", workflowFile, "--limit", "1");
+            log.info("Workflow [{}] not completed yet - attempt [{}]/[{}]", workflowFile, attempts + 1, maxAttempts);
             completed = status.stream().anyMatch(line -> line.contains("completed"));
             if (!completed) {
                 Thread.sleep(10_000);
@@ -88,8 +87,7 @@ public interface GithubActions {
             }
         }
         if (!completed) {
-            throw new RuntimeException(
-                "Workflow " + workflowFile + " did not complete within timeout");
+            throw new RuntimeException("Workflow " + workflowFile + " did not complete within timeout");
         }
         log.info("Workflow [{}] completed successfully!", workflowFile);
     }
@@ -117,35 +115,41 @@ public interface GithubActions {
         GithubClient(String token, String repo) {
             this.repo = repo;
             this.processRunner = new ProcessRunner(repo).withEnvVars(
-                Map.of("JAVA_HOME", JavaHomeFinder.findJavaHomePath(), "GH_TOKEN",
-                    token != null ? token : ""));
+                    Map.of("JAVA_HOME", JavaHomeFinder.findJavaHomePath(), "GH_TOKEN", token != null ? token : ""));
             this.objectMapper = new ObjectMapper().registerModule(new JavaTimeModule())
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         }
 
         public Release getRelease(String tag) throws JsonProcessingException {
             String output = String.join("\n",
-                processRunner.run("gh", "api", "/repos/" + repo + "/releases/tags/" + tag));
+                    processRunner.run("gh", "api", "/repos/" + repo + "/releases/tags/" + tag));
             return parseReleaseFromJson(output);
+        }
+
+        public void createReleaseAndTag(String tagName) {
+            log.info("Creating tag and release [{}]", tagName);
+
+            processRunner.run("gh", "release", "create", tagName, "--title", tagName.replace("v", ""), "--notes",
+                    "Release " + tagName, "--target", "main");
+
+            log.info("Successfully created tag and release [{}]", tagName);
         }
 
         public Milestone getMilestoneByTitle(String title) throws JsonProcessingException {
             String output = String.join("\n",
-                processRunner.run("gh", "api", "/repos/" + repo + "/milestones"));
+                    processRunner.run("gh", "api", "/repos/" + repo + "/milestones?state=all"));
             return parseMilestoneFromJson(output, title);
         }
 
-        public List<Issue> getIssuesForMilestone(int milestoneNumber)
-            throws JsonProcessingException {
+        public List<Issue> getIssuesForMilestone(int milestoneNumber) throws JsonProcessingException {
             String output = String.join("\n", processRunner.run("gh", "api",
-                "/repos/" + repo + "/issues?milestone=" + milestoneNumber));
+                    "/repos/" + repo + "/issues?milestone=" + milestoneNumber + "&state=all"));
             return parseIssuesFromJson(output);
         }
 
-        public List<Issue> getClosedIssuesForMilestone(int milestoneNumber)
-            throws JsonProcessingException {
+        public List<Issue> getClosedIssuesForMilestone(int milestoneNumber) throws JsonProcessingException {
             String output = String.join("\n", processRunner.run("gh", "api",
-                "/repos/" + repo + "/issues?milestone=" + milestoneNumber + "&state=closed"));
+                    "/repos/" + repo + "/issues?milestone=" + milestoneNumber + "&state=closed"));
             return parseIssuesFromJson(output);
         }
 
@@ -154,17 +158,14 @@ public interface GithubActions {
             return new Release(root.get("body").asText());
         }
 
-        private Milestone parseMilestoneFromJson(String json, String title)
-            throws JsonProcessingException {
+        private Milestone parseMilestoneFromJson(String json, String title) throws JsonProcessingException {
             JsonNode root = objectMapper.readTree(json);
             for (JsonNode milestone : root) {
                 if (milestone.get("title").asText().equals(title)) {
-                    return new Milestone(milestone.get("number").asInt(),
-                        milestone.get("state").asText(),
-                        milestone.get("title").asText(),
-                        milestone.get("due_on") != null && !milestone.get("due_on").isNull()
-                            ? LocalDate.parse(milestone.get("due_on").asText().substring(0, 10))
-                            : null);
+                    return new Milestone(milestone.get("number").asInt(), milestone.get("state").asText(),
+                            milestone.get("title").asText(),
+                            milestone.get("due_on") != null && !milestone.get("due_on").isNull()
+                                    ? LocalDate.parse(milestone.get("due_on").asText().substring(0, 10)) : null);
                 }
             }
             throw new RuntimeException("Milestone with title " + title + " not found");
@@ -175,7 +176,7 @@ public interface GithubActions {
             List<Issue> issues = new ArrayList<>();
             for (JsonNode issue : root) {
                 issues.add(new Issue(issue.get("number").asInt(), issue.get("state").asText(),
-                    issue.get("title").asText()));
+                        issue.get("title").asText()));
             }
             return issues;
         }

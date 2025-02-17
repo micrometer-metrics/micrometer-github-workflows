@@ -30,6 +30,7 @@ class SingleProjectGithubActionsE2eTests implements GithubActions {
 
     @BeforeAll
     static void should_go_through_whole_flow() {
+        githubClient.createReleaseAndTag("v0.1.1");
         runPostReleaseWorkflow();
     }
 
@@ -41,13 +42,13 @@ class SingleProjectGithubActionsE2eTests implements GithubActions {
                 """
                         ## :star: New Features
 
-                        - Closed enhancement in generic [#5](https://github.com/marcingrzejszczak/gh-actions-test/issues/5)
+                        - Closed enhancement in generic 0.1.x [#8](https://github.com/marcingrzejszczak/gh-actions-test/issues/8)
                         - Foo [#2](https://github.com/micrometer-metrics/build-test/issues/2)
 
                         ## :lady_beetle: Bug Fixes
 
-                        - Closed bug in concrete [#3](https://github.com/marcingrzejszczak/gh-actions-test/issues/3)
-                        - Closed bug in generic [#4](https://github.com/marcingrzejszczak/gh-actions-test/issues/4)
+                        - Closed bug in concrete 0.1.1 [#12](https://github.com/marcingrzejszczak/gh-actions-test/issues/12)
+                        - Closed bug in generic 0.1.x [#9](https://github.com/marcingrzejszczak/gh-actions-test/issues/9)
                         - Foo2 [#53](https://github.com/micrometer-metrics/build-test/issues/53)
 
                         ## :hammer: Dependency Upgrades
@@ -71,8 +72,8 @@ class SingleProjectGithubActionsE2eTests implements GithubActions {
         List<Issue> issues = githubClient.getIssuesForMilestone(milestone.number());
         assertThat(issues).extracting(Issue::state).containsOnly("closed");
         assertThat(issues).extracting(Issue::title)
-            .containsOnly("Closed issue in generic", "Closed bug in concrete", "Closed bug in generic",
-                    "Closed enhancement in generic");
+            .containsOnly("Closed issue in generic 0.1.x", "Closed bug in concrete 0.1.1",
+                    "Closed bug in generic 0.1.x", "Closed enhancement in generic 0.1.x");
     }
 
     @Test
@@ -83,7 +84,7 @@ class SingleProjectGithubActionsE2eTests implements GithubActions {
         assertThat(milestone.dueOn()).isEqualTo(ReleaseDateCalculator.calculateDueDate(LocalDate.now()));
         List<Issue> issues = githubClient.getIssuesForMilestone(milestone.number());
         assertThat(issues).extracting(Issue::state).containsOnly("open");
-        assertThat(issues).extracting(Issue::title).containsOnly("Open issue in concrete");
+        assertThat(issues).extracting(Issue::title).containsOnly("Open issue in concrete 0.1.1");
     }
 
     @Test

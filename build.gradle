@@ -41,6 +41,24 @@ repositories {
 group = 'io.micrometer.release'
 println "I'm configuring $project.name with version $project.version"
 
+sourceSets {
+    e2eTest {
+        java {
+            srcDir 'src/test/java'
+            include '**/*E2e*.java'
+            destinationDirectory = project.layout.buildDirectory.dir('classes/java/e2eTest')
+        }
+        compileClasspath = sourceSets.test.compileClasspath + sourceSets.test.output
+        runtimeClasspath = sourceSets.test.runtimeClasspath + sourceSets.test.output + files("${buildDir}/classes/java/e2eTest")
+    }
+
+    test {
+        java {
+            exclude '**/*E2e*.java'
+        }
+    }
+}
+
 dependencies {
     checkstyle libs.javaFormatForPlugins
 
@@ -85,10 +103,20 @@ test {
 }
 
 tasks.register('e2e', Test) {
+    description = 'Runs E2E tests.'
+    group = 'verification'
+
+    dependsOn e2eTestClasses
+
+    testClassesDirs = sourceSets.e2eTest.output.classesDirs
+    classpath = sourceSets.e2eTest.runtimeClasspath
+
     useJUnitPlatform() {
         includeTags("e2e")
     }
 }
+
+formatE2eTest.dependsOn("formatTest")
 
 license {
     header rootProject.file('gradle/licenseHeader.txt')
@@ -124,12 +152,15 @@ tasks.check {
 
 pitest {
     junit5PluginVersion = libs.versions.pitestJunit5
+
     threads = 4 // Parallel threads for mutation testing
     outputFormats = ['HTML'] // Generate an HTML report
     timestampedReports = false // Avoid timestamped reports for consistent file paths
     testStrengthThreshold.set(90)
     mutationThreshold.set(80)
     setCoverageThreshold(80)
+
+    testSourceSets = [sourceSets.test]  // Only use the main test source set
 }
 
 build.dependsOn("pitest")
