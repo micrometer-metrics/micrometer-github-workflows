@@ -52,13 +52,28 @@ public class ProcessRunner {
         return run(command.toArray(new String[0]));
     }
 
+    public List<String> runSilently(List<String> command) {
+        return run(false, command.toArray(new String[0]));
+    }
+
+    public List<String> runSilently(String... command) {
+        return run(false, command);
+    }
+
     public List<String> run(String... command) {
+        return run(true, command);
+    }
+
+    private List<String> run(boolean shouldLog, String... command) {
         List<String> lines = new ArrayList<>();
         String[] processedCommand = processCommand(command);
         try {
+            log.info("About to start command {}", (Object) processedCommand);
             Process process = startProcess(processedCommand);
 
-            log.info("Printing out process logs:\n\n");
+            if (shouldLog) {
+                log.info("Printing out process logs:\n\n");
+            }
 
             List<String> errorLines = new ArrayList<>();
 
@@ -66,7 +81,9 @@ public class ProcessRunner {
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                     String line;
                     while ((line = reader.readLine()) != null) {
-                        log.info(line);
+                        if (shouldLog) {
+                            log.info(line);
+                        }
                         lines.add(line);
                     }
                 }
@@ -99,12 +116,13 @@ public class ProcessRunner {
             if (exitCode != 0) {
                 String errorMessage = String.format("Failed to run the command %s. Exit code: %d.%nError output:%n%s",
                         Arrays.toString(processedCommand), exitCode, String.join("\n", errorLines));
-                throw new RuntimeException(errorMessage);
+                throw new IllegalStateException(errorMessage);
             }
         }
         catch (IOException | InterruptedException e) {
-            throw new RuntimeException("A failure around the process execution happened", e);
+            throw new IllegalStateException("A failure around the process execution happened", e);
         }
+        log.info("Command executed successfully");
         return lines;
     }
 

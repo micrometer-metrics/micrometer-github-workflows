@@ -138,11 +138,11 @@ class ChangelogProcessor {
     }
 
     List<String> dependenciesLines(List<String> gradleCommand) {
-        return processRunner.run(gradleCommand);
+        return processRunner.runSilently(gradleCommand);
     }
 
     List<String> projectLines() {
-        return processRunner.run("./gradlew", "projects");
+        return processRunner.runSilently("./gradlew", "projects");
     }
 
     private Collection<String> processDependencyUpgrades(Iterable<String> dependencyLines,
