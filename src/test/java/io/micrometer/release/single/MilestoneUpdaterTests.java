@@ -30,17 +30,17 @@ class MilestoneUpdaterTests {
     @Test
     void should_call_gh_api_to_close_a_milestone() {
         ProcessRunner processRunner = mock();
-        given(processRunner.run("gh", "api", "/repos/micrometer-metrics/milestones?state=open", "--jq",
-                "\".[] | select(.title == \\\"1.2.3\\\").number\""))
-            .willReturn(List.of("100"));
-        String ghRepo = "micrometer-metrics";
+        given(processRunner.run("gh", "api", "/repos/micrometer-metrics/micrometer/milestones", "--jq",
+                String.format(".[] | select(.title == \"%s\") | {number: .number, title: .title}", "1.2.3")))
+            .willReturn(List.of("{\"number\":100,\"title\":\"1.2.3\"}"));
+        String ghRepo = "micrometer-metrics/micrometer";
         MilestoneUpdater milestoneUpdater = new MilestoneUpdater(processRunner, ghRepo,
                 new MilestoneMigrator(processRunner, ghRepo, new MilestoneIssueReassigner(processRunner, ghRepo)));
 
         milestoneUpdater.closeMilestone("v1.2.3");
 
-        verify(processRunner).run("gh", "api", "-X", "PATCH", "/repos/micrometer-metrics/milestones/100", "-f",
-                "state=closed");
+        verify(processRunner).run("gh", "api", "-X", "PATCH", "/repos/micrometer-metrics/micrometer/milestones/100",
+                "-f", "state=closed");
     }
 
 }

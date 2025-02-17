@@ -16,10 +16,9 @@
 package io.micrometer.release.single;
 
 import io.micrometer.release.common.ProcessRunner;
+import io.micrometer.release.single.MilestoneMigrator.Milestone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 class MilestoneUpdater {
 
@@ -51,13 +50,11 @@ class MilestoneUpdater {
     void closeMilestone(String githubRefName) {
         log.info("Closing milestone...");
         String milestoneName = githubRefName.replace("v", "");
-        List<String> output = processRunner.run("gh", "api", "/repos/" + githubRepository + "/milestones?state=open",
-                "--jq", "\".[] | select(.title == \\\"" + milestoneName + "\\\").number\"");
+        Milestone milestone = milestoneMigrator.findMilestone(milestoneName);
 
-        if (!output.isEmpty()) {
-            String milestoneNumber = output.get(0);
+        if (milestone != null) {
             processRunner.run("gh", "api", "-X", "PATCH",
-                    "/repos/" + githubRepository + "/milestones/" + milestoneNumber, "-f", "state=closed");
+                    "/repos/" + githubRepository + "/milestones/" + milestone.number(), "-f", "state=closed");
             log.info("Successfully closed milestone {}", milestoneName);
         }
         else {

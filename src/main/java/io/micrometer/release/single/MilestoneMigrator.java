@@ -29,13 +29,13 @@ class MilestoneMigrator {
 
     private final ProcessRunner processRunner;
 
-    private final String ghRepo;
+    private final String ghOrgRepo;
 
     private final MilestoneIssueReassigner milestoneIssueReassigner;
 
     MilestoneMigrator(ProcessRunner processRunner, String ghRepo, MilestoneIssueReassigner milestoneIssueReassigner) {
         this.processRunner = processRunner;
-        this.ghRepo = ghRepo;
+        this.ghOrgRepo = ghRepo;
         this.milestoneIssueReassigner = milestoneIssueReassigner;
     }
 
@@ -88,8 +88,8 @@ class MilestoneMigrator {
         return milestoneIssueReassigner.reassignIssues(concreteMilestone, refName, closedIssues, openIssues);
     }
 
-    private Milestone findMilestone(String title) {
-        List<String> lines = processRunner.run("gh", "api", "/repos/" + ghRepo + "/milestones", "--jq",
+    Milestone findMilestone(String title) {
+        List<String> lines = processRunner.run("gh", "api", "/repos/" + ghOrgRepo + "/milestones", "--jq",
                 String.format(".[] | select(.title == \"%s\") | {number: .number, title: .title}", title));
         if (lines.isEmpty()) {
             throw new IllegalStateException("No response from gh cli for version <" + title + ">");
@@ -106,7 +106,7 @@ class MilestoneMigrator {
 
     private List<Issue> getIssuesForMilestone(int milestoneNumber) {
         List<String> lines = processRunner.run("gh", "api",
-                String.format("/repos/%s/issues?milestone=%d&state=all", ghRepo, milestoneNumber), "--jq",
+                String.format("/repos/%s/issues?milestone=%d&state=all", ghOrgRepo, milestoneNumber), "--jq",
                 ".[] | {number: .number, state: .state}");
         List<Issue> issues = new ArrayList<>();
         for (String line : lines) {
