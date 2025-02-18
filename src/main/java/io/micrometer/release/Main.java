@@ -16,7 +16,7 @@
 package io.micrometer.release;
 
 import io.micrometer.release.common.ProcessRunner;
-import io.micrometer.release.single.*;
+import io.micrometer.release.single.PostReleaseWorkflow;
 import io.micrometer.release.train.ProjectTrainReleaseWorkflow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -44,8 +44,6 @@ println "I'm configuring $project.name with version $project.version"
 sourceSets {
     e2eTest {
         java {
-            srcDir 'src/test/java'
-            include '**/*E2e*.java'
             destinationDirectory = project.layout.buildDirectory.dir('classes/java/e2eTest')
         }
         compileClasspath = sourceSets.test.compileClasspath + sourceSets.test.output
