@@ -47,7 +47,8 @@ public class ProjectTrainReleaseWorkflow {
                 processRunner);
         this.versionToBranchConverter = new VersionToBranchConverter(System.getenv("GH_TOKEN"),
                 "https://api.github.com/repos/" + githubOrgRepo + "/branches/", HTTP_CLIENT);
-        this.postReleaseTaskScheduler = new PostReleaseTaskScheduler(postReleaseWorkflow, githubOrgRepo);
+        this.postReleaseTaskScheduler = new PostReleaseTaskScheduler(postReleaseWorkflow, new Git(processRunner),
+                githubOrgRepo);
         this.mavenCentralSyncChecker = new MavenCentralSyncChecker(artifactToCheck);
     }
 

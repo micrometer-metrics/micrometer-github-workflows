@@ -28,16 +28,21 @@ class PostReleaseTaskSchedulerTests {
 
     PostReleaseWorkflow postReleaseWorkflow = mock();
 
-    PostReleaseTaskScheduler scheduler = new PostReleaseTaskScheduler(postReleaseWorkflow,
+    Git git = mock();
+
+    PostReleaseTaskScheduler scheduler = new PostReleaseTaskScheduler(postReleaseWorkflow, git,
             "micrometer-metrics/micrometer");
 
     @Test
     void should_schedule_release_tasks() {
         scheduler.runPostReleaseTasks(List.of("1.0.0", "1.1.0", "1.2.0"));
 
-        InOrder inOrder = inOrder(postReleaseWorkflow);
+        InOrder inOrder = inOrder(git, postReleaseWorkflow);
+        inOrder.verify(git).changeTag("v1.0.0");
         inOrder.verify(postReleaseWorkflow).run("micrometer-metrics/micrometer", "v1.0.0", null);
+        inOrder.verify(git).changeTag("v1.1.0");
         inOrder.verify(postReleaseWorkflow).run("micrometer-metrics/micrometer", "v1.1.0", "v1.0.0");
+        inOrder.verify(git).changeTag("v1.2.0");
         inOrder.verify(postReleaseWorkflow).run("micrometer-metrics/micrometer", "v1.2.0", "v1.1.0");
     }
 

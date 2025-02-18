@@ -55,7 +55,7 @@ class ProjectTrainReleaseWorkflowAcceptanceTests {
     ReleaseScheduler releaseScheduler = new ReleaseScheduler(circleCiChecker, processRunner);
 
     PostReleaseTaskScheduler postReleaseTaskScheduler = new PostReleaseTaskScheduler(postReleaseWorkflow,
-            GITHUB_ORG_REPO);
+            new Git(processRunner), GITHUB_ORG_REPO);
 
     VersionToBranchConverter versionToBranchConverter = new VersionToBranchConverter("foo",
             wm1.url("/repos/micrometer-metrics/micrometer/branches/"), HttpClient.newBuilder().build());
