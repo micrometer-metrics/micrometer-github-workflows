@@ -30,7 +30,7 @@ class Git {
     void changeTag(String tag) {
         log.info("Changing git head to tag [{}]", tag);
         processRunner.run("git", "fetch", "origin", "refs/tags/" + tag);
-        processRunner.run("git", "checkout", tag);
+        processRunner.run("git", "checkout", "FETCH_HEAD");
     }
 
 }

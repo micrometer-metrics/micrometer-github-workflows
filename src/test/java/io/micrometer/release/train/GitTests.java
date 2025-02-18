@@ -30,7 +30,7 @@ class GitTests {
         git.changeTag("v1.2.3");
 
         then(processRunner).should().run("git", "fetch", "origin", "refs/tags/v1.2.3");
-        then(processRunner).should().run("git", "checkout", "v1.2.3");
+        then(processRunner).should().run("git", "checkout", "FETCH_HEAD");
     }
 
 }
