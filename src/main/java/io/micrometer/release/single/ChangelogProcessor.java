@@ -17,15 +17,16 @@ package io.micrometer.release.single;
 
 import io.micrometer.release.common.ProcessRunner;
 import io.micrometer.release.single.ChangelogSection.Section;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.stream.Collectors;
 
 class ChangelogProcessor {
 
@@ -51,7 +52,8 @@ class ChangelogProcessor {
     }
 
     File processChangelog(File changelog, File oldChangelog) throws Exception {
-        Set<String> testAndOptional = fetchTestAndOptionalDependencies();
+        Set<Dependency> dependencies = fetchAllDependencies();
+        Set<Dependency> testOrOptional = dependencies.stream().filter(Dependency::toIgnore).collect(Collectors.toSet());
 
         Changelog currentChangelog = Changelog.parse(changelog);
         Changelog oldChangelogContent = oldChangelog != null ? Changelog.parse(oldChangelog) : new Changelog();
@@ -64,7 +66,10 @@ class ChangelogProcessor {
 
         // Process dependencies section specially
         ChangelogSection depsSection = currentChangelog.getSection(Section.UPGRADES);
-        Collection<String> processedDeps = processDependencyUpgrades(depsSection.getEntries(), testAndOptional);
+        Collection<String> processedDeps = processDependencyUpgrades(depsSection.getEntries(),
+                testOrOptional.stream()
+                    .map(dependency -> dependency.group() + ":" + dependency.artifact())
+                    .collect(Collectors.toSet()));
         depsSection.clear();
         processedDeps.forEach(depsSection::addEntry);
 
@@ -90,7 +95,7 @@ class ChangelogProcessor {
         return outputFile;
     }
 
-    private Set<String> fetchTestAndOptionalDependencies() {
+    private Set<Dependency> fetchAllDependencies() {
         log.info("Fetching test and optional dependencies...");
         List<String> projectLines = projectLines();
         List<String> subprojects = projectLines.stream()
@@ -100,8 +105,7 @@ class ChangelogProcessor {
 
         log.info("Subprojects: {}", subprojects);
 
-        Set<String> testOptionalDependencies = new HashSet<>();
-        Set<String> implementationDependencies = new HashSet<>();
+        Set<Dependency> dependencies = new HashSet<>();
 
         if (!subprojects.isEmpty()) {
             List<String> gradleCommand = new ArrayList<>();
@@ -112,13 +116,22 @@ class ChangelogProcessor {
             for (String line : dependenciesLines(gradleCommand)) {
                 if (line.startsWith("+---") || line.startsWith("\\---")) {
                     String[] parts = line.split("[: ]");
-                    String dependency = parts[1] + ":" + parts[2];
-                    if (testOrOptional) {
-                        testOptionalDependencies.add(dependency);
-                    }
-                    else {
-                        implementationDependencies.add(dependency);
-                    }
+                    String version = extractVersion(line);
+                    boolean finalTestOrOptional = testOrOptional;
+                    dependencies.stream()
+                        .filter(dependency -> dependency.group().equalsIgnoreCase(parts[1])
+                                && dependency.artifact().equalsIgnoreCase(parts[2]))
+                        .findFirst()
+                        .ifPresentOrElse(dependency -> {
+                            log.debug("Dependency {} is already present in compile scope", parts[1] + ":" + parts[2]);
+                            if (dependency.toIgnore() && !finalTestOrOptional) {
+                                log.debug(
+                                        "Dependency {} was previously set in test or compile scope and will be in favour of one in compile scope",
+                                        dependency);
+                                dependencies.remove(dependency);
+                                dependencies.add(new Dependency(parts[1], parts[2], version, finalTestOrOptional));
+                            }
+                        }, () -> dependencies.add(new Dependency(parts[1], parts[2], version, finalTestOrOptional)));
                 }
                 else if (excludedDependencyScopes.stream()
                     .anyMatch(string -> line.toLowerCase().contains(string.toLowerCase()))) {
@@ -128,12 +141,30 @@ class ChangelogProcessor {
                     testOrOptional = false;
                 }
             }
-
-            testOptionalDependencies.removeAll(implementationDependencies);
-            log.info("Excluded dependencies: {}", testOptionalDependencies);
         }
 
-        return testOptionalDependencies;
+        return dependencies;
+    }
+
+    static String extractVersion(String line) {
+        if (line == null || line.trim().isEmpty()) {
+            return null;
+        }
+        if (line.contains("->")) {
+            String[] parts = line.split("->");
+            if (parts.length > 1) {
+                return parts[1].trim().split("\\s+")[0];
+            }
+            return null;
+        }
+        String[] parts = line.split(":");
+        if (parts.length < 2) {
+            return null;
+        }
+        if (parts.length >= 3) {
+            return parts[2].trim().split("\\s+")[0];
+        }
+        return null;
     }
 
     List<String> dependenciesLines(List<String> gradleCommand) {

@@ -72,7 +72,7 @@ public class ProcessRunner {
             Process process = startProcess(processedCommand);
 
             if (shouldLog) {
-                log.info("Printing out process logs:\n\n");
+                log("Printing out process logs:\n\n");
             }
 
             List<String> errorLines = new ArrayList<>();
@@ -82,7 +82,7 @@ public class ProcessRunner {
                     String line;
                     while ((line = reader.readLine()) != null) {
                         if (shouldLog) {
-                            log.info(line);
+                            log(line);
                         }
                         lines.add(line);
                     }
@@ -124,6 +124,10 @@ public class ProcessRunner {
         }
         log.info("Command executed successfully");
         return lines;
+    }
+
+    void log(String logLine) {
+        log.info(logLine);
     }
 
     Process startProcess(String... processedCommand) throws IOException, InterruptedException {

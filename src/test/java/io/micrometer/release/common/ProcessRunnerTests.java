@@ -15,9 +15,6 @@
  */
 package io.micrometer.release.common;
 
-import java.util.List;
-import java.util.function.Consumer;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,9 +23,10 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.List;
+import java.util.function.Consumer;
 
-import static org.assertj.core.api.BDDAssertions.then;
-import static org.assertj.core.api.BDDAssertions.thenThrownBy;
+import static org.assertj.core.api.BDDAssertions.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
@@ -62,6 +60,26 @@ class ProcessRunnerTests {
         new ProcessRunner().run("touch", tempFile.getAbsolutePath());
 
         then(tempFile).exists();
+    }
+
+    @Test
+    void should_log_silently_with_less_output() {
+        thenNoException().isThrownBy(() -> exceptionThrowingWhenLoggingProcessRunner().runSilently(List.of("foo")));
+        thenNoException().isThrownBy(() -> exceptionThrowingWhenLoggingProcessRunner().runSilently("foo"));
+    }
+
+    private ProcessRunner exceptionThrowingWhenLoggingProcessRunner() {
+        return new ProcessRunner() {
+            @Override
+            void log(String logLine) {
+                throw new AssertionError("This line <" + logLine + "> should not be logged");
+            }
+
+            @Override
+            Process startProcess(String... processedCommand) {
+                return process;
+            }
+        };
     }
 
     @Test
