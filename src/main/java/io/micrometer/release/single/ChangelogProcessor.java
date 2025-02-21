@@ -41,9 +41,12 @@ class ChangelogProcessor {
 
     private final ProcessRunner processRunner;
 
+    private final GradleParser gradleParser;
+
     ChangelogProcessor(ProcessRunner processRunner) {
         this.processRunner = processRunner;
         this.outputFile = new File(OUTPUT_FILE);
+        this.gradleParser = new GradleParser(processRunner);
     }
 
     ChangelogProcessor(ProcessRunner processRunner, File changelogOutput) {
