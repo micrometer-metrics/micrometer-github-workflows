@@ -21,6 +21,8 @@ import java.io.File;
 
 public class PostReleaseWorkflow {
 
+    private final DependencyVerifier dependencyVerifier;
+
     private final ChangelogGeneratorDownloader changelogGeneratorDownloader;
 
     private final ChangelogGenerator changelogGenerator;
@@ -35,10 +37,12 @@ public class PostReleaseWorkflow {
 
     private final NotificationSender notificationSender;
 
-    PostReleaseWorkflow(ChangelogGeneratorDownloader changelogGeneratorDownloader,
-            ChangelogGenerator changelogGenerator, ChangelogFetcher changelogFetcher,
-            ChangelogProcessor changelogProcessor, ReleaseNotesUpdater releaseNotesUpdater,
-            MilestoneUpdater milestoneUpdater, NotificationSender notificationSender) {
+    PostReleaseWorkflow(DependencyVerifier dependencyVerifier,
+            ChangelogGeneratorDownloader changelogGeneratorDownloader, ChangelogGenerator changelogGenerator,
+            ChangelogFetcher changelogFetcher, ChangelogProcessor changelogProcessor,
+            ReleaseNotesUpdater releaseNotesUpdater, MilestoneUpdater milestoneUpdater,
+            NotificationSender notificationSender) {
+        this.dependencyVerifier = dependencyVerifier;
         this.changelogGeneratorDownloader = changelogGeneratorDownloader;
         this.changelogGenerator = changelogGenerator;
         this.changelogFetcher = changelogFetcher;
@@ -49,9 +53,10 @@ public class PostReleaseWorkflow {
     }
 
     public PostReleaseWorkflow(ProcessRunner processRunner) {
-        this(new ChangelogGeneratorDownloader(), new ChangelogGenerator(processRunner),
-                new ChangelogFetcher(processRunner), new ChangelogProcessor(processRunner),
-                new ReleaseNotesUpdater(processRunner), new MilestoneUpdater(processRunner), new NotificationSender());
+        this(new DependencyVerifier(processRunner), new ChangelogGeneratorDownloader(),
+                new ChangelogGenerator(processRunner), new ChangelogFetcher(processRunner),
+                new ChangelogProcessor(processRunner), new ReleaseNotesUpdater(processRunner),
+                new MilestoneUpdater(processRunner), new NotificationSender());
     }
 
     // micrometer-metrics/tracing
@@ -61,29 +66,36 @@ public class PostReleaseWorkflow {
         assertInputs(githubOrgRepo, githubRefName, previousRefName);
         String githubRepo = githubOrgRepo.contains("/") ? githubOrgRepo.split("/")[1] : githubOrgRepo;
 
-        // Step 1: Close milestone and move issues around
+        // Run dependabot and wait for it to complete
+        verifyDependencies(githubOrgRepo);
+
+        // Close milestone and move issues around
         MilestoneWithDeadline newMilestoneId = updateMilestones(githubRefName);
 
-        // Step 2: Download GitHub Changelog Generator
+        // Download GitHub Changelog Generator
         File changelogJar = downloadChangelogGenerator();
 
-        // Step 3: Generate current changelog
+        // Generate current changelog
         File changelog = generateChangelog(githubRefName, githubOrgRepo, changelogJar);
 
         File oldChangelog = null;
-        // Step 3a: If previousRefName present - fetch its changelog
+        // If previousRefName present - fetch its changelog
         if (previousRefName != null && !previousRefName.isBlank()) {
             oldChangelog = generateOldChangelog(previousRefName, githubOrgRepo);
         }
 
-        // Step 4: Process changelog
+        // Process changelog
         File outputChangelog = processChangelog(changelog, oldChangelog);
 
-        // Step 5: Update release notes
+        // Update release notes
         updateReleaseNotes(githubRefName, outputChangelog);
 
-        // Step 6: Send notifications
+        // Send notifications
         sendNotifications(githubRepo, githubRefName, newMilestoneId);
+    }
+
+    private void verifyDependencies(String githubOrgRepo) {
+        dependencyVerifier.verifyDependencies(githubOrgRepo);
     }
 
     void assertInputs(String githubOrgRepo, String githubRefName, String previousRefName) {

@@ -26,7 +26,8 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static org.assertj.core.api.BDDAssertions.*;
+import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
@@ -64,8 +65,12 @@ class ProcessRunnerTests {
 
     @Test
     void should_log_silently_with_less_output() {
-        thenNoException().isThrownBy(() -> exceptionThrowingWhenLoggingProcessRunner().runSilently(List.of("foo")));
-        thenNoException().isThrownBy(() -> exceptionThrowingWhenLoggingProcessRunner().runSilently("foo"));
+        then(exceptionThrowingWhenLoggingProcessRunner().runSilently(List.of("foo"))).isEqualTo(List.of("Hello"));
+    }
+
+    @Test
+    void should_log_silently_with_less_output_for_varargs() {
+        then(exceptionThrowingWhenLoggingProcessRunner().runSilently("foo")).isEqualTo(List.of("Hello"));
     }
 
     private ProcessRunner exceptionThrowingWhenLoggingProcessRunner() {

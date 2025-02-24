@@ -65,7 +65,7 @@ class PostReleaseWorkflowAcceptanceTests {
             """)
     void should_fail_assertions(String githubOrgRepo, String githubRefName, String previousRefName,
             String expectedErrorMsg) {
-        PostReleaseWorkflow postReleaseWorkflow = new PostReleaseWorkflow(
+        PostReleaseWorkflow postReleaseWorkflow = new PostReleaseWorkflow(null,
                 new ChangelogGeneratorDownloader(ChangelogGeneratorDownloader.CHANGELOG_GENERATOR_URL, outputJar),
                 ChangelogGeneratorTests.testChangelogGenerator(outputChangelog),
                 ChangelogFetcherTests.testChangelogFetcher(oldOutputChangelog),
@@ -88,7 +88,7 @@ class PostReleaseWorkflowAcceptanceTests {
     }
 
     private PostReleaseWorkflow testPostReleaseWorkflow(AssertingReleaseNotesUpdater updater) {
-        return new PostReleaseWorkflow(
+        return new PostReleaseWorkflow(DependencyVerifierTests.testDependencyVerifier(),
                 new ChangelogGeneratorDownloader(ChangelogGeneratorDownloader.CHANGELOG_GENERATOR_URL, outputJar),
                 ChangelogGeneratorTests.testChangelogGenerator(outputChangelog),
                 ChangelogFetcherTests.testChangelogFetcher(oldOutputChangelog),

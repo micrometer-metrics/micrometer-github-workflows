@@ -157,6 +157,7 @@ pitest {
     testStrengthThreshold.set(85)
     mutationThreshold.set(75)
     setCoverageThreshold(80)
+    excludedClasses.set(["io.micrometer.release.Main"])
 
     testSourceSets = [sourceSets.test]  // Only use the main test source set
 }

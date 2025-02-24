@@ -34,24 +34,22 @@ class ChangelogProcessor {
 
     static final String OUTPUT_FILE = "changelog-output.md";
 
-    private final List<String> excludedDependencyScopes = List.of("testCompile", "testImplementation", "checkstyle",
-            "runtime", "nohttp", "testRuntime", "optional");
-
     private final File outputFile;
 
-    private final ProcessRunner processRunner;
+    private final GradleParser gradleParser;
 
     ChangelogProcessor(ProcessRunner processRunner) {
-        this.processRunner = processRunner;
         this.outputFile = new File(OUTPUT_FILE);
+        this.gradleParser = new GradleParser(processRunner);
     }
 
-    ChangelogProcessor(ProcessRunner processRunner, File changelogOutput) {
-        this.processRunner = processRunner;
+    ChangelogProcessor(File changelogOutput, GradleParser gradleParser) {
         this.outputFile = changelogOutput;
+        this.gradleParser = gradleParser;
     }
 
     File processChangelog(File changelog, File oldChangelog) throws Exception {
+        log.info("Starting to process changelog...");
         Set<Dependency> dependencies = fetchAllDependencies();
         Set<Dependency> testOrOptional = dependencies.stream().filter(Dependency::toIgnore).collect(Collectors.toSet());
 
@@ -92,87 +90,12 @@ class ChangelogProcessor {
                 writer.write("\n");
             }
         }
+        log.info("Changelog processed");
         return outputFile;
     }
 
     private Set<Dependency> fetchAllDependencies() {
-        log.info("Fetching test and optional dependencies...");
-        List<String> projectLines = projectLines();
-        List<String> subprojects = projectLines.stream()
-            .filter(line -> line.contains("Project") && line.contains(":") && line.contains("'"))
-            .map(line -> line.substring(line.indexOf(":") + 1, line.lastIndexOf("'")).trim())
-            .toList();
-
-        log.info("Subprojects: {}", subprojects);
-
-        Set<Dependency> dependencies = new HashSet<>();
-
-        if (!subprojects.isEmpty()) {
-            List<String> gradleCommand = new ArrayList<>();
-            gradleCommand.add("./gradlew");
-            subprojects.forEach(subproject -> gradleCommand.add(subproject + ":dependencies"));
-
-            boolean testOrOptional = false;
-            for (String line : dependenciesLines(gradleCommand)) {
-                if (line.startsWith("+---") || line.startsWith("\\---")) {
-                    String[] parts = line.split("[: ]");
-                    String version = extractVersion(line);
-                    boolean finalTestOrOptional = testOrOptional;
-                    dependencies.stream()
-                        .filter(dependency -> dependency.group().equalsIgnoreCase(parts[1])
-                                && dependency.artifact().equalsIgnoreCase(parts[2]))
-                        .findFirst()
-                        .ifPresentOrElse(dependency -> {
-                            log.debug("Dependency {} is already present in compile scope", parts[1] + ":" + parts[2]);
-                            if (dependency.toIgnore() && !finalTestOrOptional) {
-                                log.debug(
-                                        "Dependency {} was previously set in test or compile scope and will be in favour of one in compile scope",
-                                        dependency);
-                                dependencies.remove(dependency);
-                                dependencies.add(new Dependency(parts[1], parts[2], version, finalTestOrOptional));
-                            }
-                        }, () -> dependencies.add(new Dependency(parts[1], parts[2], version, finalTestOrOptional)));
-                }
-                else if (excludedDependencyScopes.stream()
-                    .anyMatch(string -> line.toLowerCase().contains(string.toLowerCase()))) {
-                    testOrOptional = true;
-                }
-                else if (line.isEmpty() || line.isBlank()) {
-                    testOrOptional = false;
-                }
-            }
-        }
-
-        return dependencies;
-    }
-
-    static String extractVersion(String line) {
-        if (line == null || line.trim().isEmpty()) {
-            return null;
-        }
-        if (line.contains("->")) {
-            String[] parts = line.split("->");
-            if (parts.length > 1) {
-                return parts[1].trim().split("\\s+")[0];
-            }
-            return null;
-        }
-        String[] parts = line.split(":");
-        if (parts.length < 2) {
-            return null;
-        }
-        if (parts.length >= 3) {
-            return parts[2].trim().split("\\s+")[0];
-        }
-        return null;
-    }
-
-    List<String> dependenciesLines(List<String> gradleCommand) {
-        return processRunner.runSilently(gradleCommand);
-    }
-
-    List<String> projectLines() {
-        return processRunner.runSilently("./gradlew", "projects");
+        return gradleParser.fetchAllDependencies();
     }
 
     private Collection<String> processDependencyUpgrades(Iterable<String> dependencyLines,

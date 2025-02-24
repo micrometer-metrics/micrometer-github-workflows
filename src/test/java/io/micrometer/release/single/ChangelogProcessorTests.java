@@ -16,11 +16,9 @@
 package io.micrometer.release.single;
 
 import io.micrometer.release.common.ProcessRunner;
-
-import java.io.*;
-
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.List;
@@ -63,7 +61,8 @@ class ChangelogProcessorTests {
     ChangelogProcessor processor = testChangelogProcessor(output);
 
     static ChangelogProcessor testChangelogProcessor(File output) {
-        return new ChangelogProcessor(new ProcessRunner(), output) {
+        return new ChangelogProcessor(output, new GradleParser(new ProcessRunner()) {
+
             @Override
             List<String> projectLines() {
                 URL resource = ChangelogGeneratorTests.class.getResource("/gradle/projects_output.txt");
@@ -86,7 +85,7 @@ class ChangelogProcessorTests {
                     throw new RuntimeException(e);
                 }
             }
-        };
+        });
     }
 
     ChangelogProcessorTests() throws Exception {
