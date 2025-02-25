@@ -15,6 +15,7 @@
  */
 package io.micrometer.release.single;
 
+import io.micrometer.release.common.GradleParser;
 import io.micrometer.release.common.ProcessRunner;
 import org.junit.jupiter.api.Test;
 

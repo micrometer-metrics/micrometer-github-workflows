@@ -15,13 +15,12 @@
  */
 package io.micrometer.release.single;
 
+import io.micrometer.release.common.Input;
 import io.micrometer.release.common.ProcessRunner;
 
 import java.io.File;
 
 public class PostReleaseWorkflow {
-
-    private final DependencyVerifier dependencyVerifier;
 
     private final ChangelogGeneratorDownloader changelogGeneratorDownloader;
 
@@ -37,12 +36,10 @@ public class PostReleaseWorkflow {
 
     private final NotificationSender notificationSender;
 
-    PostReleaseWorkflow(DependencyVerifier dependencyVerifier,
-            ChangelogGeneratorDownloader changelogGeneratorDownloader, ChangelogGenerator changelogGenerator,
+    PostReleaseWorkflow(ChangelogGeneratorDownloader changelogGeneratorDownloader, ChangelogGenerator changelogGenerator,
             ChangelogFetcher changelogFetcher, ChangelogProcessor changelogProcessor,
             ReleaseNotesUpdater releaseNotesUpdater, MilestoneUpdater milestoneUpdater,
             NotificationSender notificationSender) {
-        this.dependencyVerifier = dependencyVerifier;
         this.changelogGeneratorDownloader = changelogGeneratorDownloader;
         this.changelogGenerator = changelogGenerator;
         this.changelogFetcher = changelogFetcher;
@@ -53,7 +50,7 @@ public class PostReleaseWorkflow {
     }
 
     public PostReleaseWorkflow(ProcessRunner processRunner) {
-        this(new DependencyVerifier(processRunner), new ChangelogGeneratorDownloader(),
+        this(new ChangelogGeneratorDownloader(),
                 new ChangelogGenerator(processRunner), new ChangelogFetcher(processRunner),
                 new ChangelogProcessor(processRunner), new ReleaseNotesUpdater(processRunner),
                 new MilestoneUpdater(processRunner), new NotificationSender());
@@ -63,7 +60,7 @@ public class PostReleaseWorkflow {
     // v1.3.1
     // v1.2.5 (optional)
     public void run(String githubOrgRepo, String githubRefName, String previousRefName) {
-        assertInputs(githubOrgRepo, githubRefName, previousRefName);
+        Input.assertInputs(githubOrgRepo, githubRefName, previousRefName);
         String githubRepo = githubOrgRepo.contains("/") ? githubOrgRepo.split("/")[1] : githubOrgRepo;
 
         // Run dependabot and wait for it to complete
@@ -92,26 +89,6 @@ public class PostReleaseWorkflow {
 
         // Send notifications
         sendNotifications(githubRepo, githubRefName, newMilestoneId);
-    }
-
-    private void verifyDependencies(String githubOrgRepo) {
-        dependencyVerifier.verifyDependencies(githubOrgRepo);
-    }
-
-    void assertInputs(String githubOrgRepo, String githubRefName, String previousRefName) {
-        if (githubOrgRepo == null) {
-            throw new IllegalStateException("No repo found, please provide the GITHUB_REPOSITORY env variable");
-        }
-        if (githubRefName == null) {
-            throw new IllegalStateException("No github ref found, please provide the GITHUB_REF_NAME env variable");
-        }
-        if (!githubRefName.startsWith("v")) {
-            throw new IllegalStateException("Github ref must be a tag (must start with 'v'): " + githubRefName);
-        }
-        if (previousRefName != null && !previousRefName.isBlank() && !previousRefName.startsWith("v")) {
-            throw new IllegalStateException(
-                    "Previous github ref must be a tag (must start with 'v'): " + previousRefName);
-        }
     }
 
     private File downloadChangelogGenerator() {

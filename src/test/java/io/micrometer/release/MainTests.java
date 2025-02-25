@@ -77,7 +77,7 @@ class MainTests {
             }
 
             @Override
-            String getGithubRepository() {
+            String getGithubOrgRepository() {
                 return "micrometer-metrics/micrometer";
             }
 

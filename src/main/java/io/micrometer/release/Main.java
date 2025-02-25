@@ -15,6 +15,7 @@
  */
 package io.micrometer.release;
 
+import io.micrometer.release.common.Input;
 import io.micrometer.release.common.ProcessRunner;
 import io.micrometer.release.single.PostReleaseWorkflow;
 import io.micrometer.release.train.ProjectTrainReleaseWorkflow;
@@ -47,7 +48,7 @@ public class Main {
     void run() {
         ProcessRunner processRunner = new ProcessRunner();
         PostReleaseWorkflow postReleaseWorkflow = newPostReleaseWorkflow(processRunner);
-        String githubOrgRepo = getGithubRepository();
+        String githubOrgRepo = getGithubOrgRepository();
         String githubRefName = getGithubRefName();
         String previousRefName = getPreviousRefName();
         String trainVersions = getTrainVersions();
@@ -79,20 +80,20 @@ public class Main {
         }
     }
 
-    String getGithubRepository() {
-        return System.getenv("GITHUB_REPOSITORY");
+    String getGithubOrgRepository() {
+        return Input.getGithubOrgRepository();
     }
 
     String getPreviousRefName() {
-        return System.getenv("PREVIOUS_REF_NAME");
+        return Input.getPreviousRefName();
     }
 
     String getGithubRefName() {
-        return System.getenv("GITHUB_REF_NAME");
+        return Input.getGithubRefName();
     }
 
     String getTrainVersions() {
-        return System.getenv("TRAIN_VERSIONS");
+        return Input.getTrainVersions();
     }
 
     ProjectTrainReleaseWorkflow trainReleaseWorkflow(String githubOrgRepo, String artifactToCheck,

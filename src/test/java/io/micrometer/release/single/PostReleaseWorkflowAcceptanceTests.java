@@ -17,6 +17,7 @@ package io.micrometer.release.single;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import io.micrometer.release.common.ProcessRunner;
+import io.micrometer.release.train.DependencyVerifierTests;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;

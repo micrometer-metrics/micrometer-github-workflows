@@ -15,12 +15,11 @@
  */
 package io.micrometer.release.common;
 
-import java.io.File;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
@@ -33,14 +32,21 @@ public class ProcessRunner {
 
     private final String repo;
 
+    private final File directory;
+
     private final Map<String, String> envVars = new HashMap<>();
 
     public ProcessRunner() {
-        this.repo = null;
+        this(null, null);
     }
 
     public ProcessRunner(String repo) {
+        this(repo, null);
+    }
+
+    public ProcessRunner(String repo, File directory) {
         this.repo = repo;
+        this.directory = directory;
     }
 
     public ProcessRunner withEnvVars(Map<String, String> envVars) {
@@ -78,7 +84,8 @@ public class ProcessRunner {
             List<String> errorLines = new ArrayList<>();
 
             Thread outputThread = new Thread(() -> {
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream()))) {
                     String line;
                     while ((line = reader.readLine()) != null) {
                         if (shouldLog) {
@@ -86,21 +93,20 @@ public class ProcessRunner {
                         }
                         lines.add(line);
                     }
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     log.error("Error reading process output", e);
                 }
             });
 
             Thread errorThread = new Thread(() -> {
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getErrorStream()))) {
                     String line;
                     while ((line = reader.readLine()) != null) {
                         log.error(line);
                         errorLines.add(line);
                     }
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     log.error("Error reading process error stream", e);
                 }
             });
@@ -114,12 +120,12 @@ public class ProcessRunner {
 
             int exitCode = process.waitFor();
             if (exitCode != 0) {
-                String errorMessage = String.format("Failed to run the command %s. Exit code: %d.%nError output:%n%s",
-                        Arrays.toString(processedCommand), exitCode, String.join("\n", errorLines));
+                String errorMessage = String.format(
+                    "Failed to run the command %s. Exit code: %d.%nError output:%n%s",
+                    Arrays.toString(processedCommand), exitCode, String.join("\n", errorLines));
                 throw new IllegalStateException(errorMessage);
             }
-        }
-        catch (IOException | InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
             throw new IllegalStateException("A failure around the process execution happened", e);
         }
         log.info("Command executed successfully");
@@ -132,7 +138,11 @@ public class ProcessRunner {
 
     Process startProcess(String... processedCommand) throws IOException, InterruptedException {
         runGitConfig();
-        ProcessBuilder processBuilder = new ProcessBuilder(processedCommand).redirectErrorStream(false);
+        ProcessBuilder processBuilder = new ProcessBuilder(processedCommand).redirectErrorStream(
+            false);
+        if (directory != null) {
+            processBuilder.directory(directory);
+        }
         return doStartProcess(processBuilder);
     }
 
@@ -146,14 +156,15 @@ public class ProcessRunner {
     }
 
     void runGitConfig() throws InterruptedException, IOException {
-        doStartProcess(new ProcessBuilder("git", "config", "--global", "--add", "safe.directory", "/github/workspace"))
+        doStartProcess(new ProcessBuilder("git", "config", "--global", "--add", "safe.directory",
+            "/github/workspace"))
             .waitFor();
     }
 
     private String[] processCommand(String[] command) {
         String[] processedCommand = command;
         if (repo != null && command.length > 2 && command[0].equalsIgnoreCase("gh")
-                && !command[1].equalsIgnoreCase("api")) {
+            && !command[1].equalsIgnoreCase("api")) {
             List<String> commands = new LinkedList<>(Arrays.stream(command).toList());
             commands.add("--repo");
             commands.add(repo);

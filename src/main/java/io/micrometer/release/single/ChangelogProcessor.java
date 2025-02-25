@@ -15,6 +15,8 @@
  */
 package io.micrometer.release.single;
 
+import io.micrometer.release.common.Dependency;
+import io.micrometer.release.common.GradleParser;
 import io.micrometer.release.common.ProcessRunner;
 import io.micrometer.release.single.ChangelogSection.Section;
 import org.slf4j.Logger;

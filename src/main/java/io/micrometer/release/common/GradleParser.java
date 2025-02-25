@@ -13,41 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.release.single;
-
-import io.micrometer.release.common.ProcessRunner;
-
-import java.util.concurrent.atomic.AtomicReference;
+package io.micrometer.release.common;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
-class GradleParser {
+public class GradleParser {
 
     private static final Logger log = LoggerFactory.getLogger(GradleParser.class);
 
-    private final List<String> excludedDependencyScopes = List.of("testCompile", "testImplementation", "checkstyle",
-            "runtime", "nohttp", "testRuntime", "optional");
-
-    private final AtomicReference<Set<Dependency>> dependenciesCache = new AtomicReference<>();
+    private final List<String> excludedDependencyScopes = List.of("testCompile",
+        "testImplementation", "checkstyle",
+        "runtime", "nohttp", "testRuntime", "optional");
 
     private final ProcessRunner processRunner;
 
-    GradleParser(ProcessRunner processRunner) {
+    public GradleParser(ProcessRunner processRunner) {
         this.processRunner = processRunner;
     }
 
-    Set<Dependency> fetchAllDependencies() {
-        Set<Dependency> cachedDependencies = dependenciesCache.get();
-        if (cachedDependencies != null) {
-            log.info("Returned cached dependencies");
-            return cachedDependencies;
-        }
+    public Set<Dependency> fetchAllDependencies() {
         log.info("Fetching test and optional dependencies...");
         List<String> projectLines = projectLines();
         List<String> subprojects = projectLines.stream()
@@ -72,34 +60,30 @@ class GradleParser {
                     boolean finalTestOrOptional = testOrOptional;
                     dependencies.stream()
                         .filter(dependency -> dependency.group().equalsIgnoreCase(parts[1])
-                                && dependency.artifact().equalsIgnoreCase(parts[2]))
+                            && dependency.artifact().equalsIgnoreCase(parts[2]))
                         .findFirst()
                         .ifPresentOrElse(dependency -> {
-                            log.debug("Dependency {} is already present in compile scope", parts[1] + ":" + parts[2]);
+                            log.debug("Dependency {} is already present in compile scope",
+                                parts[1] + ":" + parts[2]);
                             if (dependency.toIgnore() && !finalTestOrOptional) {
                                 log.debug(
-                                        "Dependency {} was previously set in test or compile scope and will be in favour of one in compile scope",
-                                        dependency);
+                                    "Dependency {} was previously set in test or compile scope and will be in favour of one in compile scope",
+                                    dependency);
                                 dependencies.remove(dependency);
-                                dependencies.add(new Dependency(parts[1], parts[2], version, finalTestOrOptional));
+                                dependencies.add(new Dependency(parts[1], parts[2], version,
+                                    finalTestOrOptional));
                             }
-                        }, () -> dependencies.add(new Dependency(parts[1], parts[2], version, finalTestOrOptional)));
-                }
-                else if (excludedDependencyScopes.stream()
+                        }, () -> dependencies.add(
+                            new Dependency(parts[1], parts[2], version, finalTestOrOptional)));
+                } else if (excludedDependencyScopes.stream()
                     .anyMatch(string -> line.toLowerCase().contains(string.toLowerCase()))) {
                     testOrOptional = true;
-                }
-                else if (line.isEmpty() || line.isBlank()) {
+                } else if (line.isEmpty() || line.isBlank()) {
                     testOrOptional = false;
                 }
             }
         }
-        dependenciesCache.set(dependencies);
         return dependencies;
-    }
-
-    void clearCache() {
-        dependenciesCache.set(null);
     }
 
     static String extractVersion(String line) {
@@ -123,11 +107,11 @@ class GradleParser {
         return null;
     }
 
-    List<String> dependenciesLines(List<String> gradleCommand) {
+    public List<String> dependenciesLines(List<String> gradleCommand) {
         return processRunner.runSilently(gradleCommand);
     }
 
-    List<String> projectLines() {
+    public List<String> projectLines() {
         return processRunner.runSilently("./gradlew", "projects");
     }
 

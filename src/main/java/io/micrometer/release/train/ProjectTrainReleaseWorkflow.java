@@ -72,7 +72,8 @@ public class ProjectTrainReleaseWorkflow {
         // successfully (now we're waiting for sync to central)
         // For each branch now run a post release action
         // Finally check if sync is finished
-        List<String> versions = Arrays.stream(commaSeparatedListOfVersions.split(",")).map(String::trim).toList();
+        List<String> versions = Arrays.stream(commaSeparatedListOfVersions.split(","))
+            .map(String::trim).toList();
         Map<String, String> versionToBranch = versionToBranchConverter.convert(versions);
         releaseScheduler.runReleaseAndCheckCi(versionToBranch);
         postReleaseTaskScheduler.runPostReleaseTasks(versions);
