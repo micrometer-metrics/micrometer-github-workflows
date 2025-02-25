@@ -15,13 +15,11 @@
  */
 package io.micrometer.release.single;
 
-import io.micrometer.release.common.ProcessRunner;
+import io.micrometer.release.common.TestGradleParser;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.net.URL;
 import java.nio.file.Files;
-import java.util.List;
 
 import static org.assertj.core.api.BDDAssertions.then;
 
@@ -31,61 +29,12 @@ class ChangelogProcessorTests {
 
     File expectedOutput = new File(ChangelogProcessorTests.class.getResource("/processor/output.md").toURI());
 
-    static List<String> expectedGradleCommand = List.of("./gradlew", "concurrency-tests:dependencies",
-            "docs:dependencies", "micrometer-benchmarks-core:dependencies", "micrometer-bom:dependencies",
-            "micrometer-commons:dependencies", "micrometer-core:dependencies", "micrometer-jakarta9:dependencies",
-            "micrometer-java11:dependencies", "micrometer-jetty11:dependencies", "micrometer-jetty12:dependencies",
-            "micrometer-observation:dependencies", "micrometer-observation-test:dependencies",
-            "micrometer-osgi-test:dependencies", "micrometer-registry-appoptics:dependencies",
-            "micrometer-registry-atlas:dependencies", "micrometer-registry-azure-monitor:dependencies",
-            "micrometer-registry-cloudwatch2:dependencies", "micrometer-registry-datadog:dependencies",
-            "micrometer-registry-dynatrace:dependencies", "micrometer-registry-elastic:dependencies",
-            "micrometer-registry-ganglia:dependencies", "micrometer-registry-graphite:dependencies",
-            "micrometer-registry-health:dependencies", "micrometer-registry-humio:dependencies",
-            "micrometer-registry-influx:dependencies", "micrometer-registry-jmx:dependencies",
-            "micrometer-registry-kairos:dependencies", "micrometer-registry-new-relic:dependencies",
-            "micrometer-registry-opentsdb:dependencies", "micrometer-registry-otlp:dependencies",
-            "micrometer-registry-prometheus:dependencies", "micrometer-registry-prometheus-simpleclient:dependencies",
-            "micrometer-registry-signalfx:dependencies", "micrometer-registry-stackdriver:dependencies",
-            "micrometer-registry-statsd:dependencies", "micrometer-registry-wavefront:dependencies",
-            "micrometer-samples-boot2:dependencies", "micrometer-samples-boot2-reactive:dependencies",
-            "micrometer-samples-core:dependencies", "micrometer-samples-hazelcast:dependencies",
-            "micrometer-samples-hazelcast3:dependencies", "micrometer-samples-javalin:dependencies",
-            "micrometer-samples-jersey3:dependencies", "micrometer-samples-jetty12:dependencies",
-            "micrometer-samples-jooq:dependencies", "micrometer-samples-kotlin:dependencies",
-            "micrometer-samples-spring-integration:dependencies", "micrometer-test:dependencies",
-            "micrometer-test-aspectj-ctw:dependencies", "micrometer-test-aspectj-ltw:dependencies");
-
     File output = Files.createTempFile("output", ".md").toFile();
 
     ChangelogProcessor processor = testChangelogProcessor(output);
 
     static ChangelogProcessor testChangelogProcessor(File output) {
-        return new ChangelogProcessor(output, new GradleParser(new ProcessRunner()) {
-
-            @Override
-            List<String> projectLines() {
-                URL resource = ChangelogGeneratorTests.class.getResource("/gradle/projects_output.txt");
-                try {
-                    return Files.readAllLines(new File(resource.toURI()).toPath());
-                }
-                catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
-            @Override
-            List<String> dependenciesLines(List<String> gradleCommand) {
-                then(gradleCommand).isEqualTo(expectedGradleCommand);
-                URL resource = ChangelogGeneratorTests.class.getResource("/gradle/dependencies_output.txt");
-                try {
-                    return Files.readAllLines(new File(resource.toURI()).toPath());
-                }
-                catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
+        return new ChangelogProcessor(output, new TestGradleParser());
     }
 
     ChangelogProcessorTests() throws Exception {

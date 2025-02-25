@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.release.single;
+package io.micrometer.release.common;
 
-record Dependency(String group, String artifact, String version, boolean toIgnore) {
+public record Dependency(String group, String artifact, String version, boolean toIgnore) {
 
 }

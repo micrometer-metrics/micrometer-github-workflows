@@ -45,6 +45,8 @@ class ProjectTrainReleaseWorkflowAcceptanceTests {
         return null;
     });
 
+    DependencyVerifier dependencyVerifier = mock();
+
     PostReleaseWorkflow postReleaseWorkflow = mock();
 
     CircleCiChecker circleCiChecker = CircleCiCheckerTests.getChecker("success", wm1.url("/api/v2/"));
@@ -52,7 +54,7 @@ class ProjectTrainReleaseWorkflowAcceptanceTests {
     MavenCentralSyncChecker mavenCentralSyncChecker = new MavenCentralSyncChecker("micrometer-core",
             wm1.url("/maven2/io/micrometer/"), 3, 1);
 
-    ReleaseScheduler releaseScheduler = new ReleaseScheduler(circleCiChecker, processRunner);
+    ReleaseScheduler releaseScheduler = new ReleaseScheduler(circleCiChecker, processRunner, dependencyVerifier);
 
     PostReleaseTaskScheduler postReleaseTaskScheduler = new PostReleaseTaskScheduler(postReleaseWorkflow,
             new Git(processRunner), GITHUB_ORG_REPO);

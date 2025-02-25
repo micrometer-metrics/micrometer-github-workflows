@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.release.common;
+package io.micrometer.release.single;
 
 import java.time.LocalDate;
 
 /**
  * Always second Monday of the next month
  */
-public class ReleaseDateCalculator {
+class ReleaseDateCalculator {
 
-    public static LocalDate calculateDueDate(LocalDate now) {
+    static LocalDate calculateDueDate(LocalDate now) {
         // Go to first day of the next month
         LocalDate nextMonth = now.withDayOfMonth(1).plusMonths(1);
 

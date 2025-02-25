@@ -17,7 +17,6 @@ package io.micrometer.release.train;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.micrometer.release.common.GithubActions;
-import io.micrometer.release.common.ReleaseDateCalculator;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -120,7 +119,7 @@ class TrainGithubActionsE2eTests implements GithubActions {
         Milestone milestone = githubClient.getMilestoneByTitle(next);
 
         assertThat(milestone.state()).isEqualTo("open");
-        assertThat(milestone.dueOn()).isEqualTo(ReleaseDateCalculator.calculateDueDate(LocalDate.now()));
+        assertThat(milestone.dueOn()).isEqualTo(calculateDueDate(LocalDate.now()));
         List<Issue> issues = githubClient.getIssuesForMilestone(milestone.number());
         assertThat(issues).extracting(Issue::state).containsOnly("open");
         assertThat(issues).extracting(Issue::title).containsOnly("Open issue in concrete " + previous);
@@ -140,6 +139,17 @@ class TrainGithubActionsE2eTests implements GithubActions {
         GithubActions.runWorkflow("release-train-workflow.yml",
                 List.of("gh", "workflow", "run", "release-train-workflow.yml", "--ref", "main", "-f",
                         "train_versions=0.1.1,0.2.0-M2,1.0.0-RC1", "-f", "artifact_to_check=micrometer-bom"));
+    }
+
+    private static LocalDate calculateDueDate(LocalDate now) {
+        // Go to first day of the next month
+        LocalDate nextMonth = now.withDayOfMonth(1).plusMonths(1);
+
+        // Find first Monday
+        LocalDate firstMonday = nextMonth.plusDays((8 - nextMonth.getDayOfWeek().getValue()) % 7);
+
+        // Add a week to get to second Monday
+        return firstMonday.plusWeeks(1);
     }
 
 }

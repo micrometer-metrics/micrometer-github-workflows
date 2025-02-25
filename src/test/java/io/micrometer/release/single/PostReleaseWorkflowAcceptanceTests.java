@@ -19,8 +19,6 @@ import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import io.micrometer.release.common.ProcessRunner;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +28,6 @@ import java.nio.file.Path;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.BDDAssertions.then;
-import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -56,26 +53,6 @@ class PostReleaseWorkflowAcceptanceTests {
     PostReleaseWorkflowAcceptanceTests() throws IOException, URISyntaxException {
     }
 
-    @ParameterizedTest
-    @CsvSource(textBlock = """
-            ,v1.2.3,,No repo found, please provide the GITHUB_REPOSITORY env variable
-            foo/bar,,,No github ref found, please provide the GITHUB_REF_NAME env variable
-            foo/bar,1.2.3,,Github ref must be a tag (must start with 'v'): 1.2.3
-            foo/bar,v1.2.3,2.3.4,Previous github ref must be a tag (must start with 'v'): 2.3.4
-            """)
-    void should_fail_assertions(String githubOrgRepo, String githubRefName, String previousRefName,
-            String expectedErrorMsg) {
-        PostReleaseWorkflow postReleaseWorkflow = new PostReleaseWorkflow(null,
-                new ChangelogGeneratorDownloader(ChangelogGeneratorDownloader.CHANGELOG_GENERATOR_URL, outputJar),
-                ChangelogGeneratorTests.testChangelogGenerator(outputChangelog),
-                ChangelogFetcherTests.testChangelogFetcher(oldOutputChangelog),
-                ChangelogProcessorTests.testChangelogProcessor(outputChangelog), updater, milestoneUpdater,
-                NotificationSenderTests.testNotificationSender(wm1));
-
-        thenThrownBy(() -> postReleaseWorkflow.assertInputs(githubOrgRepo, githubRefName, previousRefName))
-            .hasMessageContaining(expectedErrorMsg);
-    }
-
     @Test
     void should_perform_full_post_release_process() throws Exception {
         PostReleaseWorkflow postReleaseWorkflow = testPostReleaseWorkflow(updater);
@@ -88,7 +65,7 @@ class PostReleaseWorkflowAcceptanceTests {
     }
 
     private PostReleaseWorkflow testPostReleaseWorkflow(AssertingReleaseNotesUpdater updater) {
-        return new PostReleaseWorkflow(DependencyVerifierTests.testDependencyVerifier(),
+        return new PostReleaseWorkflow(
                 new ChangelogGeneratorDownloader(ChangelogGeneratorDownloader.CHANGELOG_GENERATOR_URL, outputJar),
                 ChangelogGeneratorTests.testChangelogGenerator(outputChangelog),
                 ChangelogFetcherTests.testChangelogFetcher(oldOutputChangelog),

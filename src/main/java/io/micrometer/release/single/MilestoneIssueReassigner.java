@@ -16,7 +16,6 @@
 package io.micrometer.release.single;
 
 import io.micrometer.release.common.ProcessRunner;
-import io.micrometer.release.common.ReleaseDateCalculator;
 import io.micrometer.release.single.MilestoneMigrator.Milestone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

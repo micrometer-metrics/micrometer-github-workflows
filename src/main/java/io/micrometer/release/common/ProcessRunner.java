@@ -15,12 +15,11 @@
  */
 package io.micrometer.release.common;
 
-import java.io.File;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
@@ -33,14 +32,21 @@ public class ProcessRunner {
 
     private final String repo;
 
+    private final File directory;
+
     private final Map<String, String> envVars = new HashMap<>();
 
     public ProcessRunner() {
-        this.repo = null;
+        this(null, null);
     }
 
     public ProcessRunner(String repo) {
+        this(repo, null);
+    }
+
+    public ProcessRunner(String repo, File directory) {
         this.repo = repo;
+        this.directory = directory;
     }
 
     public ProcessRunner withEnvVars(Map<String, String> envVars) {
@@ -133,6 +139,9 @@ public class ProcessRunner {
     Process startProcess(String... processedCommand) throws IOException, InterruptedException {
         runGitConfig();
         ProcessBuilder processBuilder = new ProcessBuilder(processedCommand).redirectErrorStream(false);
+        if (directory != null) {
+            processBuilder.directory(directory);
+        }
         return doStartProcess(processBuilder);
     }
 

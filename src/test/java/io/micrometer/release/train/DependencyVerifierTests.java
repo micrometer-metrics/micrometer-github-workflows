@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.release.single;
+package io.micrometer.release.train;
 
+import io.micrometer.release.common.GradleParser;
 import io.micrometer.release.common.ProcessRunner;
-
-import java.util.concurrent.TimeUnit;
-
+import io.micrometer.release.common.TestGradleParser;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
@@ -28,8 +27,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -50,7 +49,12 @@ class DependencyVerifierTests {
 
     ProcessRunner processRunner = mock();
 
-    DependencyVerifier verifier = new DependencyVerifier(processRunner, 1, 5, 1, TimeUnit.MILLISECONDS);
+    DependencyVerifier verifier = new DependencyVerifier(processRunner, 1, 5, 1, TimeUnit.MILLISECONDS) {
+        @Override
+        GradleParser gradleParser(ProcessRunner branchProcessRunner) {
+            return new TestGradleParser();
+        }
+    };
 
     DependencyVerifierTests() throws URISyntaxException {
     }
@@ -65,7 +69,7 @@ class DependencyVerifierTests {
         given(processRunner.run(dependabotPrState)).willReturn(Collections.singletonList("BLOCKED,OPEN"),
                 Collections.singletonList("CLOSED,MERGED"));
 
-        assertThat(verifier.verifyDependencies("micrometer-metrics/micrometer")).isTrue();
+        verifier.verifyDependencies("main", "micrometer-metrics/micrometer");
 
         InOrder inOrder = Mockito.inOrder(processRunner);
         inOrder.verify(processRunner).run("gh", "api", "/", "--include");
@@ -82,7 +86,7 @@ class DependencyVerifierTests {
             .willReturn(Files.readAllLines(ghServerTimeResponse.toPath()));
         given(processRunner.run(dependabotCreatedPrNumbers)).willReturn(Collections.emptyList());
 
-        assertThat(verifier.verifyDependencies("micrometer-metrics/micrometer")).isTrue();
+        verifier.verifyDependencies("main", "micrometer-metrics/micrometer");
 
         InOrder inOrder = Mockito.inOrder(processRunner);
         inOrder.verify(processRunner).run("gh", "api", "/", "--include");
@@ -95,7 +99,7 @@ class DependencyVerifierTests {
     void should_throw_exception_when_gh_server_time_cannot_be_retrieved() {
         given(processRunner.run("gh", "api", "/", "--include")).willReturn(Collections.emptyList());
 
-        thenThrownBy(() -> verifier.verifyDependencies("micrometer-metrics/micrometer"))
+        thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer"))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("Could not get GitHub server time from response headers");
     }
@@ -107,7 +111,7 @@ class DependencyVerifierTests {
         given(processRunner.run(dependabotCreatedPrNumbers)).willReturn(Collections.singletonList("1234"));
         given(processRunner.run(dependabotPrState)).willReturn(Collections.singletonList("CONFLICTING"));
 
-        thenThrownBy(() -> verifier.verifyDependencies("micrometer-metrics/micrometer"))
+        thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer"))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("PR #1234 has conflicts");
     }
@@ -119,18 +123,9 @@ class DependencyVerifierTests {
         given(processRunner.run(dependabotCreatedPrNumbers)).willReturn(Collections.singletonList("1234"));
         given(processRunner.run(dependabotPrState)).willReturn(Collections.singletonList("BLOCKED,OPEN"));
 
-        thenThrownBy(() -> verifier.verifyDependencies("micrometer-metrics/micrometer"))
+        thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer"))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("Timeout waiting for Dependabot updates");
-    }
-
-    static DependencyVerifier testDependencyVerifier() {
-        return new DependencyVerifier(null) {
-            @Override
-            boolean verifyDependencies(String orgRepository) {
-                return true;
-            }
-        };
     }
 
 }

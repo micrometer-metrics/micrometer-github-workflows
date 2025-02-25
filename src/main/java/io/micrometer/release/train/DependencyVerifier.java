@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.release.single;
+package io.micrometer.release.train;
 
-import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
-
+import io.micrometer.release.common.Dependency;
+import io.micrometer.release.common.GradleParser;
 import io.micrometer.release.common.ProcessRunner;
-
-import java.time.ZonedDateTime;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 
 class DependencyVerifier {
 
@@ -59,12 +62,63 @@ class DependencyVerifier {
         this.timeUnit = timeUnit;
     }
 
-    boolean verifyDependencies(String orgRepository) {
+    void verifyDependencies(String branch, String orgRepository) {
+        cloneRepo(branch, orgRepository);
+        GradleParser gradleParser = getGradleParser(branch);
+        Set<Dependency> dependenciesBeforeDependabot = gradleParser.fetchAllDependencies();
+        Status status = dependabotUpdateStatus(orgRepository);
+        pullTheLatestRepoChanges();
+        Set<Dependency> dependenciesAfterDependabot = gradleParser.fetchAllDependencies();
+        Set<Dependency> diff = new HashSet<>(dependenciesAfterDependabot);
+        diff.removeAll(dependenciesBeforeDependabot);
+        log.info("Dependency diff {}", diff);
+        assertDependencyDiff(status, diff);
+    }
+
+    private void assertDependencyDiff(Status status, Set<Dependency> diff) {
+        if (status == Status.NO_PRS) {
+            log.info("There were no dependabot PRs, the dependency diff should have no differences");
+            if (!diff.isEmpty()) {
+                log.error("Dependency diff was not empty!");
+                throw new IllegalStateException(
+                        "There were open PRs however the dependencies differ. Different dependencies: [" + diff + "]");
+            }
+        }
+        else {
+            log.info("There were open PRs. The dependency diff should contain new library versions");
+            // TODO: Take from env vars micrometer / tracing / context propagation library
+            // versions and assert that they were updated in the diff
+            // check what this project is (e.g. micrometer) and what it should check for
+            // (e.g. context-propagation)
+        }
+    }
+
+    private Status dependabotUpdateStatus(String orgRepository) {
         String githubServerTime = getGitHubServerTime();
         triggerDependabotCheck(orgRepository);
         log.info("Waiting {} {} for PRs to be created...", initialWait, timeUnit);
         sleep(initialWait);
         return waitForDependabotUpdates(githubServerTime);
+    }
+
+    private GradleParser getGradleParser(String branch) {
+        ProcessRunner branchProcessRunner = new ProcessRunner(null, new File(branch));
+        return gradleParser(branchProcessRunner);
+    }
+
+    GradleParser gradleParser(ProcessRunner branchProcessRunner) {
+        return new GradleParser(branchProcessRunner);
+    }
+
+    private void cloneRepo(String branch, String orgRepository) {
+        log.info("Cloning out {} branch to folder {}", branch, branch);
+        processRunner.run("git", "clone", "-b", branch, "--single-branch",
+                "https://github.com/" + orgRepository + ".git", branch);
+    }
+
+    private void pullTheLatestRepoChanges() {
+        log.info("Pulling the latest repo changes");
+        processRunner.run("git", "pull");
     }
 
     private void sleep(int timeoutToSleep) {
@@ -102,14 +156,14 @@ class DependencyVerifier {
         log.info("Triggered Dependabot check");
     }
 
-    private boolean waitForDependabotUpdates(String githubServerTime) {
+    private Status waitForDependabotUpdates(String githubServerTime) {
         long startTime = System.currentTimeMillis();
         long timeoutMillis = timeUnit.toMillis(timeout);
         while (System.currentTimeMillis() - startTime < timeoutMillis) {
             List<String> openPRs = getOpenMicrometerDependabotPRs(githubServerTime);
             if (openPRs.isEmpty()) {
                 log.info("No pending Micrometer updates");
-                return true;
+                return Status.NO_PRS;
             }
             boolean allProcessed = true;
             for (String pr : openPRs) {
@@ -119,7 +173,7 @@ class DependencyVerifier {
             }
             if (allProcessed) {
                 log.info("All Dependabot PRs processed");
-                return true;
+                return Status.ALL_PRS_COMPLETED;
             }
             log.info("Not all PRs processed, will try again...");
             sleep(waitBetweenRuns);
@@ -162,6 +216,12 @@ class DependencyVerifier {
             log.info("PR #{} status: {}", prNumber, status);
         }
         return isCompleted;
+    }
+
+    enum Status {
+
+        NO_PRS, ALL_PRS_COMPLETED
+
     }
 
 }
