@@ -8,10 +8,6 @@ def VERSIONS = [
         libs.wiremock,
 ]
 
-def PLATFORM_VERSIONS = [
-        libs.junitBom
-]
-
 subprojects {
     plugins.withId('java-library') {
         dependencies {
@@ -24,11 +20,6 @@ subprojects {
                     compileOnly version
                     runtimeOnly version
                 }
-            }
-            (PLATFORM_VERSIONS).each { bom ->
-                api platform(bom)
-                compileOnly platform(bom)
-                runtimeOnly platform(bom)
             }
         }
     }

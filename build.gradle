@@ -64,6 +64,7 @@ dependencies {
     implementation libs.logback
     implementation libs.jacksonDatabind
 
+    testImplementation platform(libs.junitBom)
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation libs.assertj
     testImplementation libs.archunit
