@@ -64,9 +64,9 @@ public class GradleParser {
                                 && dependency.artifact().equalsIgnoreCase(parts[2]))
                         .findFirst()
                         .ifPresentOrElse(dependency -> {
-                            log.debug("Dependency {} is already present in compile scope", parts[1] + ":" + parts[2]);
+                            log.trace("Dependency {} is already present in compile scope", parts[1] + ":" + parts[2]);
                             if (dependency.toIgnore() && !finalTestOrOptional) {
-                                log.debug(
+                                log.trace(
                                         "Dependency {} was previously set in test or compile scope and will be in favour of one in compile scope",
                                         dependency);
                                 dependencies.remove(dependency);

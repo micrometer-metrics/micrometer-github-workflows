@@ -65,6 +65,7 @@ class DependencyVerifier {
     void verifyDependencies(String branch, String orgRepository) {
         cloneRepo(branch, orgRepository);
         GradleParser gradleParser = getGradleParser(branch);
+        log.info("Fetching all dependencies before dependabot...");
         Set<Dependency> dependenciesBeforeDependabot = gradleParser.fetchAllDependencies();
         Status status = dependabotUpdateStatus(orgRepository);
         pullTheLatestRepoChanges();
