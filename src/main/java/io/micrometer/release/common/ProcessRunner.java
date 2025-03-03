@@ -37,7 +37,7 @@ public class ProcessRunner {
     private final Map<String, String> envVars = new HashMap<>();
 
     public ProcessRunner() {
-        this(null, null);
+        this((String) null, null);
     }
 
     public ProcessRunner(String repo) {
@@ -46,6 +46,17 @@ public class ProcessRunner {
 
     public ProcessRunner(String repo, File directory) {
         this.repo = repo;
+        this.directory = directory;
+    }
+
+    public ProcessRunner(File directory) {
+        this.repo = null;
+        this.directory = directory;
+    }
+
+    // E.g. Same repo, different branch
+    public ProcessRunner(ProcessRunner processRunner, File directory) {
+        this.repo = processRunner.repo;
         this.directory = directory;
     }
 

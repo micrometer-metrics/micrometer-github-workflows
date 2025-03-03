@@ -73,6 +73,11 @@ class DependencyVerifierTests {
                 throw new RuntimeException(e);
             }
         }
+
+        @Override
+        ProcessRunner processRunnerForBranch(File clonedRepo) {
+            return processRunner;
+        }
     };
 
     DependencyVerifierTests() throws URISyntaxException {

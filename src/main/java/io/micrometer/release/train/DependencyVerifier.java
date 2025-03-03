@@ -71,7 +71,7 @@ class DependencyVerifier {
         log.info("Fetching all dependencies before dependabot...");
         Set<Dependency> dependenciesBeforeDependabot = micrometerOnly(gradleParser.fetchAllDependencies());
         Status status = dependabotUpdateStatus(clonedRepo, orgRepository);
-        pullTheLatestRepoChanges();
+        pullTheLatestRepoChanges(clonedRepo);
         Set<Dependency> dependenciesAfterDependabot = micrometerOnly(gradleParser.fetchAllDependencies());
         Set<Dependency> diff = new HashSet<>(dependenciesAfterDependabot);
         diff.removeAll(dependenciesBeforeDependabot);
@@ -111,7 +111,7 @@ class DependencyVerifier {
     }
 
     private GradleParser getGradleParser(File branch) {
-        ProcessRunner branchProcessRunner = new ProcessRunner(null, branch);
+        ProcessRunner branchProcessRunner = new ProcessRunner(branch);
         return gradleParser(branchProcessRunner);
     }
 
@@ -130,9 +130,9 @@ class DependencyVerifier {
         return new File(branch);
     }
 
-    private void pullTheLatestRepoChanges() {
+    private void pullTheLatestRepoChanges(File clonedRepo) {
         log.info("Pulling the latest repo changes");
-        processRunner.run("git", "pull");
+        processRunnerForBranch(clonedRepo).run("git", "pull");
     }
 
     private void sleep(int timeoutToSleep) {
@@ -180,18 +180,23 @@ class DependencyVerifier {
                 log.info("Added trigger comment to dependabot.yml");
             }
             Files.writeString(path, fileContent);
-            processRunner.run("git", "config", "user.name", "GitHub Action");
-            processRunner.run("git", "config", "user.email", "action@github.com");
-            processRunner.run("git", "add", filePath);
-            processRunner.run("git", "commit", "-m",
+            ProcessRunner branchProcessRunner = processRunnerForBranch(clonedRepo);
+            branchProcessRunner.run("git", "config", "user.name", "GitHub Action");
+            branchProcessRunner.run("git", "config", "user.email", "action@github.com");
+            branchProcessRunner.run("git", "add", filePath);
+            branchProcessRunner.run("git", "commit", "-m",
                     "ci: " + (hasComment ? "Remove" : "Add") + " dependabot trigger comment");
-            processRunner.run("git", "push");
+            branchProcessRunner.run("git", "push");
         }
         catch (Exception e) {
             log.error("Failed to modify dependabot.yml", e);
             throw new IllegalStateException("Failed to trigger Dependabot check", e);
         }
         log.info("Triggered Dependabot check");
+    }
+
+    ProcessRunner processRunnerForBranch(File clonedRepo) {
+        return new ProcessRunner(this.processRunner, clonedRepo);
     }
 
     private void waitForDependabotJobsToFinish(String orgRepository, String githubServerTime) {
