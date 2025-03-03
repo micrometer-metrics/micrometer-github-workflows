@@ -180,6 +180,8 @@ class DependencyVerifier {
                 log.info("Added trigger comment to dependabot.yml");
             }
             Files.writeString(path, fileContent);
+            processRunner.run("git", "config", "user.name", "GitHub Action");
+            processRunner.run("git", "config", "user.email", "action@github.com");
             processRunner.run("git", "add", filePath);
             processRunner.run("git", "commit", "-m",
                     "ci: " + (hasComment ? "Remove" : "Add") + " dependabot trigger comment");

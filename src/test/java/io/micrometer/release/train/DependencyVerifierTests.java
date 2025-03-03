@@ -18,9 +18,6 @@ package io.micrometer.release.train;
 import io.micrometer.release.common.GradleParser;
 import io.micrometer.release.common.ProcessRunner;
 import io.micrometer.release.common.TestGradleParser;
-
-import java.util.List;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
@@ -31,6 +28,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.BDDAssertions.thenThrownBy;
@@ -100,6 +98,8 @@ class DependencyVerifierTests {
 
         InOrder inOrder = Mockito.inOrder(processRunner);
         inOrder.verify(processRunner).run("gh", "api", "/", "--include");
+        inOrder.verify(processRunner).run("git", "config", "user.name", "GitHub Action");
+        inOrder.verify(processRunner).run("git", "config", "user.email", "action@github.com");
         inOrder.verify(processRunner).run("git", "add", ".github/dependabot.yml");
         inOrder.verify(processRunner)
             .run(eq("git"), eq("commit"), eq("-m"), matches("ci: (Add|Remove) dependabot trigger comment"));
