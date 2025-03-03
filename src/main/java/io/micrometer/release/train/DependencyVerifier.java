@@ -121,8 +121,7 @@ class DependencyVerifier {
 
     private File cloneRepo(String branch, String orgRepository) {
         log.info("Cloning out {} branch to folder {}", branch, branch);
-        processRunner.run("git", "clone", "-b", branch, "--single-branch",
-                "https://github.com/" + orgRepository + ".git", branch);
+        processRunner.run("gh", "repo", "clone", orgRepository, branch, "--", "-b", branch, "--single-branch");
         return clonedDir(branch);
     }
 
