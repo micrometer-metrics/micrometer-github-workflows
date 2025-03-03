@@ -75,6 +75,11 @@ class DependencyVerifierTests {
         }
 
         @Override
+        String ghToken() {
+            return "1234567890";
+        }
+
+        @Override
         ProcessRunner processRunnerForBranch(File clonedRepo) {
             return processRunner;
         }
@@ -103,6 +108,9 @@ class DependencyVerifierTests {
 
         InOrder inOrder = Mockito.inOrder(processRunner);
         inOrder.verify(processRunner).run("gh", "api", "/", "--include");
+        inOrder.verify(processRunner)
+            .run("git", "remote", "set-url", "origin",
+                    "https://x-access-token:1234567890@github.com/micrometer-metrics/micrometer.git");
         inOrder.verify(processRunner).run("git", "config", "user.name", "GitHub Action");
         inOrder.verify(processRunner).run("git", "config", "user.email", "action@github.com");
         inOrder.verify(processRunner).run("git", "add", ".github/dependabot.yml");

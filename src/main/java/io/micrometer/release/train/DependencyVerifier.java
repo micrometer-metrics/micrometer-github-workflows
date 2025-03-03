@@ -105,7 +105,7 @@ class DependencyVerifier {
 
     private Status dependabotUpdateStatus(File clonedRepo, String orgRepository) {
         String githubServerTime = getGitHubServerTime();
-        triggerDependabotCheck(clonedRepo);
+        triggerDependabotCheck(orgRepository, clonedRepo);
         waitForDependabotJobsToFinish(orgRepository, githubServerTime);
         return waitForDependabotPrsToFinish(githubServerTime);
     }
@@ -162,7 +162,7 @@ class DependencyVerifier {
         return serverTime;
     }
 
-    private void triggerDependabotCheck(File clonedRepo) {
+    private void triggerDependabotCheck(String orgRepository, File clonedRepo) {
         log.info("Will trigger a Dependabot check...");
         try {
             String filePath = ".github/dependabot.yml";
@@ -179,7 +179,10 @@ class DependencyVerifier {
                 log.info("Added trigger comment to dependabot.yml");
             }
             Files.writeString(path, fileContent);
+            String githubToken = ghToken();
             ProcessRunner branchProcessRunner = processRunnerForBranch(clonedRepo);
+            branchProcessRunner.run("git", "remote", "set-url", "origin",
+                    "https://x-access-token:" + githubToken + "@github.com/" + orgRepository + ".git");
             branchProcessRunner.run("git", "config", "user.name", "GitHub Action");
             branchProcessRunner.run("git", "config", "user.email", "action@github.com");
             branchProcessRunner.run("git", "add", filePath);
@@ -192,6 +195,10 @@ class DependencyVerifier {
             throw new IllegalStateException("Failed to trigger Dependabot check", e);
         }
         log.info("Triggered Dependabot check");
+    }
+
+    String ghToken() {
+        return System.getenv("GH_TOKEN");
     }
 
     ProcessRunner processRunnerForBranch(File clonedRepo) {
