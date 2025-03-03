@@ -96,7 +96,7 @@ class SingleProjectGithubActionsE2eTests implements GithubActions {
 
     private static void runPostReleaseWorkflow() {
         log.info("Running post release action from tag");
-        GithubActions.runWorkflow("post-release-workflow.yml", List.of("gh", "workflow", "run",
+        GithubActions.runWorkflow("post-release-workflow.yml", "v0.1.1", List.of("gh", "workflow", "run",
                 "post-release-workflow.yml", "--ref", "v0.1.1", "-f", "previous_ref_name=v0.1.0"));
     }
 

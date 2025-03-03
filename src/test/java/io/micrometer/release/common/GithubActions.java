@@ -55,22 +55,29 @@ public interface GithubActions {
 
     private static void resetMilestones() throws InterruptedException {
         log.info("Resetting repository state");
-        processRunner.run("gh", "workflow", "run", "reset-milestones.yml");
-        waitForWorkflowCompletion("reset-milestones.yml");
+        runAndWaitResetMiestones("0.1.x");
+        runAndWaitResetMiestones("0.2.x");
+        runAndWaitResetMiestones("main");
     }
 
-    static void runWorkflow(String workflowName, List<String> commands) {
+    private static void runAndWaitResetMiestones(String branch) throws InterruptedException {
+        log.info("Resetting branch {}", branch);
+        processRunner.run("gh", "workflow", "run", "reset-milestones.yml", "-r", branch);
+        waitForWorkflowCompletion("reset-milestones.yml", branch);
+    }
+
+    static void runWorkflow(String workflowName, String branch, List<String> commands) {
         log.info("Running workflow with name [{}]", workflowName);
         processRunner.run(commands);
         try {
-            waitForWorkflowCompletion(workflowName);
+            waitForWorkflowCompletion(workflowName, branch);
         }
         catch (InterruptedException e) {
             throw new IllegalStateException(e);
         }
     }
 
-    private static void waitForWorkflowCompletion(String workflowFile) throws InterruptedException {
+    private static void waitForWorkflowCompletion(String workflowFile, String branch) throws InterruptedException {
         log.info("Waiting for workflow [{}] scheduling...", workflowFile);
         Thread.sleep(10_000); // Wait for the action to schedule
         log.info("Waiting for workflow [{}] completion...", workflowFile);
@@ -78,7 +85,8 @@ public interface GithubActions {
         int maxAttempts = 30;
         int attempts = 0;
         while (!completed && attempts < maxAttempts) { // 5 minute timeout
-            List<String> status = processRunner.run("gh", "run", "list", "--workflow", workflowFile, "--limit", "1");
+            List<String> status = processRunner.run("gh", "run", "list", "--workflow", workflowFile, "--branch", branch,
+                    "--limit", "1");
             log.info("Workflow [{}] not completed yet - attempt [{}]/[{}]", workflowFile, attempts + 1, maxAttempts);
             completed = status.stream().anyMatch(line -> line.contains("completed"));
             if (!completed) {

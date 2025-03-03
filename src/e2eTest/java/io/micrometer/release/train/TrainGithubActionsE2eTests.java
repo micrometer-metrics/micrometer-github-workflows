@@ -136,7 +136,7 @@ class TrainGithubActionsE2eTests implements GithubActions {
 
     private static void runTrainPostReleaseWorkflow() {
         log.info("Running train release from main");
-        GithubActions.runWorkflow("release-train-workflow.yml",
+        GithubActions.runWorkflow("release-train-workflow.yml", "main",
                 List.of("gh", "workflow", "run", "release-train-workflow.yml", "--ref", "main", "-f",
                         "train_versions=0.1.1,0.2.0-M2,1.0.0-RC1", "-f", "artifact_to_check=micrometer-bom"));
     }
