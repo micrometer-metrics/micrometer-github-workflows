@@ -1,17 +1,15 @@
 /**
  * Copyright 2025 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * <p>
  * https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.micrometer.release.common;
 
@@ -24,7 +22,7 @@ import static org.assertj.core.api.BDDAssertions.then;
 
 public class TestGradleParser extends GradleParser {
 
-    private static List<String> expectedGradleCommand = List.of("./gradlew", "concurrency-tests:dependencies",
+    static List<String> expectedGradleCommand = List.of("./gradlew", "concurrency-tests:dependencies",
             "docs:dependencies", "micrometer-benchmarks-core:dependencies", "micrometer-bom:dependencies",
             "micrometer-commons:dependencies", "micrometer-core:dependencies", "micrometer-jakarta9:dependencies",
             "micrometer-java11:dependencies", "micrometer-jetty11:dependencies", "micrometer-jetty12:dependencies",
@@ -55,7 +53,15 @@ public class TestGradleParser extends GradleParser {
 
     @Override
     public List<String> projectLines() {
-        URL resource = TestGradleParser.class.getResource("/gradle/projects_output.txt");
+        return projectLinesFromFile();
+    }
+
+    static List<String> projectLinesFromFile() {
+        return textFromFile("/gradle/projects_output.txt");
+    }
+
+    private static List<String> textFromFile(String name) {
+        URL resource = TestGradleParser.class.getResource(name);
         try {
             return Files.readAllLines(new File(resource.toURI()).toPath());
         }
@@ -67,13 +73,11 @@ public class TestGradleParser extends GradleParser {
     @Override
     public List<String> dependenciesLines(List<String> gradleCommand) {
         then(gradleCommand).isEqualTo(expectedGradleCommand);
-        URL resource = TestGradleParser.class.getResource("/gradle/dependencies_output.txt");
-        try {
-            return Files.readAllLines(new File(resource.toURI()).toPath());
-        }
-        catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return dependenciesFromFile();
+    }
+
+    static List<String> dependenciesFromFile() {
+        return textFromFile("/gradle/dependencies_output.txt");
     }
 
 }

@@ -22,11 +22,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 
@@ -63,17 +66,23 @@ class DependencyVerifier {
     }
 
     void verifyDependencies(String branch, String orgRepository) {
-        cloneRepo(branch, orgRepository);
-        GradleParser gradleParser = getGradleParser(branch);
+        File clonedRepo = cloneRepo(branch, orgRepository);
+        GradleParser gradleParser = getGradleParser(clonedRepo);
         log.info("Fetching all dependencies before dependabot...");
-        Set<Dependency> dependenciesBeforeDependabot = gradleParser.fetchAllDependencies();
-        Status status = dependabotUpdateStatus(orgRepository);
+        Set<Dependency> dependenciesBeforeDependabot = micrometerOnly(gradleParser.fetchAllDependencies());
+        Status status = dependabotUpdateStatus(clonedRepo, orgRepository);
         pullTheLatestRepoChanges();
-        Set<Dependency> dependenciesAfterDependabot = gradleParser.fetchAllDependencies();
+        Set<Dependency> dependenciesAfterDependabot = micrometerOnly(gradleParser.fetchAllDependencies());
         Set<Dependency> diff = new HashSet<>(dependenciesAfterDependabot);
         diff.removeAll(dependenciesBeforeDependabot);
         log.info("Dependency diff {}", diff);
         assertDependencyDiff(status, diff);
+    }
+
+    private Set<Dependency> micrometerOnly(Set<Dependency> dependencies) {
+        return dependencies.stream()
+            .filter(dependency -> dependency.group().equalsIgnoreCase("io.micrometer"))
+            .collect(Collectors.toSet());
     }
 
     private void assertDependencyDiff(Status status, Set<Dependency> diff) {
@@ -94,16 +103,15 @@ class DependencyVerifier {
         }
     }
 
-    private Status dependabotUpdateStatus(String orgRepository) {
+    private Status dependabotUpdateStatus(File clonedRepo, String orgRepository) {
         String githubServerTime = getGitHubServerTime();
-        triggerDependabotCheck(orgRepository);
-        log.info("Waiting {} {} for PRs to be created...", initialWait, timeUnit);
-        sleep(initialWait);
-        return waitForDependabotUpdates(githubServerTime);
+        triggerDependabotCheck(clonedRepo);
+        waitForDependabotJobsToFinish(orgRepository, githubServerTime);
+        return waitForDependabotPrsToFinish(githubServerTime);
     }
 
-    private GradleParser getGradleParser(String branch) {
-        ProcessRunner branchProcessRunner = new ProcessRunner(null, new File(branch));
+    private GradleParser getGradleParser(File branch) {
+        ProcessRunner branchProcessRunner = new ProcessRunner(null, branch);
         return gradleParser(branchProcessRunner);
     }
 
@@ -111,10 +119,15 @@ class DependencyVerifier {
         return new GradleParser(branchProcessRunner);
     }
 
-    private void cloneRepo(String branch, String orgRepository) {
+    private File cloneRepo(String branch, String orgRepository) {
         log.info("Cloning out {} branch to folder {}", branch, branch);
         processRunner.run("git", "clone", "-b", branch, "--single-branch",
                 "https://github.com/" + orgRepository + ".git", branch);
+        return clonedDir(branch);
+    }
+
+    File clonedDir(String branch) {
+        return new File(branch);
     }
 
     private void pullTheLatestRepoChanges() {
@@ -150,14 +163,71 @@ class DependencyVerifier {
         return serverTime;
     }
 
-    private void triggerDependabotCheck(String orgRepository) {
+    private void triggerDependabotCheck(File clonedRepo) {
         log.info("Will trigger a Dependabot check...");
-        processRunner.run("gh", "api", "/repos/" + orgRepository + "/dispatches", "-X", "POST", "-F",
-                "event_type=check-dependencies");
+        try {
+            String filePath = ".github/dependabot.yml";
+            Path path = new File(clonedRepo, filePath).toPath();
+            String fileContent = Files.readString(path);
+            String triggerComment = "# Triggering dependabot";
+            boolean hasComment = fileContent.trim().endsWith(triggerComment);
+            if (hasComment) {
+                fileContent = fileContent.substring(0, fileContent.lastIndexOf(triggerComment)).trim() + "\n";
+                log.info("Removed trigger comment from dependabot.yml");
+            }
+            else {
+                fileContent = fileContent.trim() + "\n" + triggerComment + "\n";
+                log.info("Added trigger comment to dependabot.yml");
+            }
+            Files.writeString(path, fileContent);
+            processRunner.run("git", "add", filePath);
+            processRunner.run("git", "commit", "-m",
+                    "ci: " + (hasComment ? "Remove" : "Add") + " dependabot trigger comment");
+            processRunner.run("git", "push");
+        }
+        catch (Exception e) {
+            log.error("Failed to modify dependabot.yml", e);
+            throw new IllegalStateException("Failed to trigger Dependabot check", e);
+        }
         log.info("Triggered Dependabot check");
     }
 
-    private Status waitForDependabotUpdates(String githubServerTime) {
+    private void waitForDependabotJobsToFinish(String orgRepository, String githubServerTime) {
+        log.info("Waiting {} {} for Dependabot jobs to be created...", initialWait, timeUnit);
+        sleep(initialWait);
+        log.info("Waiting for Dependabot jobs to finish...");
+        List<String> ids = processRunner.run("gh", "workflow", "list", "-R", orgRepository, "--json", "id,name", "--jq",
+                ".[] | select(.name==\"Dependabot Updates\") | .id");
+        if (ids.isEmpty()) {
+            throw new IllegalStateException("Could not find dependabot updates");
+        }
+        String id = ids.get(0);
+        long startTime = System.currentTimeMillis();
+        long timeoutMillis = timeUnit.toMillis(timeout / 2);
+        while (System.currentTimeMillis() - startTime < timeoutMillis) {
+            List<String> statuses = processRunner.run("gh", "run", "list", "--workflow=" + id, "-R", orgRepository,
+                    "--created=\">" + githubServerTime + "\"", "--json", "--jq", "'.[].status");
+            if (statuses.isEmpty()) {
+                log.info("No dependabot jobs found");
+            }
+            else {
+                log.info("Found {} Dependabot jobs", statuses.size());
+                boolean allCompleted = statuses.stream().allMatch(s -> s.equalsIgnoreCase("completed"));
+                if (allCompleted) {
+                    log.info("All dependabot jobs completed");
+                    return;
+                }
+            }
+            log.info("Not all Dependabot jobs processed, will try again...");
+            sleep(waitBetweenRuns);
+        }
+        log.error("Failed! Dependabot jobs not processed within the provided timeout");
+        throw new IllegalStateException("Timeout waiting for Dependabot jobs to complete");
+    }
+
+    private Status waitForDependabotPrsToFinish(String githubServerTime) {
+        log.info("Waiting {} {} for Dependabot PRs to be created...", initialWait, timeUnit);
+        sleep(initialWait);
         long startTime = System.currentTimeMillis();
         long timeoutMillis = timeUnit.toMillis(timeout);
         while (System.currentTimeMillis() - startTime < timeoutMillis) {

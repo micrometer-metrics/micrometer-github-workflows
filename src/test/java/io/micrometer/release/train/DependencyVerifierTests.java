@@ -18,6 +18,10 @@ package io.micrometer.release.train;
 import io.micrometer.release.common.GradleParser;
 import io.micrometer.release.common.ProcessRunner;
 import io.micrometer.release.common.TestGradleParser;
+
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
@@ -30,6 +34,8 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.BDDAssertions.thenThrownBy;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
@@ -42,10 +48,15 @@ class DependencyVerifierTests {
     private static final String[] dependabotPrState = { "gh", "pr", "view", "1234", "--json",
             "mergeStateStatus,mergeable,state", "--jq", "[.mergeStateStatus, .state] | join(\",\")" };
 
+    private static final String[] dependabotUpdateJobsIds = { "gh", "workflow", "list", "-R",
+            "micrometer-metrics/micrometer", "--json", "id,name", "--jq",
+            ".[] | select(.name==\"Dependabot Updates\") | .id" };
+
+    private static final String[] dependabotUpdateJobStates = { "gh", "run", "list", "--workflow=1234", "-R",
+            "micrometer-metrics/micrometer", "--created=\">2025-02-24T10:51:29Z\"", "--json", "--jq", "'.[].status" };
+
     File ghServerTimeResponse = new File(
             DependencyVerifierTests.class.getResource("/dependencyVerifier/getGhServerTime.txt").toURI());
-
-    String orgRepo = "micrometer-metrics/micrometer";
 
     ProcessRunner processRunner = mock();
 
@@ -54,9 +65,25 @@ class DependencyVerifierTests {
         GradleParser gradleParser(ProcessRunner branchProcessRunner) {
             return new TestGradleParser();
         }
+
+        @Override
+        File clonedDir(String branch) {
+            try {
+                return new File(DependencyVerifierTests.class.getResource("/main").toURI());
+            }
+            catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+        }
     };
 
     DependencyVerifierTests() throws URISyntaxException {
+    }
+
+    @BeforeEach
+    void setup() {
+        given(processRunner.run(dependabotUpdateJobsIds)).willReturn(List.of("1234"));
+        given(processRunner.run(dependabotUpdateJobStates)).willReturn(List.of("completed"));
     }
 
     @Test
@@ -73,26 +100,36 @@ class DependencyVerifierTests {
 
         InOrder inOrder = Mockito.inOrder(processRunner);
         inOrder.verify(processRunner).run("gh", "api", "/", "--include");
+        inOrder.verify(processRunner).run("git", "add", ".github/dependabot.yml");
         inOrder.verify(processRunner)
-            .run("gh", "api", "/repos/" + orgRepo + "/dispatches", "-X", "POST", "-F", "event_type=check-dependencies");
+            .run(eq("git"), eq("commit"), eq("-m"), matches("ci: (Add|Remove) dependabot trigger comment"));
+        inOrder.verify(processRunner).run("git", "push");
         inOrder.verify(processRunner).run(dependabotCreatedPrNumbers);
         inOrder.verify(processRunner).run(dependabotPrState);
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    void should_proceed_when_no_dependabot_prs_present() throws IOException {
+    void should_fail_when_no_dependabot_jobs_present() throws IOException {
         given(processRunner.run("gh", "api", "/", "--include"))
             .willReturn(Files.readAllLines(ghServerTimeResponse.toPath()));
-        given(processRunner.run(dependabotCreatedPrNumbers)).willReturn(Collections.emptyList());
+        given(processRunner.run(dependabotUpdateJobsIds)).willReturn(Collections.emptyList());
 
-        verifier.verifyDependencies("main", "micrometer-metrics/micrometer");
+        thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer"))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("Could not find dependabot updates");
+    }
 
-        InOrder inOrder = Mockito.inOrder(processRunner);
-        inOrder.verify(processRunner).run("gh", "api", "/", "--include");
-        inOrder.verify(processRunner)
-            .run("gh", "api", "/repos/" + orgRepo + "/dispatches", "-X", "POST", "-F", "event_type=check-dependencies");
-        inOrder.verify(processRunner).run(dependabotCreatedPrNumbers);
+    @Test
+    @SuppressWarnings("unchecked")
+    void should_fail_when_dependabot_jobs_are_not_successful() throws IOException {
+        given(processRunner.run("gh", "api", "/", "--include"))
+            .willReturn(Files.readAllLines(ghServerTimeResponse.toPath()));
+        given(processRunner.run(dependabotUpdateJobStates)).willReturn(List.of(), List.of("BLOCKED", "OPEN"));
+
+        thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer"))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("Timeout waiting for Dependabot jobs to complete");
     }
 
     @Test
@@ -102,6 +139,18 @@ class DependencyVerifierTests {
         thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer"))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("Could not get GitHub server time from response headers");
+    }
+
+    @Test
+    void should_throw_exception_when_no_dependabot_jobs() throws IOException {
+        given(processRunner.run("gh", "api", "/", "--include"))
+            .willReturn(Files.readAllLines(ghServerTimeResponse.toPath()));
+        given(processRunner.run(dependabotCreatedPrNumbers)).willReturn(Collections.singletonList("1234"));
+        given(processRunner.run(dependabotPrState)).willReturn(Collections.singletonList("CONFLICTING"));
+
+        thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer"))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("PR #1234 has conflicts");
     }
 
     @Test

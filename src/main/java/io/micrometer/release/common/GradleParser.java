@@ -86,7 +86,7 @@ public class GradleParser {
         return dependencies;
     }
 
-    static String extractVersion(String line) {
+    private static String extractVersion(String line) {
         if (line == null || line.trim().isEmpty()) {
             return null;
         }
@@ -112,7 +112,7 @@ public class GradleParser {
     }
 
     public List<String> projectLines() {
-        return processRunner.runSilently("./gradlew", "projects");
+        return processRunner.runSilently(List.of("./gradlew", "projects"));
     }
 
 }

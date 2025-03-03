@@ -15,15 +15,14 @@
  */
 package io.micrometer.release.single;
 
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-
 import io.micrometer.release.common.ProcessRunner;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import org.junit.jupiter.api.Test;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 class MilestoneUpdaterTests {
 
@@ -41,6 +40,16 @@ class MilestoneUpdaterTests {
 
         verify(processRunner).run("gh", "api", "-X", "PATCH", "/repos/micrometer-metrics/micrometer/milestones/100",
                 "-f", "state=closed");
+    }
+
+    @Test
+    void should_update_milestones() {
+        MilestoneMigrator migrator = mock();
+        MilestoneUpdater milestoneUpdater = new MilestoneUpdater(null, null, migrator);
+
+        milestoneUpdater.updateMilestones("v1.2.3");
+
+        verify(migrator).migrateMilestones("v1.2.3");
     }
 
 }
