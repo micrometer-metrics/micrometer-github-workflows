@@ -219,7 +219,7 @@ class DependencyVerifier {
         long timeoutMillis = timeUnit.toMillis(timeout / 2);
         while (System.currentTimeMillis() - startTime < timeoutMillis) {
             List<String> statuses = processRunner.run("gh", "run", "list", "--workflow=" + id, "-R", orgRepository,
-                    "--created=\">" + githubServerTime + "\"", "--json", "status", "--jq", ".[].status");
+                    "--created='>" + githubServerTime + "'", "--json=status", "--jq='.[].status'");
             if (statuses.isEmpty()) {
                 log.info("No dependabot jobs found");
             }
