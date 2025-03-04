@@ -52,7 +52,7 @@ class DependencyVerifierTests {
 
     private static final String[] dependabotUpdateJobStates = { "gh", "run", "list", "--workflow=1234", "-R",
             "micrometer-metrics/micrometer", "--created='>2025-02-24T10:51:29Z'", "--json=status",
-            "--jq='.[].status'" };
+            "--jq=.[].status" };
 
     File ghServerTimeResponse = new File(
             DependencyVerifierTests.class.getResource("/dependencyVerifier/getGhServerTime.txt").toURI());
