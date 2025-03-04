@@ -208,8 +208,10 @@ class DependencyVerifier {
         long startTime = System.currentTimeMillis();
         long timeoutMillis = timeUnit.toMillis(timeout / 2);
         while (System.currentTimeMillis() - startTime < timeoutMillis) {
-            List<String> statuses = processRunner.run("gh", "run", "list", "--workflow=" + id, "-R", orgRepository,
-                    "--created='>" + githubServerTime + "'", "--json=status", "--jq=.[].status");
+            List<String> statuses = curlRuns(orgRepository, githubServerTime, id).stream()
+                .filter(s -> s.contains("\"status\": \""))
+                .map(s -> s.substring(s.lastIndexOf(":") + 1).replace("\"", "").replace(",", "").trim())
+                .toList();
             if (statuses.isEmpty()) {
                 log.info("No dependabot jobs found");
             }
@@ -226,6 +228,11 @@ class DependencyVerifier {
         }
         log.error("Failed! Dependabot jobs not processed within the provided timeout");
         throw new IllegalStateException("Timeout waiting for Dependabot jobs to complete");
+    }
+
+    List<String> curlRuns(String orgRepository, String githubServerTime, String id) {
+        return processRunner.run("curl", "-H", "Authorization: token " + ghToken(), "https://api.github.com/repos/"
+                + orgRepository + "/actions/runs?created=>" + githubServerTime + "&workflow_id=" + id);
     }
 
     private String getDependabotupdatesWorkflowId(String orgRepository) {

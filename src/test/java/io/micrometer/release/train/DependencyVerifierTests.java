@@ -18,6 +18,10 @@ package io.micrometer.release.train;
 import io.micrometer.release.common.GradleParser;
 import io.micrometer.release.common.ProcessRunner;
 import io.micrometer.release.common.TestGradleParser;
+
+import java.io.IOException;
+import java.nio.file.Files;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
@@ -51,8 +55,8 @@ class DependencyVerifierTests {
     private static final String[] dependabotUpdateJobTime = { "gh", "run", "list", "--workflow=1234", "-R",
             "micrometer-metrics/micrometer", "--json=createdAt", "--jq=.[].createdAt", "--limit=1" };
 
-    private static final String[] dependabotUpdateJobStates = { "gh", "run", "list", "--workflow=1234", "-R",
-            "micrometer-metrics/micrometer", "--created='>2025-02-24T10:51:29Z'", "--json=status", "--jq=.[].status" };
+    private static final String[] dependabotUpdateJobStates = { "curl", "-H", "Authorization: token 1234567890",
+            "https://api.github.com/repos/micrometer-metrics/micrometer/actions/runs?created=>2025-02-24T10:51:29Z&workflow_id=1234" };
 
     ProcessRunner processRunner = mock();
 
@@ -87,15 +91,16 @@ class DependencyVerifierTests {
     }
 
     @BeforeEach
-    void setup() {
+    void setup() throws URISyntaxException, IOException {
         given(processRunner.run(dependabotUpdateJobsIds)).willReturn(List.of("1234"));
-        given(processRunner.run(dependabotUpdateJobStates)).willReturn(List.of("completed"));
+        given(processRunner.run(dependabotUpdateJobStates)).willReturn(Files
+            .readAllLines(new File(DependencyVerifierTests.class.getResource("/github/runs.json").toURI()).toPath()));
+        given(processRunner.run(dependabotUpdateJobTime)).willReturn(List.of("2025-02-24T10:51:29Z"));
     }
 
     @Test
     @SuppressWarnings("unchecked")
     void should_receive_updated_dependabot_status() {
-        given(processRunner.run(dependabotUpdateJobTime)).willReturn(List.of("2025-02-24T10:51:29Z"));
         given(processRunner.run(dependabotCreatedPrNumbers)).willReturn(Collections.singletonList("1234"),
                 Collections.singletonList("1234"), Collections.emptyList());
         given(processRunner.run(dependabotPrState)).willReturn(Collections.singletonList("BLOCKED,OPEN"),
@@ -121,7 +126,6 @@ class DependencyVerifierTests {
     @Test
     @SuppressWarnings("unchecked")
     void should_fail_when_no_dependabot_jobs_present() {
-        given(processRunner.run(dependabotUpdateJobTime)).willReturn(List.of("2025-02-24T10:51:29Z"));
         given(processRunner.run(dependabotUpdateJobsIds)).willReturn(Collections.emptyList());
 
         thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer"))
@@ -132,8 +136,19 @@ class DependencyVerifierTests {
     @Test
     @SuppressWarnings("unchecked")
     void should_fail_when_dependabot_jobs_are_not_successful() {
-        given(processRunner.run(dependabotUpdateJobTime)).willReturn(List.of("2025-02-24T10:51:29Z"));
-        given(processRunner.run(dependabotUpdateJobStates)).willReturn(List.of(), List.of("BLOCKED", "OPEN"));
+        given(processRunner.run(dependabotUpdateJobStates)).willReturn(List.of("", """
+                          {
+                "total_count": 15,
+                "workflow_runs": [
+                  {
+                    "status": "blocked",
+                    "event": "pull_request"
+                  },
+                  {
+                    "status": "open",
+                    "event": "pull_request"
+                  }
+                 ]"""));
 
         thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer"))
             .isInstanceOf(IllegalStateException.class)
@@ -151,7 +166,6 @@ class DependencyVerifierTests {
 
     @Test
     void should_throw_exception_when_dependabot_pr_is_conflicting() {
-        given(processRunner.run(dependabotUpdateJobTime)).willReturn(List.of("2025-02-24T10:51:29Z"));
         given(processRunner.run(dependabotCreatedPrNumbers)).willReturn(Collections.singletonList("1234"));
         given(processRunner.run(dependabotPrState)).willReturn(Collections.singletonList("CONFLICTING"));
 
@@ -162,7 +176,6 @@ class DependencyVerifierTests {
 
     @Test
     void should_throw_exception_when_timeout() {
-        given(processRunner.run(dependabotUpdateJobTime)).willReturn(List.of("2025-02-24T10:51:29Z"));
         given(processRunner.run(dependabotCreatedPrNumbers)).willReturn(Collections.singletonList("1234"));
         given(processRunner.run(dependabotPrState)).willReturn(Collections.singletonList("BLOCKED,OPEN"));
 
