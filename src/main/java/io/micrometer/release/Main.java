@@ -94,13 +94,22 @@ public class Main {
 
     private boolean isTrainRelease(String githubOrgRepo, String contextPropVersions, String micrometerVersions,
             String tracingVersions, String docsGenVersions) {
-        return switch (githubOrgRepo) {
+        String modifiedGhOrgRepo = modifyForE2eTests(githubOrgRepo);
+        return switch (modifiedGhOrgRepo) {
             case "micrometer-metrics/context-propagation" -> hasText(contextPropVersions);
             case "micrometer-metrics/micrometer" -> hasText(micrometerVersions);
             case "micrometer-metrics/tracing" -> hasText(tracingVersions);
             case "micrometer-metrics/micrometer-docs-generator" -> hasText(docsGenVersions);
             default -> false;
         };
+    }
+
+    // This is used for e2e tests
+    private String modifyForE2eTests(String githubOrgRepo) {
+        if ("marcingrzejszczak/gh-actions-test".equalsIgnoreCase(githubOrgRepo)) {
+            return "micrometer-metrics/tracing";
+        }
+        return githubOrgRepo;
     }
 
     private boolean hasText(String text) {
