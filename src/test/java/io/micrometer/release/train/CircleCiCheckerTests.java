@@ -71,7 +71,7 @@ class CircleCiCheckerTests {
 
     static CircleCiChecker getChecker(String status, String url) {
         return new CircleCiChecker("foo", "micrometer-metrics/micrometer", HttpClient.newBuilder().build(),
-                new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false), url) {
+                new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false), url, 1, 1) {
             @Override
             Builder requestBuilder(String workflowUrl) {
                 return super.requestBuilder(workflowUrl).header("Test-Status", status);

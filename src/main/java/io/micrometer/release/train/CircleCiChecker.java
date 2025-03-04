@@ -15,6 +15,9 @@ package io.micrometer.release.train;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.net.http.HttpResponse.BodyHandlers;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,48 +45,69 @@ class CircleCiChecker {
 
     private final String externalUrl;
 
+    private final int waitTimeMs;
+
+    private final int numberOfRetries;
+
     CircleCiChecker(String circleCiToken, String githubOrgRepo, HttpClient httpClient, ObjectMapper objectMapper) {
         this.circleCiToken = circleCiToken;
         this.githubOrgRepo = githubOrgRepo;
         this.httpClient = httpClient;
         this.objectMapper = objectMapper;
         this.externalUrl = System.getenv("CI_URL") != null ? System.getenv("CI_URL") : CIRCLE_URL;
+        this.waitTimeMs = 5 * 1000;
+        this.numberOfRetries = 3;
     }
 
     CircleCiChecker(String circleCiToken, String githubOrgRepo, HttpClient httpClient, ObjectMapper objectMapper,
-            String externalUrl) {
+            String externalUrl, int waitTimeMs, int numberOfRetries) {
         this.circleCiToken = circleCiToken;
         this.githubOrgRepo = githubOrgRepo;
         this.httpClient = httpClient;
         this.objectMapper = objectMapper;
         this.externalUrl = externalUrl;
+        this.waitTimeMs = waitTimeMs;
+        this.numberOfRetries = numberOfRetries;
     }
 
     boolean checkBuildStatus(String version) throws IOException, InterruptedException {
         log.info("Checking CircleCI status for version: [{}]", version);
         String tag = "v" + version;
         String apiUrl = externalUrl + "project/github/" + githubOrgRepo + "/pipeline";
-        int pageCount = 0;
-        // Limit to 2 pages - there shouldn't be more jobs to search against
-        while (apiUrl != null && pageCount < 2) {
-            HttpRequest request = getCircleHttpRequest(apiUrl);
-            HttpResponse<String> response = sendPipelineRequest(request);
-            PipelineResponse pipelineResponse = objectMapper.readValue(response.body(), PipelineResponse.class);
-            for (Pipeline pipeline : pipelineResponse.items()) {
-                if (tag.equals(pipeline.vcs().tag())) {
-                    return checkWorkflowStatus(pipeline.id());
+        log.info("Waiting for [{}] ms for the CircleCI build to appear", waitTimeMs);
+        Thread.sleep(waitTimeMs);
+        log.info("Will try [{}] times with wait time [{}] ms to check if the build in CircleCI appeared",
+                numberOfRetries, waitTimeMs);
+        for (int i = 0; i < numberOfRetries; i++) {
+            int pageCount = 0;
+            // Limit to 2 pages - there shouldn't be more jobs to search against
+            while (apiUrl != null && pageCount < 2) {
+                HttpRequest request = getCircleHttpRequest(apiUrl);
+                PipelineResponse pipelineResponse = getPipelineResponse(request);
+                for (Pipeline pipeline : pipelineResponse.items()) {
+                    if (tag.equals(pipeline.vcs().tag())) {
+                        return checkWorkflowStatus(pipeline.id());
+                    }
                 }
+                apiUrl = pipelineResponse.nextPageToken() != null
+                        ? apiUrl + "?page-token=" + pipelineResponse.nextPageToken() : null;
+                pageCount++;
+                log.info("The tag [{}] was not found in this page, trying page [{}]", tag, pageCount);
             }
-            apiUrl = pipelineResponse.nextPageToken() != null
-                    ? apiUrl + "?page-token=" + pipelineResponse.nextPageToken() : null;
-            pageCount++;
-            log.info("The tag [{}] was not found in this page, trying page [{}]", tag, pageCount);
+            log.info("Try [{}/{}] - no CircleCI pipeline found for tag [{}], will try again in [{}] ms", i + 1,
+                    numberOfRetries, tag, waitTimeMs);
+            Thread.sleep(waitTimeMs);
         }
         throw new IllegalStateException("No CircleCI pipeline found for tag [" + tag + "]");
     }
 
+    private PipelineResponse getPipelineResponse(HttpRequest request) throws IOException, InterruptedException {
+        HttpResponse<String> response = sendPipelineRequest(request);
+        return objectMapper.readValue(response.body(), PipelineResponse.class);
+    }
+
     private HttpResponse<String> sendPipelineRequest(HttpRequest request) throws IOException, InterruptedException {
-        return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        return httpClient.send(request, BodyHandlers.ofString());
     }
 
     private boolean checkWorkflowStatus(String pipelineId) throws IOException, InterruptedException {
@@ -106,7 +130,7 @@ class CircleCiChecker {
     }
 
     private HttpResponse<String> sendWorkflowRequest(HttpRequest request) throws IOException, InterruptedException {
-        return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        return httpClient.send(request, BodyHandlers.ofString());
     }
 
     private HttpRequest getCircleHttpRequest(String workflowUrl) {

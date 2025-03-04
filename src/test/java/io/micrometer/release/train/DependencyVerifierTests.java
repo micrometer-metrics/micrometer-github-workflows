@@ -93,7 +93,7 @@ class DependencyVerifierTests {
     @BeforeEach
     void setup() throws URISyntaxException, IOException {
         given(processRunner.run(dependabotUpdateJobsIds)).willReturn(List.of("1234"));
-        given(processRunner.run(dependabotUpdateJobStates)).willReturn(Files
+        given(processRunner.runSilently(dependabotUpdateJobStates)).willReturn(Files
             .readAllLines(new File(DependencyVerifierTests.class.getResource("/github/runs.json").toURI()).toPath()));
         given(processRunner.run(dependabotUpdateJobTime)).willReturn(List.of("2025-02-24T10:51:29Z"));
     }
@@ -136,7 +136,7 @@ class DependencyVerifierTests {
     @Test
     @SuppressWarnings("unchecked")
     void should_fail_when_dependabot_jobs_are_not_successful() {
-        given(processRunner.run(dependabotUpdateJobStates)).willReturn(List.of("", """
+        given(processRunner.runSilently(dependabotUpdateJobStates)).willReturn(List.of("", """
                           {
                 "total_count": 15,
                 "workflow_runs": [

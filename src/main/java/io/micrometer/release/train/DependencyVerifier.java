@@ -231,8 +231,9 @@ class DependencyVerifier {
     }
 
     List<String> curlRuns(String orgRepository, String githubServerTime, String id) {
-        return processRunner.run("curl", "-H", "Authorization: token " + ghToken(), "https://api.github.com/repos/"
-                + orgRepository + "/actions/runs?created=>" + githubServerTime + "&workflow_id=" + id);
+        return processRunner.runSilently("curl", "-H", "Authorization: token " + ghToken(),
+                "https://api.github.com/repos/" + orgRepository + "/actions/runs?created=>" + githubServerTime
+                        + "&workflow_id=" + id);
     }
 
     private String getDependabotupdatesWorkflowId(String orgRepository) {
