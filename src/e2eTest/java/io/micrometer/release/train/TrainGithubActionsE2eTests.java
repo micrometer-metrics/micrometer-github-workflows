@@ -138,7 +138,8 @@ class TrainGithubActionsE2eTests implements GithubActions {
         log.info("Running train release from main");
         GithubActions.runWorkflow("release-train-workflow.yml", "main",
                 List.of("gh", "workflow", "run", "release-train-workflow.yml", "--ref", "main", "-f",
-                        "train_versions=0.1.1,0.2.0-M2,1.0.0-RC1", "-f", "artifact_to_check=micrometer-bom"));
+                        "context_propagation_versions=1.1.2,1.1.2,1.1.2", "-f",
+                        "micrometer_versions=0.1.1,0.2.0-M2,1.0.0-RC1"));
     }
 
     private static LocalDate calculateDueDate(LocalDate now) {
