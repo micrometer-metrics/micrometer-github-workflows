@@ -23,6 +23,10 @@ public class TrainOptions {
 
     public ProjectSetup parse(String ghOrgRepo, String contextPropagationVersions, String micrometerVersions,
             String tracingVersions, String docsGenVersions) {
+        if (!hasText(contextPropagationVersions) && !hasText(micrometerVersions) && !hasText(tracingVersions)
+                && !hasText(docsGenVersions)) {
+            throw new IllegalStateException("At least one st of versions must be set...");
+        }
         List<ProjectWithDependencies> projects = new ArrayList<>();
         String[] contextPropagationVersion = split(contextPropagationVersions);
         parseContextPropagation(contextPropagationVersion, projects);

@@ -35,5 +35,7 @@ jobs:
           spring_release_gchat_webhook_url: ${{ secrets.SPRING_RELEASE_GCHAT_WEBHOOK_URL }}
           bluesky_handle: ${{ secrets.BLUESKY_HANDLE }}
           bluesky_password: ${{ secrets.BLUESKY_PASSWORD }}
-          train_versions: ${{ github.event.inputs.train_versions }}
-          artifact_to_check: ${{ github.event.inputs.artifact_to_check }}
+          context_propagation_versions: ${{ github.event.inputs.context_propagation_versions }}
+          micrometer_versions: ${{ github.event.inputs.micrometer_versions }}
+          tracing_versions: ${{ github.event.inputs.tracing_versions }}
+          docs_gen_versions: ${{ github.event.inputs.docs_gen_versions }}

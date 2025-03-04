@@ -1,21 +1,20 @@
 /**
  * Copyright 2025 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * <p>
  * https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.micrometer.release.train;
 
 import io.micrometer.release.train.TrainOptions.ProjectSetup;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -25,10 +24,17 @@ import java.util.stream.Stream;
 
 import static io.micrometer.release.train.TrainOptions.Project.*;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 
 class TrainOptionsTests {
 
     TrainOptions trainOptions = new TrainOptions();
+
+    @Test
+    void should_throw_exception_for_no_versions() {
+        thenThrownBy(() -> trainOptions.parse("foo", "", null, "", null)).isInstanceOf(IllegalStateException.class)
+            .hasMessage("At least one st of versions must be set...");
+    }
 
     @ParameterizedTest(name = "ghOrg <{0}>, contextProp <{1}>, microm <{2}>, tracing <{3}>, docsGen <{4}>")
     @MethodSource("should_parse_entries_to_project_setup_args")
