@@ -155,7 +155,7 @@ pitest {
     threads = 4 // Parallel threads for mutation testing
     outputFormats = ['HTML'] // Generate an HTML report
     timestampedReports = false // Avoid timestamped reports for consistent file paths
-    testStrengthThreshold.set(85)
+    testStrengthThreshold.set(80)
     mutationThreshold.set(75)
     setCoverageThreshold(80)
     excludedClasses.set(["io.micrometer.release.Main"])

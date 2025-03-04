@@ -13,11 +13,15 @@
  */
 package io.micrometer.release.train;
 
+import io.micrometer.release.common.ProcessRunner;
+import io.micrometer.release.single.PostReleaseWorkflow;
+import io.micrometer.release.train.TrainOptions.ProjectSetup;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 
+import static org.assertj.core.api.BDDAssertions.thenNoException;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
@@ -36,16 +40,23 @@ class ProjectTrainReleaseWorkflowTests {
             postReleaseTaskScheduler, mavenCentralSyncChecker);
 
     @Test
+    void should_construct_instance() {
+        thenNoException().isThrownBy(() -> new ProjectTrainReleaseWorkflow("foo/bar", new ProcessRunner(),
+                new PostReleaseWorkflow(new ProcessRunner())));
+    }
+
+    @Test
     void should_run_train_workflow_tasks() {
         List<String> versions = List.of("1.0.0", "1.1.0");
         Map<String, String> versionToBranch = Map.of("1.0.0", "v1.0.0", "1.1.0", "main");
         given(versionToBranchConverter.convert(versions)).willReturn(versionToBranch);
+        ProjectSetup projectSetup = TestProjectSetup.forMicrometer("1.0.0", "1.1.0");
 
-        workflow.run("1.0.0,1.1.0");
+        workflow.run(projectSetup);
 
-        then(releaseScheduler).should().runReleaseAndCheckCi(versionToBranch);
+        then(releaseScheduler).should().runReleaseAndCheckCi(versionToBranch, projectSetup);
         then(postReleaseTaskScheduler).should().runPostReleaseTasks(versions);
-        then(mavenCentralSyncChecker).should().checkIfArtifactsAreInCentral(versions);
+        then(mavenCentralSyncChecker).should().checkIfArtifactsAreInCentral(versions, projectSetup);
     }
 
 }

@@ -51,8 +51,8 @@ class ProjectTrainReleaseWorkflowAcceptanceTests {
 
     CircleCiChecker circleCiChecker = CircleCiCheckerTests.getChecker("success", wm1.url("/api/v2/"));
 
-    MavenCentralSyncChecker mavenCentralSyncChecker = new MavenCentralSyncChecker("micrometer-core",
-            wm1.url("/maven2/io/micrometer/"), 3, 1);
+    MavenCentralSyncChecker mavenCentralSyncChecker = new MavenCentralSyncChecker(wm1.url("/maven2/io/micrometer/"), 3,
+            1);
 
     ReleaseScheduler releaseScheduler = new ReleaseScheduler(circleCiChecker, processRunner, dependencyVerifier);
 
@@ -67,7 +67,7 @@ class ProjectTrainReleaseWorkflowAcceptanceTests {
 
     @Test
     void should_perform_the_release() {
-        workflow.run("1.14.9");
+        workflow.run(TestProjectSetup.forMicrometer("1.14.9"));
 
         thenGithubReleaseAndTagGotCreated();
         thenCiBuildStatusWasVerified();
@@ -80,11 +80,11 @@ class ProjectTrainReleaseWorkflowAcceptanceTests {
     }
 
     private static void thenMavenCentralSyncWasVerified() {
-        wm1.verify(WireMock.headRequestedFor(WireMock.urlEqualTo("/maven2/io/micrometer/micrometer-core/1.14.9/")));
+        wm1.verify(WireMock.headRequestedFor(WireMock.urlEqualTo("/maven2/io/micrometer/micrometer-bom/1.14.9/")));
     }
 
     private void thenGithubReleaseAndTagGotCreated() {
-        then(processRunner).should().run("gh", "release", "create", "v1.14.9", "--target", "main", "-t", "1.14.9");
+        then(processRunner).should().run("gh", "release", "create", "v1.14.9", "--target", "1.14.x", "-t", "1.14.9");
     }
 
 }

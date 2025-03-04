@@ -18,17 +18,16 @@ package io.micrometer.release.train;
 import io.micrometer.release.common.GradleParser;
 import io.micrometer.release.common.ProcessRunner;
 import io.micrometer.release.common.TestGradleParser;
-
-import java.io.IOException;
-import java.nio.file.Files;
-
+import io.micrometer.release.train.TrainOptions.ProjectSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -106,7 +105,7 @@ class DependencyVerifierTests {
         given(processRunner.run(dependabotPrState)).willReturn(Collections.singletonList("BLOCKED,OPEN"),
                 Collections.singletonList("CLOSED,MERGED"));
 
-        verifier.verifyDependencies("main", "micrometer-metrics/micrometer");
+        verifier.verifyDependencies("main", "micrometer-metrics/micrometer", projectSetup());
 
         InOrder inOrder = Mockito.inOrder(processRunner);
         inOrder.verify(processRunner).run(dependabotUpdateJobTime);
@@ -124,12 +123,16 @@ class DependencyVerifierTests {
         inOrder.verify(processRunner).run(dependabotPrState);
     }
 
+    private ProjectSetup projectSetup() {
+        return TestProjectSetup.forMicrometer("1.14.9");
+    }
+
     @Test
     @SuppressWarnings("unchecked")
     void should_fail_when_no_dependabot_jobs_present() {
         given(processRunner.run(dependabotUpdateJobsIds)).willReturn(Collections.emptyList());
 
-        thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer"))
+        thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer", projectSetup()))
             .isInstanceOf(IllegalStateException.class)
             .hasMessage("Could not find dependabot updates");
     }
@@ -151,7 +154,7 @@ class DependencyVerifierTests {
                   }
                  ]"""));
 
-        thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer"))
+        thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer", projectSetup()))
             .isInstanceOf(IllegalStateException.class)
             .hasMessage("Timeout waiting for Dependabot jobs to complete");
     }
@@ -160,7 +163,7 @@ class DependencyVerifierTests {
     void should_throw_exception_when_gh_server_time_cannot_be_retrieved() {
         given(processRunner.run(dependabotUpdateJobTime)).willReturn(Collections.emptyList());
 
-        thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer"))
+        thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer", projectSetup()))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("Can't get Github server time because no dependabot jobs were ever ran");
     }
@@ -170,7 +173,7 @@ class DependencyVerifierTests {
         given(processRunner.run(dependabotCreatedPrNumbers)).willReturn(Collections.singletonList("1234"));
         given(processRunner.run(dependabotPrState)).willReturn(Collections.singletonList("CONFLICTING"));
 
-        thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer"))
+        thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer", projectSetup()))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("PR #1234 has conflicts");
     }
@@ -180,7 +183,7 @@ class DependencyVerifierTests {
         given(processRunner.run(dependabotCreatedPrNumbers)).willReturn(Collections.singletonList("1234"));
         given(processRunner.run(dependabotPrState)).willReturn(Collections.singletonList("BLOCKED,OPEN"));
 
-        thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer"))
+        thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer", projectSetup()))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("Timeout waiting for Dependabot updates");
     }

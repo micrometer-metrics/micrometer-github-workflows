@@ -17,7 +17,9 @@ package io.micrometer.release.train;
 
 import io.micrometer.release.common.Dependency;
 import io.micrometer.release.common.GradleParser;
+import io.micrometer.release.common.Input;
 import io.micrometer.release.common.ProcessRunner;
+import io.micrometer.release.train.TrainOptions.ProjectSetup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,18 +64,24 @@ class DependencyVerifier {
         this.timeUnit = timeUnit;
     }
 
-    void verifyDependencies(String branch, String orgRepository) {
+    void verifyDependencies(String branch, String orgRepository, ProjectSetup projectSetup) {
         File clonedRepo = cloneRepo(branch, orgRepository);
         GradleParser gradleParser = getGradleParser(clonedRepo);
         log.info("Fetching all dependencies before dependabot...");
         Set<Dependency> dependenciesBeforeDependabot = micrometerOnly(gradleParser.fetchAllDependencies());
-        Status status = dependabotUpdateStatus(clonedRepo, orgRepository);
+        log.info("Micrometer dependencies before running dependabot {}", dependenciesBeforeDependabot);
+        dependabotUpdateStatus(clonedRepo, orgRepository);
         pullTheLatestRepoChanges(clonedRepo);
         Set<Dependency> dependenciesAfterDependabot = micrometerOnly(gradleParser.fetchAllDependencies());
+        log.info("Micrometer dependencies after running dependabot {}", dependenciesBeforeDependabot);
+        printDiff(dependenciesAfterDependabot, dependenciesBeforeDependabot);
+        assertDependencyDiff(dependenciesAfterDependabot, projectSetup);
+    }
+
+    private void printDiff(Set<Dependency> dependenciesAfterDependabot, Set<Dependency> dependenciesBeforeDependabot) {
         Set<Dependency> diff = new HashSet<>(dependenciesAfterDependabot);
         diff.removeAll(dependenciesBeforeDependabot);
-        log.info("Dependency diff {}", diff);
-        assertDependencyDiff(status, diff);
+        log.info("Dependency diff after running dependabot {}", diff);
     }
 
     private Set<Dependency> micrometerOnly(Set<Dependency> dependencies) {
@@ -82,29 +90,25 @@ class DependencyVerifier {
             .collect(Collectors.toSet());
     }
 
-    private void assertDependencyDiff(Status status, Set<Dependency> diff) {
-        if (status == Status.NO_PRS) {
-            log.info("There were no dependabot PRs, the dependency diff should have no differences");
-            if (!diff.isEmpty()) {
-                log.error("Dependency diff was not empty!");
-                throw new IllegalStateException(
-                        "There were open PRs however the dependencies differ. Different dependencies: [" + diff + "]");
-            }
+    private void assertDependencyDiff(Set<Dependency> diff, ProjectSetup projectSetup) {
+        List<Dependency> dependencies = projectSetup.expectedDependencies();
+        log.info("Expected dependencies from the project setup {}", dependencies);
+        Set<Dependency> diffBetweenExpectedAndActual = new HashSet<>(dependencies);
+        diffBetweenExpectedAndActual.removeAll(diff);
+        if (!diffBetweenExpectedAndActual.isEmpty()) {
+            throw new IllegalStateException(
+                    "There's a difference between expected dependencies from project setup and the one after running dependabot ["
+                            + diffBetweenExpectedAndActual + "]");
         }
-        else {
-            log.info("There were open PRs. The dependency diff should contain new library versions");
-            // TODO: Take from env vars micrometer / tracing / context propagation library
-            // versions and assert that they were updated in the diff
-            // check what this project is (e.g. micrometer) and what it should check for
-            // (e.g. context-propagation)
-        }
+        log.info(
+                "Project after running dependabot has all project dependencies in required versions! Proceeding with the release...");
     }
 
-    private Status dependabotUpdateStatus(File clonedRepo, String orgRepository) {
+    private void dependabotUpdateStatus(File clonedRepo, String orgRepository) {
         String githubServerTime = getGitHubServerTime(orgRepository);
         triggerDependabotCheck(orgRepository, clonedRepo);
         waitForDependabotJobsToFinish(orgRepository, githubServerTime);
-        return waitForDependabotPrsToFinish(githubServerTime);
+        waitForDependabotPrsToFinish(githubServerTime);
     }
 
     private GradleParser getGradleParser(File branch) {
@@ -194,7 +198,7 @@ class DependencyVerifier {
     }
 
     String ghToken() {
-        return System.getenv("GH_TOKEN");
+        return Input.getGhToken();
     }
 
     ProcessRunner processRunnerForBranch(File clonedRepo) {
@@ -246,7 +250,7 @@ class DependencyVerifier {
         return ids.get(0);
     }
 
-    private Status waitForDependabotPrsToFinish(String githubServerTime) {
+    private void waitForDependabotPrsToFinish(String githubServerTime) {
         log.info("Waiting {} {} for Dependabot PRs to be created...", initialWait, timeUnit);
         sleep(initialWait);
         long startTime = System.currentTimeMillis();
@@ -255,7 +259,7 @@ class DependencyVerifier {
             List<String> openPRs = getOpenMicrometerDependabotPRs(githubServerTime);
             if (openPRs.isEmpty()) {
                 log.info("No pending Micrometer updates");
-                return Status.NO_PRS;
+                return;
             }
             boolean allProcessed = true;
             for (String pr : openPRs) {
@@ -265,7 +269,7 @@ class DependencyVerifier {
             }
             if (allProcessed) {
                 log.info("All Dependabot PRs processed");
-                return Status.ALL_PRS_COMPLETED;
+                return;
             }
             log.info("Not all PRs processed, will try again...");
             sleep(waitBetweenRuns);
@@ -308,12 +312,6 @@ class DependencyVerifier {
             log.info("PR #{} status: {}", prNumber, status);
         }
         return isCompleted;
-    }
-
-    enum Status {
-
-        NO_PRS, ALL_PRS_COMPLETED
-
     }
 
 }

@@ -31,26 +31,28 @@ class MavenCentralSyncCheckerTests {
     @RegisterExtension
     static WireMockExtension wm1 = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
 
-    MavenCentralSyncChecker mavenCentralSyncChecker = new MavenCentralSyncChecker("micrometer-core",
-            wm1.url("/maven2/io/micrometer/"), 1, 1);
+    MavenCentralSyncChecker mavenCentralSyncChecker = new MavenCentralSyncChecker(wm1.url("/maven2/io/micrometer/"), 1,
+            1);
 
     @Test
     void should_check_when_artifact_present() {
-        wm1.stubFor(head(urlEqualTo("/maven2/io/micrometer/micrometer-core/1.13.3/"))
+        wm1.stubFor(head(urlEqualTo("/maven2/io/micrometer/micrometer-bom/1.13.3/"))
             .willReturn(aResponse().withStatus(200)));
-        wm1.stubFor(head(urlEqualTo("/maven2/io/micrometer/micrometer-core/1.14.9/"))
+        wm1.stubFor(head(urlEqualTo("/maven2/io/micrometer/micrometer-bom/1.14.9/"))
             .willReturn(aResponse().withStatus(200)));
 
-        mavenCentralSyncChecker.checkIfArtifactsAreInCentral(List.of("1.13.3", "1.14.9"));
+        mavenCentralSyncChecker.checkIfArtifactsAreInCentral(List.of("1.13.3", "1.14.9"),
+                TestProjectSetup.forMicrometer("1.13.3", "1.14.9"));
 
-        wm1.verify(WireMock.headRequestedFor(WireMock.urlEqualTo("/maven2/io/micrometer/micrometer-core/1.13.3/")));
-        wm1.verify(WireMock.headRequestedFor(WireMock.urlEqualTo("/maven2/io/micrometer/micrometer-core/1.14.9/")));
+        wm1.verify(WireMock.headRequestedFor(WireMock.urlEqualTo("/maven2/io/micrometer/micrometer-bom/1.13.3/")));
+        wm1.verify(WireMock.headRequestedFor(WireMock.urlEqualTo("/maven2/io/micrometer/micrometer-bom/1.14.9/")));
     }
 
     @Test
     void should_fail_when_artifact_missing_within_timeout() {
         BDDAssertions
-            .thenThrownBy(() -> mavenCentralSyncChecker.checkIfArtifactsAreInCentral(List.of("1.13.3", "1.14.9")))
+            .thenThrownBy(() -> mavenCentralSyncChecker.checkIfArtifactsAreInCentral(List.of("1.13.3", "1.14.9"),
+                    TestProjectSetup.forMicrometer("1.13.3", "1.14.9")))
             .hasMessageContaining("not found in Maven Central")
             .hasRootCauseInstanceOf(IllegalStateException.class);
     }

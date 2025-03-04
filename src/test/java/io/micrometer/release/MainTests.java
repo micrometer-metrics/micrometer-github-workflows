@@ -18,6 +18,7 @@ package io.micrometer.release;
 import io.micrometer.release.common.ProcessRunner;
 import io.micrometer.release.single.PostReleaseWorkflow;
 import io.micrometer.release.train.ProjectTrainReleaseWorkflow;
+import io.micrometer.release.train.TestProjectSetup;
 import org.junit.jupiter.api.Test;
 
 import static org.mockito.BDDMockito.then;
@@ -34,7 +35,12 @@ class MainTests {
         Main main = new Main() {
 
             @Override
-            ProjectTrainReleaseWorkflow trainReleaseWorkflow(String githubOrgRepo, String artifactToCheck,
+            String getGithubOrgRepository() {
+                return "micrometer-metrics/micrometer";
+            }
+
+            @Override
+            ProjectTrainReleaseWorkflow trainReleaseWorkflow(String githubOrgRepo,
                     PostReleaseWorkflow postReleaseWorkflow, ProcessRunner processRunner) {
                 return projectTrainReleaseWorkflow;
             }
@@ -45,14 +51,14 @@ class MainTests {
             }
 
             @Override
-            String getTrainVersions() {
-                return "1.0.0,1.1.0";
+            String getMicrometerVersions() {
+                return "1.0.0,1.1.0,1.2.0";
             }
         };
 
         main.run();
 
-        then(projectTrainReleaseWorkflow).should().run("1.0.0,1.1.0");
+        then(projectTrainReleaseWorkflow).should().run(TestProjectSetup.forMicrometer("1.0.0", "1.1.0", "1.2.0"));
         then(postReleaseWorkflow).shouldHaveNoInteractions();
     }
 
@@ -61,7 +67,7 @@ class MainTests {
         Main main = new Main() {
 
             @Override
-            ProjectTrainReleaseWorkflow trainReleaseWorkflow(String githubOrgRepo, String artifactToCheck,
+            ProjectTrainReleaseWorkflow trainReleaseWorkflow(String githubOrgRepo,
                     PostReleaseWorkflow postReleaseWorkflow, ProcessRunner processRunner) {
                 return projectTrainReleaseWorkflow;
             }
@@ -69,11 +75,6 @@ class MainTests {
             @Override
             PostReleaseWorkflow newPostReleaseWorkflow(ProcessRunner processRunner) {
                 return postReleaseWorkflow;
-            }
-
-            @Override
-            String getTrainVersions() {
-                return "";
             }
 
             @Override

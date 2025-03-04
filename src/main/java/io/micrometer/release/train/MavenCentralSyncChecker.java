@@ -15,6 +15,7 @@
  */
 package io.micrometer.release.train;
 
+import io.micrometer.release.train.TrainOptions.ProjectSetup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,8 +30,6 @@ class MavenCentralSyncChecker {
 
     private static final String CENTRAL_URL = "https://repo.maven.apache.org/maven2/io/micrometer/";
 
-    private final String artifactToCheck;
-
     private static final int MAX_WAIT_TIME_MINUTES = 20;
 
     private static final int POLL_INTERVAL_SECONDS = 60;
@@ -41,30 +40,27 @@ class MavenCentralSyncChecker {
 
     private final String externalUrl;
 
-    private final int maxWaitTimeInSeconds;
+    private final int maxWaitTimeInMs;
 
-    private final int pollIntervalInSeconds;
+    private final int pollIntervalInMs;
 
-    MavenCentralSyncChecker(String artifactToCheck) {
-        this.artifactToCheck = artifactToCheck;
+    MavenCentralSyncChecker() {
         this.externalUrl = System.getenv("CENTRAL_URL") != null ? System.getenv("CENTRAL_URL") : CENTRAL_URL;
-        this.maxWaitTimeInSeconds = MAX_WAIT_TIME_MINUTES * 60;
-        this.pollIntervalInSeconds = POLL_INTERVAL_SECONDS;
+        this.maxWaitTimeInMs = MAX_WAIT_TIME_MINUTES * 60 * 1000;
+        this.pollIntervalInMs = POLL_INTERVAL_SECONDS * 1000;
     }
 
     // for tests
-    MavenCentralSyncChecker(String artifactToCheck, String externalUrl, int maxWaitTimeInSeconds,
-            int pollIntervalInSeconds) {
-        this.artifactToCheck = artifactToCheck;
+    MavenCentralSyncChecker(String externalUrl, int maxWaitTimeInMs, int pollIntervalInMs) {
         this.externalUrl = externalUrl;
-        this.maxWaitTimeInSeconds = maxWaitTimeInSeconds;
-        this.pollIntervalInSeconds = pollIntervalInSeconds;
+        this.maxWaitTimeInMs = maxWaitTimeInMs;
+        this.pollIntervalInMs = pollIntervalInMs;
     }
 
-    void checkIfArtifactsAreInCentral(List<String> versions) {
+    void checkIfArtifactsAreInCentral(List<String> versions, ProjectSetup projectSetup) {
         try {
             List<CompletableFuture<Void>> mavenCheckTasks = versions.stream()
-                .map(this::checkMavenCentralWithRetries)
+                .map(s -> checkMavenCentralWithRetries(s, projectSetup))
                 .toList();
             FutureUtility.waitForTasksToComplete(mavenCheckTasks);
             log.info("Maven Central verification completed.");
@@ -74,19 +70,19 @@ class MavenCentralSyncChecker {
         }
     }
 
-    private CompletableFuture<Void> checkMavenCentralWithRetries(String version) {
+    private CompletableFuture<Void> checkMavenCentralWithRetries(String version, ProjectSetup projectSetup) {
         CompletableFuture<Void> future = new CompletableFuture<>();
-        String mavenUrl = externalUrl + artifactToCheck + "/" + version + "/";
+        String mavenUrl = externalUrl + projectSetup.artifactToCheck() + "/" + version + "/";
         log.info(
                 "Starting Maven Central sync check for version: [{}] and url [{}]. Will check for the artifact every [{}] seconds for at most [{}] seconds",
-                version, mavenUrl, pollIntervalInSeconds, maxWaitTimeInSeconds);
+                version, mavenUrl, pollIntervalInMs, maxWaitTimeInMs);
         long startTime = System.currentTimeMillis();
-        long maxWaitTimeMillis = TimeUnit.SECONDS.toMillis(maxWaitTimeInSeconds);
+        long maxWaitTimeMillis = TimeUnit.SECONDS.toMillis(maxWaitTimeInMs);
         final ScheduledFuture<?> scheduledFuture = scheduler.scheduleAtFixedRate(() -> {
             if (System.currentTimeMillis() - startTime > maxWaitTimeMillis) {
-                log.error("Version {} not found in Maven Central after {} seconds.", version, maxWaitTimeInSeconds);
-                future.completeExceptionally(new IllegalStateException("Version " + version
-                        + " not found in Maven Central after " + maxWaitTimeInSeconds + " seconds."));
+                log.error("Version {} not found in Maven Central after {} seconds.", version, maxWaitTimeInMs);
+                future.completeExceptionally(new IllegalStateException(
+                        "Version " + version + " not found in Maven Central after " + maxWaitTimeInMs + " seconds."));
                 return;
             }
             if (checkMavenCentral(mavenUrl, version)) {
@@ -94,9 +90,9 @@ class MavenCentralSyncChecker {
                 future.complete(null);
             }
             else {
-                log.info("Version {} not yet available. Retrying in {} seconds...", version, pollIntervalInSeconds);
+                log.info("Version {} not yet available. Retrying in {} seconds...", version, pollIntervalInMs);
             }
-        }, 0, pollIntervalInSeconds, TimeUnit.SECONDS);
+        }, 0, pollIntervalInMs, TimeUnit.SECONDS);
         future.whenComplete((result, throwable) -> scheduledFuture.cancel(true));
         return future;
     }

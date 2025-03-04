@@ -75,11 +75,13 @@ class NotificationSenderTests {
         return new NotificationSender() {
             @Override
             BlueSkyNotifier blueSky() {
+                super.blueSky(); // to ensure no exception is thrown
                 return new BlueSkyNotifier(extension.baseUrl(), "identifier", "");
             }
 
             @Override
             GoogleChatNotifier googleChat() {
+                super.googleChat(); // to ensure no exception is thrown
                 return new GoogleChatNotifier("");
             }
         };

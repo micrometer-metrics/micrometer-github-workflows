@@ -19,6 +19,8 @@ import io.micrometer.release.common.Input;
 import io.micrometer.release.common.ProcessRunner;
 import io.micrometer.release.single.PostReleaseWorkflow;
 import io.micrometer.release.train.ProjectTrainReleaseWorkflow;
+import io.micrometer.release.train.TrainOptions;
+import io.micrometer.release.train.TrainOptions.ProjectSetup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,8 +53,11 @@ public class Main {
         String githubOrgRepo = getGithubOrgRepository();
         String githubRefName = getGithubRefName();
         String previousRefName = getPreviousRefName();
-        String trainVersions = getTrainVersions();
-        String artifactToCheck = System.getenv("ARTIFACT_TO_CHECK");
+        // TRAIN OPTIONS
+        String contextPropVersions = getContextPropVersions();
+        String micrometerVersions = getMicrometerVersions();
+        String tracingVersions = getTracingVersions();
+        String docsGenVersions = getDocsGenVersions();
 
         log.info("""
                 !!!
@@ -64,20 +69,58 @@ public class Main {
                 GITHUB_REPOSITORY [%s]
                 GITHUB_REF_NAME [%s]
                 PREVIOUS_REF_NAME [%s]
-                TRAIN_VERSIONS [%s]
-                ARTIFACT_TO_CHECK [%s]
+
+                TRAIN OPTIONS:
+                CONTEXT_PROPAGATION_VERSIONS [%s]
+                MICROMETER_VERSIONS [%s]
+                TRACING_VERSIONS [%s]
+                DOCS_GEN_VERSIONS [%s]
 
                 !!!
-                """.formatted(githubOrgRepo, githubRefName, previousRefName, trainVersions, artifactToCheck));
+                """.formatted(githubOrgRepo, githubRefName, previousRefName, contextPropVersions, micrometerVersions,
+                tracingVersions, docsGenVersions));
 
-        if (trainVersions != null && !trainVersions.isBlank()) {
+        if (isTrainRelease(githubOrgRepo, contextPropVersions, micrometerVersions, tracingVersions, docsGenVersions)) {
             log.info("Will proceed with train release...");
-            trainReleaseWorkflow(githubOrgRepo, artifactToCheck, postReleaseWorkflow, processRunner).run(trainVersions);
+            ProjectSetup projectSetup = new TrainOptions().parse(githubOrgRepo, contextPropVersions, micrometerVersions,
+                    tracingVersions, docsGenVersions);
+            trainReleaseWorkflow(githubOrgRepo, postReleaseWorkflow, processRunner).run(projectSetup);
         }
         else {
             log.info("Will proceed with single project post release workflow...");
             postReleaseWorkflow.run(githubOrgRepo, githubRefName, previousRefName);
         }
+    }
+
+    private boolean isTrainRelease(String githubOrgRepo, String contextPropVersions, String micrometerVersions,
+            String tracingVersions, String docsGenVersions) {
+        return switch (githubOrgRepo) {
+            case "micrometer-metrics/context-propagation" -> hasText(contextPropVersions);
+            case "micrometer-metrics/micrometer" -> hasText(micrometerVersions);
+            case "micrometer-metrics/tracing" -> hasText(tracingVersions);
+            case "micrometer-metrics/micrometer-docs-generator" -> hasText(docsGenVersions);
+            default -> false;
+        };
+    }
+
+    private boolean hasText(String text) {
+        return text != null && !text.isBlank();
+    }
+
+    String getDocsGenVersions() {
+        return Input.getDocsGenVersions();
+    }
+
+    String getTracingVersions() {
+        return Input.getTracingVersions();
+    }
+
+    String getMicrometerVersions() {
+        return Input.getMicrometerVersions();
+    }
+
+    String getContextPropVersions() {
+        return Input.getContextPropagationVersions();
     }
 
     String getGithubOrgRepository() {
@@ -92,13 +135,9 @@ public class Main {
         return Input.getGithubRefName();
     }
 
-    String getTrainVersions() {
-        return Input.getTrainVersions();
-    }
-
-    ProjectTrainReleaseWorkflow trainReleaseWorkflow(String githubOrgRepo, String artifactToCheck,
-            PostReleaseWorkflow postReleaseWorkflow, ProcessRunner processRunner) {
-        return new ProjectTrainReleaseWorkflow(githubOrgRepo, artifactToCheck, processRunner, postReleaseWorkflow);
+    ProjectTrainReleaseWorkflow trainReleaseWorkflow(String githubOrgRepo, PostReleaseWorkflow postReleaseWorkflow,
+            ProcessRunner processRunner) {
+        return new ProjectTrainReleaseWorkflow(githubOrgRepo, processRunner, postReleaseWorkflow);
     }
 
     PostReleaseWorkflow newPostReleaseWorkflow(ProcessRunner processRunner) {

@@ -1,6 +1,6 @@
 {
   "request" : {
-    "url" : "/repos/micrometer-metrics/micrometer/branches/1.14.x",
+    "url" : "/repos/micrometer-metrics/micrometer/branches/1.0.x",
     "method" : "GET",
     "headers": {
       "Authorization": {

@@ -49,4 +49,24 @@ public class Input {
         return System.getenv("TRAIN_VERSIONS");
     }
 
+    public static String getContextPropagationVersions() {
+        return System.getenv("CONTEXT_PROPAGATION_VERSIONS");
+    }
+
+    public static String getMicrometerVersions() {
+        return System.getenv("MICROMETER_VERSIONS");
+    }
+
+    public static String getTracingVersions() {
+        return System.getenv("TRACING_VERSIONS");
+    }
+
+    public static String getDocsGenVersions() {
+        return System.getenv("DOCS_GEN_VERSIONS");
+    }
+
+    public static String getGhToken() {
+        return System.getenv("GH_TOKEN");
+    }
+
 }

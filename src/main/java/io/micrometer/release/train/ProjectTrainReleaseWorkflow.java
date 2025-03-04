@@ -17,11 +17,13 @@ package io.micrometer.release.train;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.release.common.Input;
 import io.micrometer.release.common.ProcessRunner;
 import io.micrometer.release.single.PostReleaseWorkflow;
 
+import io.micrometer.release.train.TrainOptions.ProjectSetup;
+
 import java.net.http.HttpClient;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -40,16 +42,16 @@ public class ProjectTrainReleaseWorkflow {
 
     private final MavenCentralSyncChecker mavenCentralSyncChecker;
 
-    public ProjectTrainReleaseWorkflow(String githubOrgRepo, String artifactToCheck, ProcessRunner processRunner,
+    public ProjectTrainReleaseWorkflow(String githubOrgRepo, ProcessRunner processRunner,
             PostReleaseWorkflow postReleaseWorkflow) {
         this.releaseScheduler = new ReleaseScheduler(
                 new CircleCiChecker(System.getenv("CIRCLE_CI_TOKEN"), githubOrgRepo, HTTP_CLIENT, OBJECT_MAPPER),
                 processRunner);
-        this.versionToBranchConverter = new VersionToBranchConverter(System.getenv("GH_TOKEN"),
+        this.versionToBranchConverter = new VersionToBranchConverter(Input.getGhToken(),
                 "https://api.github.com/repos/" + githubOrgRepo + "/branches/", HTTP_CLIENT);
         this.postReleaseTaskScheduler = new PostReleaseTaskScheduler(postReleaseWorkflow, new Git(processRunner),
                 githubOrgRepo);
-        this.mavenCentralSyncChecker = new MavenCentralSyncChecker(artifactToCheck);
+        this.mavenCentralSyncChecker = new MavenCentralSyncChecker();
     }
 
     // For tests
@@ -61,22 +63,12 @@ public class ProjectTrainReleaseWorkflow {
         this.mavenCentralSyncChecker = mavenCentralSyncChecker;
     }
 
-    public void run(String commaSeparatedListOfVersions) {
-        // Take in a comma separated list of versions (e.g. 1.15.6-M2, 1.14.9, 1.13.2)
-        // Iterate over the list, convert version to branch (e.g. 1.15.6-M2 -> 1.15.x or
-        // main if doesn't exist)
-        // Using GH cli create a release and tag from each branch (main, 1.14.x, 1.13.x ->
-        // v1.15.6-M2, v1.14.9, v1.13.2)
-        // Check if circle ci status is successful for all executions
-        // Once all jobs are completed that means that all 3 deployments completed
-        // successfully (now we're waiting for sync to central)
-        // For each branch now run a post release action
-        // Finally check if sync is finished
-        List<String> versions = Arrays.stream(commaSeparatedListOfVersions.split(",")).map(String::trim).toList();
+    public void run(ProjectSetup projectSetup) {
+        List<String> versions = projectSetup.versionsForThisProject();
         Map<String, String> versionToBranch = versionToBranchConverter.convert(versions);
-        releaseScheduler.runReleaseAndCheckCi(versionToBranch);
+        releaseScheduler.runReleaseAndCheckCi(versionToBranch, projectSetup);
         postReleaseTaskScheduler.runPostReleaseTasks(versions);
-        mavenCentralSyncChecker.checkIfArtifactsAreInCentral(versions);
+        mavenCentralSyncChecker.checkIfArtifactsAreInCentral(versions, projectSetup);
     }
 
 }

@@ -17,6 +17,7 @@ package io.micrometer.release.train;
 
 import io.micrometer.release.common.Input;
 import io.micrometer.release.common.ProcessRunner;
+import io.micrometer.release.train.TrainOptions.ProjectSetup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,18 +50,19 @@ class ReleaseScheduler {
         this.dependencyVerifier = dependencyVerifier;
     }
 
-    void runReleaseAndCheckCi(Map<String, String> versionToBranch) {
+    void runReleaseAndCheckCi(Map<String, String> versionToBranch, ProjectSetup projectSetup) {
         List<CompletableFuture<Void>> releaseTasks = versionToBranch.entrySet()
             .stream()
-            .map(entry -> CompletableFuture.runAsync(() -> handleReleaseAndCI(entry.getKey(), entry.getValue())))
+            .map(entry -> CompletableFuture
+                .runAsync(() -> handleReleaseAndCI(entry.getKey(), entry.getValue(), projectSetup)))
             .toList();
         FutureUtility.waitForTasksToComplete(releaseTasks);
         log.info("All releases created and CI checks completed successfully.");
     }
 
-    private void handleReleaseAndCI(String version, String branch) {
+    private void handleReleaseAndCI(String version, String branch, ProjectSetup projectSetup) {
         try {
-            dependencyVerifier.verifyDependencies(branch, getOrgRepository());
+            dependencyVerifier.verifyDependencies(branch, getOrgRepository(), projectSetup);
             createGithubRelease(version, branch);
             boolean buildSuccessful = circleCiChecker.checkBuildStatus(version);
             if (!buildSuccessful) {

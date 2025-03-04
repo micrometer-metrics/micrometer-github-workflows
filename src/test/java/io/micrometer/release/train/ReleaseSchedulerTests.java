@@ -14,6 +14,7 @@
 package io.micrometer.release.train;
 
 import io.micrometer.release.common.ProcessRunner;
+import io.micrometer.release.train.TrainOptions.ProjectSetup;
 import org.junit.jupiter.api.Test;
 import org.mockito.BDDMockito;
 
@@ -40,7 +41,8 @@ class ReleaseSchedulerTests {
     void should_schedule_releases() throws IOException, InterruptedException {
         given(checker.checkBuildStatus(BDDMockito.anyString())).willReturn(true);
 
-        releaseScheduler.runReleaseAndCheckCi(Map.of("1.0.0", "v1.0.0", "2.0.0", "v2.0.0"));
+        releaseScheduler.runReleaseAndCheckCi(Map.of("1.0.0", "v1.0.0", "2.0.0", "v2.0.0"),
+                TestProjectSetup.forMicrometer("1.0.0", "2.0.0"));
 
         then(processRunner).should().run("gh", "release", "create", "v1.0.0", "--target", "v1.0.0", "-t", "1.0.0");
         then(processRunner).should().run("gh", "release", "create", "v2.0.0", "--target", "v2.0.0", "-t", "2.0.0");
@@ -54,13 +56,14 @@ class ReleaseSchedulerTests {
         ReleaseScheduler releaseScheduler = new ReleaseScheduler(checker, processRunner,
                 new DependencyVerifier(processRunner) {
                     @Override
-                    void verifyDependencies(String branch, String orgRepository) {
+                    void verifyDependencies(String branch, String orgRepository, ProjectSetup projectSetup) {
                         throw new IllegalStateException("BOOM!"); // mock doesn't work for
                         // some reason
                     }
                 });
 
-        thenThrownBy(() -> releaseScheduler.runReleaseAndCheckCi(Map.of("1.0.0", "v1.0.0")))
+        thenThrownBy(() -> releaseScheduler.runReleaseAndCheckCi(Map.of("1.0.0", "v1.0.0"),
+                TestProjectSetup.forMicrometer("1.0.0")))
             .isInstanceOf(CompletionException.class)
             .hasRootCauseInstanceOf(IllegalStateException.class)
             .hasRootCauseMessage("BOOM!");
@@ -73,7 +76,8 @@ class ReleaseSchedulerTests {
     void should_throw_exception_when_build_status_not_successful() throws IOException, InterruptedException {
         given(checker.checkBuildStatus(BDDMockito.anyString())).willReturn(false);
 
-        thenThrownBy(() -> releaseScheduler.runReleaseAndCheckCi(Map.of("1.0.0", "v1.0.0", "2.0.0", "v2.0.0")))
+        thenThrownBy(() -> releaseScheduler.runReleaseAndCheckCi(Map.of("1.0.0", "v1.0.0", "2.0.0", "v2.0.0"),
+                TestProjectSetup.forMicrometer("1.0.0", "2.0.0")))
             .hasRootCauseInstanceOf(IllegalStateException.class)
             .hasMessageContaining("Build failed for version:");
     }

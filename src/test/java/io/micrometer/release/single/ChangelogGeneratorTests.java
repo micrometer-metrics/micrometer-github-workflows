@@ -17,6 +17,7 @@ package io.micrometer.release.single;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import io.micrometer.release.JavaHomeFinder;
+import io.micrometer.release.common.ProcessRunner;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -26,6 +27,7 @@ import java.nio.file.Files;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenNoException;
 
 class ChangelogGeneratorTests {
 
@@ -45,6 +47,11 @@ class ChangelogGeneratorTests {
         String content = Files.readString(
                 new File(ChangelogGeneratorTests.class.getResource("/generator/micrometer.md").toURI()).toPath());
         then(output).hasContent(content);
+    }
+
+    @Test
+    void should_construct_instance() {
+        thenNoException().isThrownBy(() -> new ChangelogGenerator(new ProcessRunner()));
     }
 
     static ChangelogGenerator testChangelogGenerator(String ghApi, File changelogOutput) {

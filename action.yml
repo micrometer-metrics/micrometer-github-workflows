@@ -18,12 +18,20 @@ inputs:
     description: "[SINGLE PROJECT] Previous release version in this train (e.g.v1.14.8)"
     required: false
     default: ""
-  train_versions:
-    description: "[TRAIN] Comma separated list of versions (e.g. 1.13.2,1.14.8,1.15.9)"
+  context_propagation_versions:
+    description: "[TRAIN] Comma separated list of context propagation versions (e.g. 1.0.0,1.1.0,1.1.0)"
     required: false
     default: ""
-  artifact_to_check:
-    description: "[TRAIN] What's the artifact id (io.micrometer:artifactId) to check in Maven Central if the sync after the release was successful (e.g. micrometer-bom)"
+  micrometer_versions:
+    description: "[TRAIN] Comma separated list of micrometer versions (e.g. 1.13.2,1.14.8,1.15.9)"
+    required: false
+    default: ""
+  tracing_versions:
+    description: "[TRAIN] Comma separated list of context micrometer tracing versions (e.g. 1.5.0,1.6.0,1.7.0)"
+    required: false
+    default: ""
+  docs_gen_versions:
+    description: "[TRAIN] Comma separated list of context micrometer docs generator versions (e.g. 1.0.0,1.1.0,1.2.0)"
     required: false
     default: ""
   spring_release_gchat_webhook_url:
@@ -52,9 +60,11 @@ runs:
     SPRING_RELEASE_GCHAT_WEBHOOK_URL: ${{ inputs.spring_release_gchat_webhook_url }}
     BLUESKY_HANDLE: ${{ inputs.bluesky_handle }}
     BLUESKY_PASSWORD: ${{ inputs.bluesky_password }}
-    TRAIN_VERSIONS: ${{ inputs.train_versions }}
-    ARTIFACT_TO_CHECK: ${{ inputs.artifact_to_check }}
     CIRCLE_CI_TOKEN: ${{ inputs.circle_ci_token }}
+    CONTEXT_PROPAGATION_VERSIONS: ${{ inputs.context_propagation_versions }}
+    MICROMETER_VERSIONS: ${{ inputs.micrometer_versions }}
+    TRACING_VERSIONS: ${{ inputs.tracing_versions }}
+    DOCS_GEN_VERSIONS: ${{ inputs.docs_gen_versions }}
 
 branding:
   icon: "activity"
