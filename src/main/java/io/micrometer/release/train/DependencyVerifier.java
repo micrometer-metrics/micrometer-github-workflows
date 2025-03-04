@@ -180,6 +180,7 @@ class DependencyVerifier {
                     "https://x-access-token:" + githubToken + "@github.com/" + orgRepository + ".git");
             branchProcessRunner.run("git", "config", "user.name", "GitHub Action");
             branchProcessRunner.run("git", "config", "user.email", "action@github.com");
+            branchProcessRunner.run("git", "pull");
             branchProcessRunner.run("git", "add", filePath);
             branchProcessRunner.run("git", "commit", "-m",
                     "ci: " + (hasComment ? "Remove" : "Add") + " dependabot trigger comment");

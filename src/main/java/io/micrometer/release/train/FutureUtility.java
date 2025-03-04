@@ -22,7 +22,7 @@ class FutureUtility {
     static void waitForTasksToComplete(List<CompletableFuture<Void>> releaseTasks) {
         CompletableFuture
             .allOf(releaseTasks.stream()
-                .map(future -> future.orTimeout(20, TimeUnit.MINUTES))
+                .map(future -> future.orTimeout(30, TimeUnit.MINUTES))
                 .toList()
                 .toArray(new CompletableFuture[0]))
             .join();

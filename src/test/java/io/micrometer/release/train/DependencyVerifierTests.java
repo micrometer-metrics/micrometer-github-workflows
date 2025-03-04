@@ -115,6 +115,7 @@ class DependencyVerifierTests {
                     "https://x-access-token:1234567890@github.com/micrometer-metrics/micrometer.git");
         inOrder.verify(processRunner).run("git", "config", "user.name", "GitHub Action");
         inOrder.verify(processRunner).run("git", "config", "user.email", "action@github.com");
+        inOrder.verify(processRunner).run("git", "pull");
         inOrder.verify(processRunner).run("git", "add", ".github/dependabot.yml");
         inOrder.verify(processRunner)
             .run(eq("git"), eq("commit"), eq("-m"), matches("ci: (Add|Remove) dependabot trigger comment"));
