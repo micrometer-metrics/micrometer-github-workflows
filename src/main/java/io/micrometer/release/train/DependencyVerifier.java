@@ -24,14 +24,11 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 
 class DependencyVerifier {
 
@@ -104,7 +101,7 @@ class DependencyVerifier {
     }
 
     private Status dependabotUpdateStatus(File clonedRepo, String orgRepository) {
-        String githubServerTime = getGitHubServerTime();
+        String githubServerTime = getGitHubServerTime(orgRepository);
         triggerDependabotCheck(orgRepository, clonedRepo);
         waitForDependabotJobsToFinish(orgRepository, githubServerTime);
         return waitForDependabotPrsToFinish(githubServerTime);
@@ -147,19 +144,17 @@ class DependencyVerifier {
         }
     }
 
-    private String getGitHubServerTime() {
+    private String getGitHubServerTime(String orgRepository) {
         log.info("Retrieving the GH server time...");
-        List<String> response = processRunner.run("gh", "api", "/", "--include");
-        String dateHeader = response.stream()
-            .filter(line -> line.startsWith("Date:"))
-            .findFirst()
-            .orElseThrow(() -> new IllegalStateException("Could not get GitHub server time from response headers"));
-        // Parse RFC 1123 date to ZonedDateTime and format as ISO-8601 (done by default by
-        // dateTime.toInstant())
-        ZonedDateTime dateTime = ZonedDateTime.parse(dateHeader.substring(5).trim(), RFC_1123_DATE_TIME);
-        String serverTime = dateTime.toInstant().toString();
-        log.info("GH server time: {}", serverTime);
-        return serverTime;
+        String id = getDependabotupdatesWorkflowId(orgRepository);
+        List<String> latestJobDates = processRunner.run("gh", "run", "list", "--workflow=" + id, "-R", orgRepository,
+                "--json=createdAt", "--jq=.[].createdAt", "--limit=1");
+        if (latestJobDates.isEmpty()) {
+            throw new IllegalStateException("Can't get Github server time because no dependabot jobs were ever ran");
+        }
+        String date = latestJobDates.get(0);
+        log.info("GH server time: {}", date);
+        return date;
     }
 
     private void triggerDependabotCheck(String orgRepository, File clonedRepo) {
@@ -209,12 +204,7 @@ class DependencyVerifier {
         log.info("Waiting {} {} for Dependabot jobs to be created...", initialWait, timeUnit);
         sleep(initialWait);
         log.info("Waiting for Dependabot jobs to finish...");
-        List<String> ids = processRunner.run("gh", "workflow", "list", "-R", orgRepository, "--json", "id,name", "--jq",
-                ".[] | select(.name==\"Dependabot Updates\") | .id");
-        if (ids.isEmpty()) {
-            throw new IllegalStateException("Could not find dependabot updates");
-        }
-        String id = ids.get(0);
+        String id = getDependabotupdatesWorkflowId(orgRepository);
         long startTime = System.currentTimeMillis();
         long timeoutMillis = timeUnit.toMillis(timeout / 2);
         while (System.currentTimeMillis() - startTime < timeoutMillis) {
@@ -236,6 +226,15 @@ class DependencyVerifier {
         }
         log.error("Failed! Dependabot jobs not processed within the provided timeout");
         throw new IllegalStateException("Timeout waiting for Dependabot jobs to complete");
+    }
+
+    private String getDependabotupdatesWorkflowId(String orgRepository) {
+        List<String> ids = processRunner.run("gh", "workflow", "list", "-R", orgRepository, "--json", "id,name", "--jq",
+                ".[] | select(.name==\"Dependabot Updates\") | .id");
+        if (ids.isEmpty()) {
+            throw new IllegalStateException("Could not find dependabot updates");
+        }
+        return ids.get(0);
     }
 
     private Status waitForDependabotPrsToFinish(String githubServerTime) {

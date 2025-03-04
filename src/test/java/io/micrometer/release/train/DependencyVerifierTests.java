@@ -24,9 +24,7 @@ import org.mockito.InOrder;
 import org.mockito.Mockito;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -50,11 +48,11 @@ class DependencyVerifierTests {
             "micrometer-metrics/micrometer", "--json", "id,name", "--jq",
             ".[] | select(.name==\"Dependabot Updates\") | .id" };
 
+    private static final String[] dependabotUpdateJobTime = { "gh", "run", "list", "--workflow=1234", "-R",
+            "micrometer-metrics/micrometer", "--json=createdAt", "--jq=.[].createdAt", "--limit=1" };
+
     private static final String[] dependabotUpdateJobStates = { "gh", "run", "list", "--workflow=1234", "-R",
             "micrometer-metrics/micrometer", "--created='>2025-02-24T10:51:29Z'", "--json=status", "--jq=.[].status" };
-
-    File ghServerTimeResponse = new File(
-            DependencyVerifierTests.class.getResource("/dependencyVerifier/getGhServerTime.txt").toURI());
 
     ProcessRunner processRunner = mock();
 
@@ -85,7 +83,7 @@ class DependencyVerifierTests {
         }
     };
 
-    DependencyVerifierTests() throws URISyntaxException {
+    DependencyVerifierTests() {
     }
 
     @BeforeEach
@@ -96,9 +94,8 @@ class DependencyVerifierTests {
 
     @Test
     @SuppressWarnings("unchecked")
-    void should_receive_updated_dependabot_status() throws IOException {
-        given(processRunner.run("gh", "api", "/", "--include"))
-            .willReturn(Files.readAllLines(ghServerTimeResponse.toPath()));
+    void should_receive_updated_dependabot_status() {
+        given(processRunner.run(dependabotUpdateJobTime)).willReturn(List.of("2025-02-24T10:51:29Z"));
         given(processRunner.run(dependabotCreatedPrNumbers)).willReturn(Collections.singletonList("1234"),
                 Collections.singletonList("1234"), Collections.emptyList());
         given(processRunner.run(dependabotPrState)).willReturn(Collections.singletonList("BLOCKED,OPEN"),
@@ -107,7 +104,7 @@ class DependencyVerifierTests {
         verifier.verifyDependencies("main", "micrometer-metrics/micrometer");
 
         InOrder inOrder = Mockito.inOrder(processRunner);
-        inOrder.verify(processRunner).run("gh", "api", "/", "--include");
+        inOrder.verify(processRunner).run(dependabotUpdateJobTime);
         inOrder.verify(processRunner)
             .run("git", "remote", "set-url", "origin",
                     "https://x-access-token:1234567890@github.com/micrometer-metrics/micrometer.git");
@@ -123,9 +120,8 @@ class DependencyVerifierTests {
 
     @Test
     @SuppressWarnings("unchecked")
-    void should_fail_when_no_dependabot_jobs_present() throws IOException {
-        given(processRunner.run("gh", "api", "/", "--include"))
-            .willReturn(Files.readAllLines(ghServerTimeResponse.toPath()));
+    void should_fail_when_no_dependabot_jobs_present() {
+        given(processRunner.run(dependabotUpdateJobTime)).willReturn(List.of("2025-02-24T10:51:29Z"));
         given(processRunner.run(dependabotUpdateJobsIds)).willReturn(Collections.emptyList());
 
         thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer"))
@@ -135,9 +131,8 @@ class DependencyVerifierTests {
 
     @Test
     @SuppressWarnings("unchecked")
-    void should_fail_when_dependabot_jobs_are_not_successful() throws IOException {
-        given(processRunner.run("gh", "api", "/", "--include"))
-            .willReturn(Files.readAllLines(ghServerTimeResponse.toPath()));
+    void should_fail_when_dependabot_jobs_are_not_successful() {
+        given(processRunner.run(dependabotUpdateJobTime)).willReturn(List.of("2025-02-24T10:51:29Z"));
         given(processRunner.run(dependabotUpdateJobStates)).willReturn(List.of(), List.of("BLOCKED", "OPEN"));
 
         thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer"))
@@ -147,17 +142,16 @@ class DependencyVerifierTests {
 
     @Test
     void should_throw_exception_when_gh_server_time_cannot_be_retrieved() {
-        given(processRunner.run("gh", "api", "/", "--include")).willReturn(Collections.emptyList());
+        given(processRunner.run(dependabotUpdateJobTime)).willReturn(Collections.emptyList());
 
         thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer"))
             .isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("Could not get GitHub server time from response headers");
+            .hasMessageContaining("Can't get Github server time because no dependabot jobs were ever ran");
     }
 
     @Test
-    void should_throw_exception_when_no_dependabot_jobs() throws IOException {
-        given(processRunner.run("gh", "api", "/", "--include"))
-            .willReturn(Files.readAllLines(ghServerTimeResponse.toPath()));
+    void should_throw_exception_when_dependabot_pr_is_conflicting() {
+        given(processRunner.run(dependabotUpdateJobTime)).willReturn(List.of("2025-02-24T10:51:29Z"));
         given(processRunner.run(dependabotCreatedPrNumbers)).willReturn(Collections.singletonList("1234"));
         given(processRunner.run(dependabotPrState)).willReturn(Collections.singletonList("CONFLICTING"));
 
@@ -167,21 +161,8 @@ class DependencyVerifierTests {
     }
 
     @Test
-    void should_throw_exception_when_dependabot_pr_is_conflicting() throws IOException {
-        given(processRunner.run("gh", "api", "/", "--include"))
-            .willReturn(Files.readAllLines(ghServerTimeResponse.toPath()));
-        given(processRunner.run(dependabotCreatedPrNumbers)).willReturn(Collections.singletonList("1234"));
-        given(processRunner.run(dependabotPrState)).willReturn(Collections.singletonList("CONFLICTING"));
-
-        thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer"))
-            .isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("PR #1234 has conflicts");
-    }
-
-    @Test
-    void should_throw_exception_when_timeout() throws IOException {
-        given(processRunner.run("gh", "api", "/", "--include"))
-            .willReturn(Files.readAllLines(ghServerTimeResponse.toPath()));
+    void should_throw_exception_when_timeout() {
+        given(processRunner.run(dependabotUpdateJobTime)).willReturn(List.of("2025-02-24T10:51:29Z"));
         given(processRunner.run(dependabotCreatedPrNumbers)).willReturn(Collections.singletonList("1234"));
         given(processRunner.run(dependabotPrState)).willReturn(Collections.singletonList("BLOCKED,OPEN"));
 
