@@ -13,8 +13,6 @@
  */
 package io.micrometer.release.train;
 
-import io.micrometer.release.common.Dependency;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

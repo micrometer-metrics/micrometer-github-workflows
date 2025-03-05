@@ -15,6 +15,7 @@
  */
 package io.micrometer.release.train;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.release.common.Input;
 import io.micrometer.release.common.ProcessRunner;
 import io.micrometer.release.train.TrainOptions.ProjectSetup;
@@ -36,10 +37,10 @@ class ReleaseScheduler {
 
     private final DependencyVerifier dependencyVerifier;
 
-    ReleaseScheduler(CircleCiChecker circleCiChecker, ProcessRunner processRunner) {
+    ReleaseScheduler(CircleCiChecker circleCiChecker, ObjectMapper objectMapper, ProcessRunner processRunner) {
         this.circleCiChecker = circleCiChecker;
         this.processRunner = processRunner;
-        this.dependencyVerifier = new DependencyVerifier(processRunner);
+        this.dependencyVerifier = new DependencyVerifier(processRunner, objectMapper);
     }
 
     // for tests

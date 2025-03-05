@@ -59,7 +59,8 @@ class DependencyVerifierTests {
 
     ProcessRunner processRunner = mock();
 
-    DependencyVerifier verifier = new DependencyVerifier(processRunner, 1, 5, 1, TimeUnit.MILLISECONDS) {
+    DependencyVerifier verifier = new DependencyVerifier(processRunner, ProjectTrainReleaseWorkflow.OBJECT_MAPPER, 1, 5,
+            1, TimeUnit.MILLISECONDS) {
         @Override
         GradleParser gradleParser(ProcessRunner branchProcessRunner) {
             return new TestGradleParser();
@@ -145,14 +146,21 @@ class DependencyVerifierTests {
                 "total_count": 15,
                 "workflow_runs": [
                   {
+                    "id" : 1,
+                    "url": "a",
+                    "name": "foo",
                     "status": "blocked",
                     "event": "pull_request"
                   },
                   {
+                    "id" : 2,
+                    "url": "a",
+                    "name": "bar",
                     "status": "open",
                     "event": "pull_request"
                   }
-                 ]"""));
+                 ]
+                 }"""));
 
         thenThrownBy(() -> verifier.verifyDependencies("main", "micrometer-metrics/micrometer", projectSetup()))
             .isInstanceOf(IllegalStateException.class)

@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.release.common.Input;
 import io.micrometer.release.common.ProcessRunner;
 import io.micrometer.release.single.PostReleaseWorkflow;
-
 import io.micrometer.release.train.TrainOptions.ProjectSetup;
 
 import java.net.http.HttpClient;
@@ -31,7 +30,7 @@ public class ProjectTrainReleaseWorkflow {
 
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+    static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     private final ReleaseScheduler releaseScheduler;
@@ -46,7 +45,7 @@ public class ProjectTrainReleaseWorkflow {
             PostReleaseWorkflow postReleaseWorkflow) {
         this.releaseScheduler = new ReleaseScheduler(
                 new CircleCiChecker(System.getenv("CIRCLE_CI_TOKEN"), githubOrgRepo, HTTP_CLIENT, OBJECT_MAPPER),
-                processRunner);
+                OBJECT_MAPPER, processRunner);
         this.versionToBranchConverter = new VersionToBranchConverter(Input.getGhToken(),
                 "https://api.github.com/repos/" + githubOrgRepo + "/branches/", HTTP_CLIENT);
         this.postReleaseTaskScheduler = new PostReleaseTaskScheduler(postReleaseWorkflow, new Git(processRunner),

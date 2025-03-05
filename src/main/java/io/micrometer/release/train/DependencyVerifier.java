@@ -15,6 +15,8 @@
  */
 package io.micrometer.release.train;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.release.common.Dependency;
 import io.micrometer.release.common.GradleParser;
 import io.micrometer.release.common.Input;
@@ -38,6 +40,8 @@ class DependencyVerifier {
 
     private final ProcessRunner processRunner;
 
+    private final ObjectMapper objectMapper;
+
     private final int initialWait;
 
     private final int timeout;
@@ -46,8 +50,9 @@ class DependencyVerifier {
 
     private final TimeUnit timeUnit;
 
-    DependencyVerifier(ProcessRunner processRunner) {
+    DependencyVerifier(ProcessRunner processRunner, ObjectMapper objectMapper) {
         this.processRunner = processRunner;
+        this.objectMapper = objectMapper;
         this.timeUnit = TimeUnit.SECONDS;
         this.initialWait = 15;
         this.timeout = 60 * 10;
@@ -55,9 +60,10 @@ class DependencyVerifier {
     }
 
     // for tests
-    DependencyVerifier(ProcessRunner processRunner, int initialWait, int timeout, int waitBetweenRuns,
-            TimeUnit timeUnit) {
+    DependencyVerifier(ProcessRunner processRunner, ObjectMapper objectMapper, int initialWait, int timeout,
+            int waitBetweenRuns, TimeUnit timeUnit) {
         this.processRunner = processRunner;
+        this.objectMapper = objectMapper;
         this.initialWait = initialWait;
         this.timeout = timeout;
         this.waitBetweenRuns = waitBetweenRuns;
@@ -213,23 +219,27 @@ class DependencyVerifier {
         long startTime = System.currentTimeMillis();
         long timeoutMillis = timeUnit.toMillis(timeout / 2);
         while (System.currentTimeMillis() - startTime < timeoutMillis) {
-            List<String> statuses = curlRuns(orgRepository, githubServerTime, id).stream()
-                .filter(s -> s.contains("\"status\": \""))
-                .map(s -> s.substring(s.lastIndexOf(":") + 1).replace("\"", "").replace(",", "").trim())
-                .toList();
-            if (statuses.isEmpty()) {
-                log.info("No dependabot jobs found");
-            }
-            else {
-                log.info("Found {} Dependabot jobs with statuses {}", statuses.size(), statuses);
-                boolean allCompleted = statuses.stream().allMatch(s -> s.equalsIgnoreCase("completed"));
-                if (allCompleted) {
-                    log.info("All dependabot jobs completed");
-                    return;
+            List<String> curl = curlRuns(orgRepository, githubServerTime, id);
+            try {
+                Workflows workflows = objectMapper.readValue(String.join("\n", curl), Workflows.class);
+                List<Pr> prs = workflows.workflow_runs();
+                if (prs.isEmpty()) {
+                    log.info("No dependabot jobs found");
                 }
+                else {
+                    log.info("Found {} Dependabot jobs with statuses {}", prs.size(), prs);
+                    boolean allCompleted = prs.stream().allMatch(pr -> pr.status().equalsIgnoreCase("completed"));
+                    if (allCompleted) {
+                        log.info("All dependabot jobs completed");
+                        return;
+                    }
+                }
+                log.info("Not all Dependabot jobs processed, will try again...");
+                sleep(waitBetweenRuns);
             }
-            log.info("Not all Dependabot jobs processed, will try again...");
-            sleep(waitBetweenRuns);
+            catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
         }
         log.error("Failed! Dependabot jobs not processed within the provided timeout");
         throw new IllegalStateException("Timeout waiting for Dependabot jobs to complete");
@@ -239,6 +249,14 @@ class DependencyVerifier {
         return processRunner.runSilently("curl", "-H", "Authorization: token " + ghToken(),
                 "https://api.github.com/repos/" + orgRepository + "/actions/runs?created=>" + githubServerTime
                         + "&workflow_id=" + id);
+    }
+
+    record Pr(String id, String name, String url, String status) {
+
+    }
+
+    record Workflows(List<Pr> workflow_runs) {
+
     }
 
     private String getDependabotupdatesWorkflowId(String orgRepository) {

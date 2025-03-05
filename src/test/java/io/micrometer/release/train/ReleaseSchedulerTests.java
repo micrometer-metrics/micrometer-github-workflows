@@ -54,7 +54,7 @@ class ReleaseSchedulerTests {
     @Test
     void should_not_make_a_release_when_dependency_check_fails() {
         ReleaseScheduler releaseScheduler = new ReleaseScheduler(checker, processRunner,
-                new DependencyVerifier(processRunner) {
+                new DependencyVerifier(processRunner, ProjectTrainReleaseWorkflow.OBJECT_MAPPER) {
                     @Override
                     void verifyDependencies(String branch, String orgRepository, ProjectSetup projectSetup) {
                         throw new IllegalStateException("BOOM!"); // mock doesn't work for
