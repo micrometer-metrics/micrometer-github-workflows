@@ -110,7 +110,7 @@ public class TrainOptions {
         private final String artifactId;
 
         ProjectDefinition(String repository, String artifactId) {
-            this.orgRepo = repository.equals("gh-actions-test") ? "marcingrzejszczak" + repository
+            this.orgRepo = repository.equals("gh-actions-test") ? "marcingrzejszczak/" + repository
                     : "micrometer-metrics/" + repository;
             this.artifactId = artifactId;
         }
