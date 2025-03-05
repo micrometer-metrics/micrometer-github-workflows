@@ -63,12 +63,16 @@ public class TrainOptions {
             String[] contextPropagationVersion) {
         for (int i = 0; i < micrometerVersion.length; i++) {
             MicrometerProject micrometer = micrometer(micrometerVersion[i]);
+            Micrometer micrometerWithDeps;
             if (contextPropagationVersion.length > 0) {
-                projects.add(micrometer.withContextPropagation(contextPropagationVersion[i]));
+                micrometerWithDeps = micrometer.withContextPropagation(contextPropagationVersion[i]);
+                projects.add(micrometerWithDeps);
             }
             else {
-                projects.add(micrometer.noContextPropagation());
+                micrometerWithDeps = micrometer.noContextPropagation();
+                projects.add(micrometerWithDeps);
             }
+            projects.add(new GhActionsTest(micrometerWithDeps));
         }
     }
 
@@ -247,6 +251,15 @@ public class TrainOptions {
                     contextPropagationVersion != null
                             ? List.of(new Dependency(ProjectDefinition.CONTEXT_PROPAGATION, contextPropagationVersion))
                             : List.of());
+        }
+
+    }
+
+    static class GhActionsTest extends ProjectWithDependencies {
+
+        public GhActionsTest(Micrometer micrometer) {
+            super(new Project(ProjectDefinition.TEST, micrometer.getProject().projectVersion),
+                    micrometer.getDependencies());
         }
 
     }
