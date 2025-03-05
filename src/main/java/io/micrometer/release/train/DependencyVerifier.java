@@ -227,12 +227,17 @@ class DependencyVerifier {
                     log.info("No dependabot jobs found");
                 }
                 else {
-                    log.info("Found {} Dependabot jobs with statuses {}", prs.size(), prs);
+                    log.info("Found {} Dependabot jobs", prs.size());
                     boolean allCompleted = prs.stream().allMatch(pr -> pr.status().equalsIgnoreCase("completed"));
                     if (allCompleted) {
                         log.info("All dependabot jobs completed");
                         return;
                     }
+                    Set<Pr> notCompleted = prs.stream()
+                        .filter(pr -> !pr.status.equalsIgnoreCase("completed"))
+                        .collect(Collectors.toSet());
+                    log.info("Found {} not completed jobs\n", notCompleted.size());
+                    notCompleted.forEach(pr -> log.info("\t{}", pr));
                 }
                 log.info("Not all Dependabot jobs processed, will try again...");
                 sleep(waitBetweenRuns);
@@ -251,7 +256,7 @@ class DependencyVerifier {
                         + "&workflow_id=" + id);
     }
 
-    record Pr(String id, String name, String url, String status) {
+    record Pr(String id, String name, String status) {
 
     }
 
