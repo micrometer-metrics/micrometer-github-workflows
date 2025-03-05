@@ -108,13 +108,12 @@ public class Main {
     // This is used for e2e tests
     private String modifyForE2eTests(String githubOrgRepo) {
         if ("marcingrzejszczak/gh-actions-test".equalsIgnoreCase(githubOrgRepo)) {
-            return "micrometer-metrics/tracing";
+            return "micrometer-metrics/micrometer";
         }
         return githubOrgRepo;
     }
 
     private boolean hasText(String text) {
-        log.info("Checking if text is there [{}]", text);
         return text != null && !text.isBlank();
     }
 
