@@ -222,7 +222,10 @@ class DependencyVerifier {
             List<String> curl = curlRuns(orgRepository, githubServerTime, id);
             try {
                 Workflows workflows = objectMapper.readValue(String.join("\n", curl), Workflows.class);
-                List<Pr> prs = workflows.workflow_runs();
+                List<Pr> prs = workflows.workflow_runs()
+                    .stream()
+                    .filter(pr -> "dependabot[bot]".equals(pr.actor().login()))
+                    .toList();
                 if (prs.isEmpty()) {
                     log.info("No dependabot jobs found");
                 }
@@ -256,7 +259,11 @@ class DependencyVerifier {
                         + "&workflow_id=" + id);
     }
 
-    record Pr(String id, String name, String status) {
+    record Actor(String login) {
+
+    }
+
+    record Pr(String id, String name, String status, Actor actor) {
 
     }
 

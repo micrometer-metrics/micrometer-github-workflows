@@ -150,14 +150,20 @@ class DependencyVerifierTests {
                     "url": "a",
                     "name": "foo",
                     "status": "blocked",
-                    "event": "pull_request"
+                    "event": "pull_request",
+                    "actor": {
+                        "login": "log"
+                    }
                   },
                   {
                     "id" : 2,
                     "url": "a",
                     "name": "bar",
                     "status": "open",
-                    "event": "pull_request"
+                    "event": "pull_request",
+                    "actor": {
+                        "login": "log"
+                    }
                   }
                  ]
                  }"""));
