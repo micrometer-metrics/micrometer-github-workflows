@@ -60,23 +60,24 @@ public class Main {
         String docsGenVersions = getDocsGenVersions();
 
         log.info("""
-                !!!
-
                 @@@ MICROMETER RELEASE @@@
 
                 Processing following env variables:
 
                 GITHUB_REPOSITORY [%s]
                 GITHUB_REF_NAME [%s]
+
+                POST RELEASE TASKS:
+                ------------------
                 PREVIOUS_REF_NAME [%s]
 
+
                 TRAIN OPTIONS:
+                ------------------
                 CONTEXT_PROPAGATION_VERSIONS [%s]
                 MICROMETER_VERSIONS [%s]
                 TRACING_VERSIONS [%s]
                 DOCS_GEN_VERSIONS [%s]
-
-                !!!
                 """.formatted(githubOrgRepo, githubRefName, previousRefName, contextPropVersions, micrometerVersions,
                 tracingVersions, docsGenVersions));
 
@@ -113,6 +114,7 @@ public class Main {
     }
 
     private boolean hasText(String text) {
+        log.info("Checking if text is there [{}]", text);
         return text != null && !text.isBlank();
     }
 
