@@ -91,7 +91,7 @@ class DependencyVerifier {
     }
 
     private void assertDependencyDiff(Set<Dependency> diff, ProjectSetup projectSetup) {
-        List<Dependency> dependencies = projectSetup.expectedDependencies();
+        Set<Dependency> dependencies = projectSetup.expectedDependencies();
         log.info("Expected dependencies from the project setup {}", dependencies);
         Set<Dependency> diffBetweenExpectedAndActual = new HashSet<>(dependencies);
         diffBetweenExpectedAndActual.removeAll(diff);

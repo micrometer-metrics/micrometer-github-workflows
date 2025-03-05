@@ -13,9 +13,13 @@
  */
 package io.micrometer.release.train;
 
+import io.micrometer.release.common.Dependency;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static io.micrometer.release.train.TrainOptions.Project.*;
 
@@ -145,12 +149,12 @@ public class TrainOptions {
             return this.thisProject.get(0).project.projectDefinition.artifactId;
         }
 
-        public List<io.micrometer.release.common.Dependency> expectedDependencies() {
+        public Set<io.micrometer.release.common.Dependency> expectedDependencies() {
             return this.thisProject.stream()
                 .flatMap(p -> p.getDependencies().stream())
                 .map(dependency -> new io.micrometer.release.common.Dependency(dependency.projectDefinition.groupId,
                         dependency.projectDefinition.artifactId, dependency.version, false))
-                .toList();
+                .collect(Collectors.toSet());
         }
 
         @Override
