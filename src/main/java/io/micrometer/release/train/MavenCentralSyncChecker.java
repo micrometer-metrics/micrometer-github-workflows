@@ -74,7 +74,7 @@ class MavenCentralSyncChecker {
         CompletableFuture<Void> future = new CompletableFuture<>();
         String mavenUrl = externalUrl + projectSetup.artifactToCheck() + "/" + version + "/";
         log.info(
-                "Starting Maven Central sync check for version: [{}] and url [{}]. Will check for the artifact every [{}] seconds for at most [{}] seconds",
+                "Starting Maven Central sync check for version: [{}] and url [{}]. Will check for the artifact every [{}] ms for at most [{}] ms",
                 version, mavenUrl, pollIntervalInMs, maxWaitTimeInMs);
         long startTime = System.currentTimeMillis();
         long maxWaitTimeMillis = TimeUnit.SECONDS.toMillis(maxWaitTimeInMs);
