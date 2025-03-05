@@ -221,7 +221,7 @@ class DependencyVerifier {
                 log.info("No dependabot jobs found");
             }
             else {
-                log.info("Found {} Dependabot jobs", statuses.size());
+                log.info("Found {} Dependabot jobs with statuses {}", statuses.size(), statuses);
                 boolean allCompleted = statuses.stream().allMatch(s -> s.equalsIgnoreCase("completed"));
                 if (allCompleted) {
                     log.info("All dependabot jobs completed");
