@@ -82,15 +82,15 @@ public interface GithubActions {
         Thread.sleep(10_000); // Wait for the action to schedule
         log.info("Waiting for workflow [{}] completion...", workflowFile);
         boolean completed = false;
-        int maxAttempts = 30;
+        int maxAttempts = 50;
         int attempts = 0;
-        while (!completed && attempts < maxAttempts) { // 5 minute timeout
+        while (!completed && attempts < maxAttempts) {
             List<String> status = processRunner.run("gh", "run", "list", "--workflow", workflowFile, "--branch", branch,
                     "--limit", "1");
             log.info("Workflow [{}] not completed yet - attempt [{}]/[{}]", workflowFile, attempts + 1, maxAttempts);
             completed = status.stream().anyMatch(line -> line.contains("completed"));
             if (!completed) {
-                Thread.sleep(10_000);
+                Thread.sleep(30 * 1000);
                 attempts++;
             }
         }
