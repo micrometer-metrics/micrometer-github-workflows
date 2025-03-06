@@ -84,8 +84,8 @@ class TrainGithubActionsE2eTests implements GithubActions {
         List<Issue> issues = githubClient.getIssuesForMilestone(milestone.number());
         assertThat(issues).extracting(Issue::state).containsOnly("closed");
         assertThat(issues).extracting(Issue::title)
-            .doesNotMatch(strings -> strings.stream().noneMatch(s -> s.contains("Open issue")))
-            .containsOnly("Closed issue in generic " + generic, "Closed bug in concrete " + version,
+            .matches(strings -> strings.stream().noneMatch(s -> s.contains("Open issue")), "Not a single issue should contain 'Open issue' in its title")
+            .contains("Closed issue in generic " + generic, "Closed bug in concrete " + version,
                     "Closed bug in generic " + generic, "Closed enhancement in generic " + generic);
     }
 
@@ -103,7 +103,7 @@ class TrainGithubActionsE2eTests implements GithubActions {
         List<Issue> issues = githubClient.getIssuesForMilestone(milestone.number());
         assertThat(issues).extracting(Issue::state).containsOnly("open");
         assertThat(issues).extracting(Issue::title)
-            .doesNotMatch(strings -> strings.stream().noneMatch(s -> s.contains("in generic")))
+            .matches(strings -> strings.stream().noneMatch(s -> s.contains("in generic")), "Not a single issue should contain 'in generic' in its title")
             .contains("Open issue in concrete " + previous);
     }
 

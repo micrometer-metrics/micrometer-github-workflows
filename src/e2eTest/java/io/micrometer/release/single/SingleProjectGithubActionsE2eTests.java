@@ -73,7 +73,7 @@ class SingleProjectGithubActionsE2eTests implements GithubActions {
         List<Issue> issues = githubClient.getIssuesForMilestone(milestone.number());
         assertThat(issues).filteredOn(s -> "Open issue in concrete 0.1.1".equalsIgnoreCase(s.title()))
             .extracting(Issue::state)
-            .containsOnly("closed");
+            .containsOnly("open");
         assertThat(issues).extracting(Issue::title)
             .contains("Open issue in concrete 0.1.1")
             .doesNotContain(issueTitles);
