@@ -70,17 +70,17 @@ class MilestoneMigratorTests {
     void should_reassign_issues_from_generic_milestone_to_concrete_one() {
         String concrete = "1.0.0";
         String generic = "1.0.x";
-        when(runner.run("gh", "api", "/repos/" + GH_REPO + "/milestones", "--jq",
+        when(runner.run("gh", "api", "--paginate", "/repos/" + GH_REPO + "/milestones", "--jq",
                 String.format(".[] | select(.title == \"%s\") | {number: .number, title: .title}", concrete)))
             .thenReturn(Collections.singletonList("{\"number\":5,\"title\":\"" + concrete + "\"}")); // concrete
-        when(runner.run("gh", "api", "/repos/" + GH_REPO + "/milestones", "--jq",
+        when(runner.run("gh", "api", "--paginate", "/repos/" + GH_REPO + "/milestones", "--jq",
                 String.format(".[] | select(.title == \"%s\") | {number: .number, title: .title}", generic)))
             .thenReturn(Collections.singletonList("{\"number\":4,\"title\":\"" + generic + "\"}")); // generic
-        when(runner.run("gh", "api", String.format("/repos/%s/issues?milestone=%d&state=all", GH_REPO, 5), "--jq",
-                ".[] | {number: .number, state: .state}"))
+        when(runner.run("gh", "api", "--paginate", String.format("/repos/%s/issues?milestone=%d&state=all", GH_REPO, 5),
+                "--jq", ".[] | {number: .number, state: .state}"))
             .thenReturn(Collections.singletonList("{\"number\":10,\"state\":\"open\"}")); // concrete
-        when(runner.run("gh", "api", String.format("/repos/%s/issues?milestone=%d&state=all", GH_REPO, 4), "--jq",
-                ".[] | {number: .number, state: .state}"))
+        when(runner.run("gh", "api", "--paginate", String.format("/repos/%s/issues?milestone=%d&state=all", GH_REPO, 4),
+                "--jq", ".[] | {number: .number, state: .state}"))
             .thenReturn(Collections.singletonList("{\"number\":11,\"state\":\"closed\"}")); // generic
         MilestoneWithDeadline expectedMilestone = new MilestoneWithDeadline(12, "1.0.1", LocalDate.of(2025, 1, 1));
         when(reasigner.reassignIssues(new Milestone(5, concrete), "v" + concrete, Collections.singletonList(11),

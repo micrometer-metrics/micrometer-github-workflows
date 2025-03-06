@@ -89,7 +89,7 @@ class MilestoneMigrator {
     }
 
     Milestone findMilestone(String title) {
-        List<String> lines = processRunner.run("gh", "api", "/repos/" + ghOrgRepo + "/milestones", "--jq",
+        List<String> lines = processRunner.run("gh", "api", "--paginate", "/repos/" + ghOrgRepo + "/milestones", "--jq",
                 String.format(".[] | select(.title == \"%s\") | {number: .number, title: .title}", title));
         if (lines.isEmpty()) {
             throw new IllegalStateException("No response from gh cli for version <" + title + ">");
@@ -105,7 +105,7 @@ class MilestoneMigrator {
     }
 
     private List<Issue> getIssuesForMilestone(int milestoneNumber) {
-        List<String> lines = processRunner.run("gh", "api",
+        List<String> lines = processRunner.run("gh", "api", "--paginate",
                 String.format("/repos/%s/issues?milestone=%d&state=all", ghOrgRepo, milestoneNumber), "--jq",
                 ".[] | {number: .number, state: .state}");
         List<Issue> issues = new ArrayList<>();

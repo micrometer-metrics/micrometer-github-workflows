@@ -130,7 +130,7 @@ public interface GithubActions {
 
         public Release getRelease(String tag) throws JsonProcessingException {
             String output = String.join("\n",
-                    processRunner.run("gh", "api", "/repos/" + repo + "/releases/tags/" + tag));
+                    processRunner.run("gh", "api", "--paginate", "/repos/" + repo + "/releases/tags/" + tag));
             return parseReleaseFromJson(output);
         }
 
@@ -145,18 +145,18 @@ public interface GithubActions {
 
         public Milestone getMilestoneByTitle(String title) throws JsonProcessingException {
             String output = String.join("\n",
-                    processRunner.run("gh", "api", "/repos/" + repo + "/milestones?state=all"));
+                    processRunner.run("gh", "api", "--paginate", "/repos/" + repo + "/milestones?state=all"));
             return parseMilestoneFromJson(output, title);
         }
 
         public List<Issue> getIssuesForMilestone(int milestoneNumber) throws JsonProcessingException {
-            String output = String.join("\n", processRunner.run("gh", "api",
+            String output = String.join("\n", processRunner.run("gh", "api", "--paginate",
                     "/repos/" + repo + "/issues?milestone=" + milestoneNumber + "&state=all"));
             return parseIssuesFromJson(output);
         }
 
         public List<Issue> getClosedIssuesForMilestone(int milestoneNumber) throws JsonProcessingException {
-            String output = String.join("\n", processRunner.run("gh", "api",
+            String output = String.join("\n", processRunner.run("gh", "api", "--paginate",
                     "/repos/" + repo + "/issues?milestone=" + milestoneNumber + "&state=closed"));
             return parseIssuesFromJson(output);
         }

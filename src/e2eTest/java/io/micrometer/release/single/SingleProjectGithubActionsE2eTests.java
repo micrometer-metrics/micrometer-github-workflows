@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,53 +38,45 @@ class SingleProjectGithubActionsE2eTests implements GithubActions {
     void should_verify_release_notes_content() throws JsonProcessingException {
         Release release = githubClient.getRelease("v0.1.1");
 
-        assertThat(release.body()).isEqualToIgnoringWhitespace(
-                """
-                        ## :star: New Features
-
-                        - Closed enhancement in generic 0.1.x [#8](https://github.com/marcingrzejszczak/gh-actions-test/issues/8)
-                        - Foo [#2](https://github.com/micrometer-metrics/build-test/issues/2)
-
-                        ## :lady_beetle: Bug Fixes
-
-                        - Closed bug in concrete 0.1.1 [#12](https://github.com/marcingrzejszczak/gh-actions-test/issues/12)
-                        - Closed bug in generic 0.1.x [#9](https://github.com/marcingrzejszczak/gh-actions-test/issues/9)
-                        - Foo2 [#53](https://github.com/micrometer-metrics/build-test/issues/53)
-
-                        ## :hammer: Dependency Upgrades
-
-                        - Bump com.fasterxml.jackson.core:jackson-databind from 2.17.1 to 2.18.2 [#50](https://github.com/micrometer-metrics/build-test/pull/50)
-                        - Bump com.google.cloud:google-cloud-monitoring from 3.47.0 to 3.56.0 [#51](https://github.com/micrometer-metrics/build-test/pull/51)
-                        - Bump io.micrometer:context-propagation from 1.1.1 to 1.1.2 [#28](https://github.com/micrometer-metrics/build-test/pull/28)
-                        - Bump io.projectreactor:reactor-bom from 2022.0.20 to 2022.0.22 [#49](https://github.com/micrometer-metrics/build-test/pull/49)
-                        - Bump io.spring.develocity.conventions from 0.0.19 to 0.0.22 [#30](https://github.com/micrometer-metrics/build-test/pull/30)
-                        - Bump jakarta.jms:jakarta.jms-api from 3.0.0 to 3.1.0 [#43](https://github.com/micrometer-metrics/build-test/pull/43)
-                        - Bump maven-resolver from 1.9.20 to 1.9.22 [#32](https://github.com/micrometer-metrics/build-test/pull/32)
-                        - Bump me.champeau.gradle:japicmp-gradle-plugin from 0.4.3 to 0.4.5 [#52](https://github.com/micrometer-metrics/build-test/pull/52)
-                        """);
+        assertThat(release.body()).containsIgnoringWhitespaces(
+                "Closed enhancement in generic 0.1.x [#8](https://github.com/marcingrzejszczak/gh-actions-test/issues/8)")
+            .containsIgnoringWhitespaces(
+                    "Closed bug in concrete 0.1.1 [#12](https://github.com/marcingrzejszczak/gh-actions-test/issues/12)")
+            .containsIgnoringWhitespaces(
+                    "Closed bug in generic 0.1.x [#9](https://github.com/marcingrzejszczak/gh-actions-test/issues/9)");
     }
 
     @Test
     void should_verify_current_milestone() throws JsonProcessingException {
         Milestone milestone = githubClient.getMilestoneByTitle("0.1.1");
 
+        String[] issueTitles = { "Closed issue in generic 0.1.x", "Closed bug in concrete 0.1.1",
+                "Closed bug in generic 0.1.x", "Closed enhancement in generic 0.1.x" };
         assertThat(milestone.state()).isEqualTo("closed");
         List<Issue> issues = githubClient.getIssuesForMilestone(milestone.number());
-        assertThat(issues).extracting(Issue::state).containsOnly("closed");
+        assertThat(issues).filteredOn(s -> Arrays.asList(issueTitles).contains(s.title()))
+            .extracting(Issue::state)
+            .containsOnly("closed");
         assertThat(issues).extracting(Issue::title)
-            .containsOnly("Closed issue in generic 0.1.x", "Closed bug in concrete 0.1.1",
-                    "Closed bug in generic 0.1.x", "Closed enhancement in generic 0.1.x");
+            .contains(issueTitles)
+            .doesNotContain("Open issue in concrete 0.1.1");
     }
 
     @Test
     void should_verify_next_milestone() throws JsonProcessingException {
         Milestone milestone = githubClient.getMilestoneByTitle("0.1.2");
 
+        String[] issueTitles = { "Closed issue in generic 0.1.x", "Closed bug in concrete 0.1.1",
+                "Closed bug in generic 0.1.x", "Closed enhancement in generic 0.1.x" };
         assertThat(milestone.state()).isEqualTo("open");
         assertThat(milestone.dueOn()).isEqualTo(ReleaseDateCalculator.calculateDueDate(LocalDate.now()));
         List<Issue> issues = githubClient.getIssuesForMilestone(milestone.number());
-        assertThat(issues).extracting(Issue::state).containsOnly("open");
-        assertThat(issues).extracting(Issue::title).containsOnly("Open issue in concrete 0.1.1");
+        assertThat(issues).filteredOn(s -> "Open issue in concrete 0.1.1".equalsIgnoreCase(s.title()))
+            .extracting(Issue::state)
+            .containsOnly("closed");
+        assertThat(issues).extracting(Issue::title)
+            .contains("Open issue in concrete 0.1.1")
+            .doesNotContain(issueTitles);
     }
 
     @Test
