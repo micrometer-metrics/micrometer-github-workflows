@@ -96,9 +96,8 @@ class MilestoneIssueReassignerTests {
     }
 
     private void thenClosedIssuesFromGenericMilestoneGotMovedToConcreteMilestone(Milestone concreteMilestone) {
-        verify(processRunner).run("gh", "api", "--paginate",
-                String.format("/repos/%s/issues/%d", GH_REPO, CLOSED_ISSUE_ID), "-X", "PATCH", "-f",
-                String.format("milestone=%d", concreteMilestone.number()));
+        verify(processRunner).run("gh", "api", String.format("/repos/%s/issues/%d", GH_REPO, CLOSED_ISSUE_ID), "-X",
+                "PATCH", "-f", String.format("milestone=%d", concreteMilestone.number()));
     }
 
 }

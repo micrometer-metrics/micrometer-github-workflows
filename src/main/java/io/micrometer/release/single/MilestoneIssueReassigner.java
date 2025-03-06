@@ -52,8 +52,8 @@ class MilestoneIssueReassigner {
 
     private void reassignIssues(List<Integer> issueNumbers, int milestoneNumber) {
         for (Integer issueNumber : issueNumbers) {
-            processRunner.run("gh", "api", "--paginate", String.format("/repos/%s/issues/%d", ghRepo, issueNumber),
-                    "-X", "PATCH", "-f", String.format("milestone=%d", milestoneNumber));
+            processRunner.run("gh", "api", String.format("/repos/%s/issues/%d", ghRepo, issueNumber), "-X", "PATCH",
+                    "-f", String.format("milestone=%d", milestoneNumber));
         }
     }
 
