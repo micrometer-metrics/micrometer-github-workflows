@@ -157,6 +157,8 @@ public class ProcessRunner {
         if (directory != null) {
             processBuilder.directory(directory);
         }
+        log.info("Starting process from folder [{}]",
+            directory != null ? directory.getAbsolutePath() : new File(".").getAbsolutePath());
         return doStartProcess(processBuilder);
     }
 
@@ -166,8 +168,6 @@ public class ProcessRunner {
             processBuilder.environment().put("JAVA_HOME", JAVA_PATH_FOR_ECLIPSE_DOCKER_IMAGE);
         }
         processBuilder.environment().putAll(this.envVars);
-        log.info("Starting process from folder [{}]",
-                directory != null ? directory.getAbsolutePath() : new File(".").getAbsolutePath());
         return processBuilder.start();
     }
 

@@ -67,8 +67,8 @@ class MetaTrainGithubActionsE2eTests implements GithubActions {
     private static void runTrainPostReleaseWorkflow() {
         log.info("Running meta train release from main");
         GithubActions.runWorkflow("meta-release-train-workflow.yml", "main",
-                List.of("gh", "workflow", "run", "release-train-workflow.yml", "--ref", "main", "-f",
-                        "micrometer_versions=0.1.1", "-f", "tracing_versions=2.0.0"));
+                List.of("gh", "workflow", "run", "meta-release-train-workflow.yml", "--ref", "main", "-f",
+                        "micrometer_versions=1.1.0", "-f", "tracing_versions=2.0.0"));
     }
 
 }

@@ -13,7 +13,11 @@
  */
 package io.micrometer.release.train;
 
+import io.micrometer.release.common.Dependency;
+import io.micrometer.release.train.TrainOptions.Project;
+import io.micrometer.release.train.TrainOptions.ProjectDefinition;
 import io.micrometer.release.train.TrainOptions.ProjectSetup;
+import io.micrometer.release.train.TrainOptions.ProjectWithDependencies;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -21,6 +25,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static io.micrometer.release.train.TrainOptions.Project.*;
@@ -36,6 +41,21 @@ class TrainOptionsTests {
         thenThrownBy(() -> trainOptions.parseForSingleProjectTrain("foo", "", null, "", null))
             .isInstanceOf(IllegalStateException.class)
             .hasMessage("At least one of the versions must be set...");
+    }
+
+    @Test
+    void should_return_list_of_dependencies() {
+        ProjectSetup projectSetup = new ProjectSetup(
+            List.of(new ProjectWithDependencies(new Project(ProjectDefinition.TRACING, "2.0.0"), List.of(new TrainOptions.Dependency(ProjectDefinition.MICROMETER, "1.0.0")))),
+        "micrometer-metrics/tracing");
+
+        Set<Dependency> dependencies = projectSetup.expectedDependencies();
+
+        then(dependencies).hasSize(1);
+        Dependency dependency = dependencies.stream().toList().get(0);
+        then(dependency.version()).isEqualTo("1.0.0");
+        then(dependency.artifact()).isEqualTo("micrometer-bom");
+        then(dependency.group()).isEqualTo("io.micrometer");
     }
 
     @ParameterizedTest(name = "contextProp <{0}>, microm <{1}>, tracing <{2}>, docsGen <{3}>")
