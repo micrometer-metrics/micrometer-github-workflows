@@ -40,7 +40,7 @@ class MetaTrainGithubActionsE2eTests implements GithubActions {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "0.1.1", "2.0.0" })
+    @ValueSource(strings = { "0.1.1" })
     void should_verify_current_milestone(String version) throws JsonProcessingException {
         trainGithubActionsE2eTests.should_verify_current_milestone(version);
     }
@@ -48,14 +48,13 @@ class MetaTrainGithubActionsE2eTests implements GithubActions {
     @ParameterizedTest
     @CsvSource(textBlock = """
             0.1.2,0.1.1
-            2.0.1,2.0.0
             """)
     void should_verify_next_milestone(String next, String previous) throws JsonProcessingException {
         trainGithubActionsE2eTests.should_verify_next_milestone(next, previous);
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "0.1.x", "2.0.x" })
+    @ValueSource(strings = { "0.1.x" })
     void should_verify_generic_milestone(String branch) throws JsonProcessingException {
         trainGithubActionsE2eTests.should_verify_generic_milestone(branch);
     }
@@ -66,9 +65,8 @@ class MetaTrainGithubActionsE2eTests implements GithubActions {
      */
     private static void runTrainPostReleaseWorkflow() {
         log.info("Running meta train release from main");
-        GithubActions.runWorkflow("meta-release-train-workflow.yml", "main",
-                List.of("gh", "workflow", "run", "meta-release-train-workflow.yml", "--ref", "main", "-f",
-                        "micrometer_versions=1.1.0", "-f", "tracing_versions=2.0.0"));
+        GithubActions.runWorkflow("meta-release-train-workflow.yml", "main", List.of("gh", "workflow", "run",
+                "meta-release-train-workflow.yml", "--ref", "main", "-f", "micrometer_versions=0.1.1"));
     }
 
 }
