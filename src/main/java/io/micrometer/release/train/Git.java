@@ -14,11 +14,10 @@
 package io.micrometer.release.train;
 
 import io.micrometer.release.common.ProcessRunner;
-
-import java.io.File;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
 
 class Git {
 
@@ -37,13 +36,15 @@ class Git {
     }
 
     File cloneRepo(String branch, String orgRepository) {
-        log.info("Cloning out {} branch to folder {}", branch, branch);
-        processRunner.run("gh", "repo", "clone", orgRepository, branch, "--", "-b", branch, "--single-branch");
-        return clonedDir(branch);
+        // micrometer-metrics/micrometer -> micrometer-metrics_micrometer
+        String folderToCloneTo = orgRepository.replace("/", "_");
+        log.info("Cloning out {} branch to folder {}", branch, folderToCloneTo);
+        processRunner.run("gh", "repo", "clone", orgRepository, folderToCloneTo, "--", "-b", branch, "--single-branch");
+        return clonedDir(folderToCloneTo);
     }
 
-    File clonedDir(String branch) {
-        return new File(branch);
+    File clonedDir(String subfolder) {
+        return new File(subfolder);
     }
 
 }

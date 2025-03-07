@@ -33,4 +33,15 @@ class GitTests {
         then(processRunner).should().run("git", "checkout", "FETCH_HEAD");
     }
 
+    @Test
+    void should_clone_a_repo() {
+        Git git = new Git(processRunner);
+
+        git.cloneRepo("foo", "micrometer-metrics/micrometer");
+
+        then(processRunner).should()
+            .run("gh", "repo", "clone", "micrometer-metrics/micrometer", "micrometer-metrics_micrometer", "--", "-b",
+                    "foo", "--single-branch");
+    }
+
 }

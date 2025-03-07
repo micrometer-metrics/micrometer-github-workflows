@@ -171,9 +171,9 @@ public class TrainOptions {
 
     enum ProjectDefinition {
 
-        TEST("gh-actions-test", "micrometer-bom"), CONTEXT_PROPAGATION("context-propagation", "context-propagation"),
-        MICROMETER("micrometer", "micrometer-bom"), TRACING("tracing", "micrometer-tracing-bom"),
-        DOC_GEN("micrometer-docs-generator", "micrometer-docs-generator");
+        TEST("gh-actions-test", "micrometer-bom"), TRACING_TEST("gh-actions-test2", "micrometer-tracing-bom"),
+        CONTEXT_PROPAGATION("context-propagation", "context-propagation"), MICROMETER("micrometer", "micrometer-bom"),
+        TRACING("tracing", "micrometer-tracing-bom"), DOC_GEN("micrometer-docs-generator", "micrometer-docs-generator");
 
         private final String groupId = "io.micrometer";
 
@@ -182,7 +182,7 @@ public class TrainOptions {
         private final String artifactId;
 
         ProjectDefinition(String repository, String artifactId) {
-            this.orgRepo = repository.equals("gh-actions-test") ? "marcingrzejszczak/" + repository
+            this.orgRepo = repository.contains("gh-actions-test") ? "marcingrzejszczak/" + repository
                     : "micrometer-metrics/" + repository;
             this.artifactId = artifactId;
         }
