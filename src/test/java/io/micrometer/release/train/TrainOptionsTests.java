@@ -46,8 +46,9 @@ class TrainOptionsTests {
     @Test
     void should_return_list_of_dependencies() {
         ProjectSetup projectSetup = new ProjectSetup(
-            List.of(new ProjectWithDependencies(new Project(ProjectDefinition.TRACING, "2.0.0"), List.of(new TrainOptions.Dependency(ProjectDefinition.MICROMETER, "1.0.0")))),
-        "micrometer-metrics/tracing");
+                List.of(new ProjectWithDependencies(new Project(ProjectDefinition.TRACING, "2.0.0"),
+                        List.of(new TrainOptions.Dependency(ProjectDefinition.MICROMETER, "1.0.0")))),
+                "micrometer-metrics/tracing");
 
         Set<Dependency> dependencies = projectSetup.expectedDependencies();
 

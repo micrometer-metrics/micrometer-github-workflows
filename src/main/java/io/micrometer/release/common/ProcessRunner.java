@@ -158,7 +158,7 @@ public class ProcessRunner {
             processBuilder.directory(directory);
         }
         log.info("Starting process from folder [{}]",
-            directory != null ? directory.getAbsolutePath() : new File(".").getAbsolutePath());
+                directory != null ? directory.getAbsolutePath() : new File(".").getAbsolutePath());
         return doStartProcess(processBuilder);
     }
 
