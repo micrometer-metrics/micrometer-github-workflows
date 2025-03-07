@@ -16,6 +16,10 @@ package io.micrometer.release.train;
 import io.micrometer.release.common.ProcessRunner;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 
@@ -35,12 +39,15 @@ class GitTests {
 
     @Test
     void should_clone_a_repo() {
+        File parentFile = new File("micrometer");
+        given(processRunner.getDirectory()).willReturn(parentFile);
         Git git = new Git(processRunner);
 
-        git.cloneRepo("foo", "micrometer-metrics/micrometer");
+        File clonedRepo = git.cloneRepo("foo", "micrometer-metrics/micrometer");
 
         then(processRunner).should()
             .run("gh", "repo", "clone", "micrometer-metrics/micrometer", "foo", "--", "-b", "foo", "--single-branch");
+        assertThat(clonedRepo).isEqualTo(new File(parentFile, "foo"));
     }
 
 }

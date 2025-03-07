@@ -42,7 +42,7 @@ class Git {
     }
 
     File clonedDir(String subfolder) {
-        return new File(subfolder);
+        return new File(processRunner.getDirectory(), subfolder);
     }
 
 }

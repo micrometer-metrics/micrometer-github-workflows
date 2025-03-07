@@ -17,7 +17,10 @@ package io.micrometer.release.train;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micrometer.release.common.*;
+import io.micrometer.release.common.Dependency;
+import io.micrometer.release.common.GradleParser;
+import io.micrometer.release.common.Input;
+import io.micrometer.release.common.ProcessRunner;
 import io.micrometer.release.train.TrainOptions.ProjectSetup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

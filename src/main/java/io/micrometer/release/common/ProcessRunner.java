@@ -69,6 +69,10 @@ public class ProcessRunner {
         return orgRepo;
     }
 
+    public File getDirectory() {
+        return directory;
+    }
+
     public List<String> run(List<String> command) {
         return run(command.toArray(new String[0]));
     }
