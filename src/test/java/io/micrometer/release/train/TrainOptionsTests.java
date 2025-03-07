@@ -138,10 +138,25 @@ class TrainOptionsTests {
         then(projectSetups).isEqualTo(expectedResult);
     }
 
+    @Test
+    void should_parse_for_meta_train_entries_to_project_setup_for_test_project() {
+        String contextPropagationVersions = "";
+        String micrometerVersions = "1.1.0";
+        String tracingVersions = "2.0.0";
+        String docsGenVersions = "";
+
+        List<ProjectSetup> projectSetups = TrainOptions.withTestMode(true)
+            .parseForMetaTrain(contextPropagationVersions, micrometerVersions, tracingVersions, docsGenVersions);
+
+        then(projectSetups).hasSize(2);
+        then(projectSetups.get(0).ghRepo()).isEqualTo("gh-actions-test");
+        then(projectSetups.get(1).ghRepo()).isEqualTo("gh-actions-test2");
+    }
+
     static Stream<Arguments> should_parse_for_meta_train_entries_to_project_setup_args() {
         return Stream.of(
-                // Arguments.of("1.0.0,1.1.0,1.1.1", "", "", "",
-                // List.of(singleContextPropagation("micrometer-metrics/context-propagation"))),
+                Arguments.of("1.0.0,1.1.0,1.1.1", "", "", "",
+                        List.of(singleContextPropagation("micrometer-metrics/context-propagation"))),
                 Arguments.of("1.0.0,1.1.0,1.1.1", "1.14.0,1.15.0,1.16.0", "", "",
                         List.of(contextAndMicrometer("micrometer-metrics/context-propagation"),
                                 contextAndMicrometer("micrometer-metrics/micrometer"))),

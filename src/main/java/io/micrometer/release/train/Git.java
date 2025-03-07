@@ -36,11 +36,9 @@ class Git {
     }
 
     File cloneRepo(String branch, String orgRepository) {
-        // micrometer-metrics/micrometer -> micrometer-metrics_micrometer
-        String folderToCloneTo = orgRepository.replace("/", "_");
-        log.info("Cloning out {} branch to folder {}", branch, folderToCloneTo);
-        processRunner.run("gh", "repo", "clone", orgRepository, folderToCloneTo, "--", "-b", branch, "--single-branch");
-        return clonedDir(folderToCloneTo);
+        log.info("Cloning out {} branch to folder {}", branch, branch);
+        processRunner.run("gh", "repo", "clone", orgRepository, branch, "--", "-b", branch, "--single-branch");
+        return clonedDir(branch);
     }
 
     File clonedDir(String subfolder) {

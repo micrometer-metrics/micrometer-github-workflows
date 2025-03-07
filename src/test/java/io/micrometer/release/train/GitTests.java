@@ -40,8 +40,7 @@ class GitTests {
         git.cloneRepo("foo", "micrometer-metrics/micrometer");
 
         then(processRunner).should()
-            .run("gh", "repo", "clone", "micrometer-metrics/micrometer", "micrometer-metrics_micrometer", "--", "-b",
-                    "foo", "--single-branch");
+            .run("gh", "repo", "clone", "micrometer-metrics/micrometer", "foo", "--", "-b", "foo", "--single-branch");
     }
 
 }

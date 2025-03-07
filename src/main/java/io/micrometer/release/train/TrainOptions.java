@@ -45,8 +45,12 @@ public class TrainOptions {
         List<ProjectWithDependencies> projects = projectWithDependencies(splitProjects);
         Map<ProjectDefinition, List<ProjectWithDependencies>> perProject = projects.stream()
             .collect(Collectors.groupingBy(p -> p.project.projectDefinition));
-        return perProject.entrySet()
-            .stream()
+        return perProject.entrySet().stream().filter(e -> {
+            if (testMode) {
+                return e.getKey() == ProjectDefinition.TEST || e.getKey() == ProjectDefinition.TRACING_TEST;
+            }
+            return true;
+        })
             .map(e -> new ProjectSetup(e.getValue(), e.getKey().orgRepo))
             .sorted(Comparator.comparingInt(o -> o.thisProject.get(0).project.projectDefinition.ordinal())) // ORDER
                                                                                                             // MATTERS!!!!
@@ -346,7 +350,8 @@ public class TrainOptions {
     static class GhActionsTracingTest extends ProjectWithDependencies {
 
         public GhActionsTracingTest(Tracing tracing) {
-            super(new Project(ProjectDefinition.TEST, tracing.getProject().projectVersion), tracing.getDependencies());
+            super(new Project(ProjectDefinition.TRACING_TEST, tracing.getProject().projectVersion),
+                    tracing.getDependencies());
         }
 
     }

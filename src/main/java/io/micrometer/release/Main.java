@@ -113,15 +113,19 @@ public class Main {
 
     private List<ProjectSetup> parseMetaTrainOptions(boolean testMode, String contextPropVersions,
             String micrometerVersions, String tracingVersions, String docsGenVersions) {
-        return TrainOptions.withTestMode(testMode)
+        List<ProjectSetup> projectSetups = TrainOptions.withTestMode(testMode)
             .parseForMetaTrain(contextPropVersions, micrometerVersions, tracingVersions, docsGenVersions);
+        log.info("Parsed options for meta-release {}", projectSetups);
+        return projectSetups;
     }
 
     private ProjectSetup parseTrainOptions(boolean testMode, String githubOrgRepo, String contextPropVersions,
             String micrometerVersions, String tracingVersions, String docsGenVersions) {
-        return TrainOptions.withTestMode(testMode)
+        ProjectSetup setup = TrainOptions.withTestMode(testMode)
             .parseForSingleProjectTrain(githubOrgRepo, contextPropVersions, micrometerVersions, tracingVersions,
                     docsGenVersions);
+        log.info("Parsed options for meta-release [{}]", setup);
+        return setup;
     }
 
     private boolean isMetaRelease(String githubOrgRepo, String contextPropVersions, String micrometerVersions,
@@ -135,7 +139,7 @@ public class Main {
         return switch (githubOrgRepo) {
             case "micrometer-metrics/context-propagation" -> hasText(contextPropVersions);
             case "micrometer-metrics/micrometer", "marcingrzejszczak/gh-actions-test" -> hasText(micrometerVersions);
-            case "micrometer-metrics/tracing" -> hasText(tracingVersions);
+            case "micrometer-metrics/tracing", "marcingrzejszczak/gh-actions-test2" -> hasText(tracingVersions);
             case "micrometer-metrics/micrometer-docs-generator" -> hasText(docsGenVersions);
             default -> false;
         };

@@ -49,7 +49,9 @@ public class MetaTrainReleaseWorkflow {
 
     private ProjectTrainReleaseWorkflow newProjectTrainReleaseWorkflow(ProjectSetup projectSetup) {
         File projectSubfolder = new File(projectSetup.ghRepo());
-        log.info("Creating a subfolder [{}] for project [{}]", projectSubfolder, projectSetup.ghOrgRepo());
+        projectSubfolder.mkdirs();
+        log.info("Setting a working dir [{}] for project [{}]", projectSubfolder.getAbsolutePath(),
+                projectSetup.ghOrgRepo());
         return workflow(projectSetup, projectSubfolder);
     }
 
