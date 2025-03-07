@@ -55,15 +55,13 @@ public interface GithubActions {
 
     private static void resetMilestones() throws InterruptedException {
         log.info("Resetting repository state");
-        runAndWaitResetMiestones("0.1.x");
-        runAndWaitResetMiestones("0.2.x");
-        runAndWaitResetMiestones("main");
+        runAndWaitResetMilestones();
     }
 
-    private static void runAndWaitResetMiestones(String branch) throws InterruptedException {
-        log.info("Resetting branch {}", branch);
-        processRunner.run("gh", "workflow", "run", "reset-milestones.yml", "-r", branch);
-        waitForWorkflowCompletion("reset-milestones.yml", branch);
+    private static void runAndWaitResetMilestones() throws InterruptedException {
+        log.info("Resetting branch {}", "main");
+        processRunner.run("gh", "workflow", "run", "reset-milestones.yml", "-r", "main");
+        waitForWorkflowCompletion("reset-milestones.yml", "main");
     }
 
     static void runWorkflow(String workflowName, String branch, List<String> commands) {

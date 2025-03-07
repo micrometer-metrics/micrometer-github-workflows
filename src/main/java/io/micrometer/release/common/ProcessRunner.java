@@ -177,7 +177,7 @@ public class ProcessRunner {
     private String[] processCommand(String[] command) {
         String[] processedCommand = command;
         if (orgRepo != null && command.length > 2 && command[0].equalsIgnoreCase("gh")
-                && !command[1].equalsIgnoreCase("api")) {
+                && !command[1].equalsIgnoreCase("api") && !command[1].equalsIgnoreCase("repo")) {
             List<String> commands = new LinkedList<>(Arrays.stream(command).toList());
             commands.add("--repo");
             commands.add(orgRepo);

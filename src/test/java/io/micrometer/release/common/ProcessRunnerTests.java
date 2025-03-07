@@ -105,7 +105,7 @@ class ProcessRunnerTests {
     }
 
     @Test
-    void should_append_repo_for_gh_command_that_is_not_api() throws InterruptedException {
+    void should_append_repo_for_gh_command_that_is_not_excluded() throws InterruptedException {
         given(process.waitFor()).willReturn(0);
 
         then(stubReturingCommandAssertingProcessRunner(
@@ -114,12 +114,15 @@ class ProcessRunnerTests {
     }
 
     @Test
-    void should_not_append_repo_for_gh_command_that_is_api() throws InterruptedException {
+    void should_not_append_repo_for_gh_command_that_is_excluded() throws InterruptedException {
         given(process.waitFor()).willReturn(0);
 
         then(stubReturingCommandAssertingProcessRunner(
                 strings -> then(strings).containsExactly("gh", "api", "foo", "bar"))
             .run("gh", "api", "foo", "bar")).isEqualTo(List.of("Hello"));
+        then(stubReturingCommandAssertingProcessRunner(
+                strings -> then(strings).containsExactly("gh", "repo", "foo", "bar"))
+            .run("gh", "repo", "foo", "bar")).isEqualTo(List.of());
     }
 
     @Test
