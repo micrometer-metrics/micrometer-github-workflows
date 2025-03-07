@@ -31,9 +31,9 @@ class MilestoneIssueReassigner {
 
     private final String ghRepo;
 
-    MilestoneIssueReassigner(ProcessRunner processRunner, String ghRepo) {
+    MilestoneIssueReassigner(ProcessRunner processRunner) {
         this.processRunner = processRunner;
-        this.ghRepo = ghRepo;
+        this.ghRepo = processRunner.getOrgRepo();
     }
 
     MilestoneWithDeadline reassignIssues(Milestone concreteMilestone, String refName,

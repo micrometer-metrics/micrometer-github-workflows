@@ -37,10 +37,9 @@ class MilestoneUpdater {
     }
 
     MilestoneUpdater(ProcessRunner processRunner) {
-        this.githubRepository = System.getenv("GITHUB_REPOSITORY");
+        this.githubRepository = processRunner.getOrgRepo();
         this.processRunner = processRunner;
-        this.milestoneMigrator = new MilestoneMigrator(this.processRunner, this.githubRepository,
-                new MilestoneIssueReassigner(processRunner, githubRepository));
+        this.milestoneMigrator = new MilestoneMigrator(this.processRunner, new MilestoneIssueReassigner(processRunner));
     }
 
     MilestoneWithDeadline updateMilestones(String githubRefName) {

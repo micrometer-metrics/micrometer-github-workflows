@@ -17,6 +17,7 @@ import io.micrometer.release.common.ProcessRunner;
 import io.micrometer.release.train.TrainOptions.ProjectSetup;
 import org.junit.jupiter.api.Test;
 import org.mockito.BDDMockito;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.util.Map;
@@ -26,6 +27,7 @@ import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 
 class ReleaseSchedulerTests {
 
@@ -68,7 +70,8 @@ class ReleaseSchedulerTests {
             .hasRootCauseInstanceOf(IllegalStateException.class)
             .hasRootCauseMessage("BOOM!");
 
-        then(processRunner).shouldHaveNoInteractions();
+        then(processRunner).should(never()).run((String[]) Mockito.any());
+        then(processRunner).should(never()).run(Mockito.anyList());
         then(checker).shouldHaveNoInteractions();
     }
 

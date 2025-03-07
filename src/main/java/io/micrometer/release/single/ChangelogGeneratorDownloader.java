@@ -15,6 +15,8 @@
  */
 package io.micrometer.release.single;
 
+import io.micrometer.release.common.Input;
+
 import java.io.File;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -63,7 +65,7 @@ class ChangelogGeneratorDownloader {
 
     void download() throws Exception {
         log.info("Downloading GitHub Changelog Generator to [{}]...", changelogGeneratorJar.getAbsolutePath());
-        String changelogGeneratorVersion = System.getenv("CHANGELOG_GENERATOR_VERSION");
+        String changelogGeneratorVersion = Input.getChangelogGeneratorVersion();
         changelogGeneratorVersion = (changelogGeneratorVersion == null || changelogGeneratorVersion.isBlank())
                 ? DEFAULT_CHANGELOG_GENERATOR_VERSION : changelogGeneratorVersion;
         HttpRequest request = HttpRequest.newBuilder()

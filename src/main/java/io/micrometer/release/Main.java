@@ -17,6 +17,7 @@ package io.micrometer.release;
 
 import io.micrometer.release.common.Input;
 import io.micrometer.release.common.ProcessRunner;
+import io.micrometer.release.meta.MetaTrainReleaseWorkflow;
 import io.micrometer.release.single.PostReleaseWorkflow;
 import io.micrometer.release.train.ProjectTrainReleaseWorkflow;
 import io.micrometer.release.train.TrainOptions;
@@ -24,40 +25,29 @@ import io.micrometer.release.train.TrainOptions.ProjectSetup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 public class Main {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) throws Exception {
-        // Env Vars
-
-        // Single Project Post Release
-        // GH_TOKEN
-        // CHANGELOG_GENERATOR_VERSION
-        // GITHUB_REPOSITORY
-        // GITHUB_REF_NAME
-        // PREVIOUS_REF_NAME
-        // BSKY_IDENTIFIER
-        // BSKY_HANDLE
-        // SPRING_RELEASE_GCHAT_WEBHOOK_URL
-
-        // Train Project Post Release
-        // TRAIN_VERSIONS
         Main main = new Main();
         main.run();
     }
 
     void run() {
-        ProcessRunner processRunner = new ProcessRunner();
-        PostReleaseWorkflow postReleaseWorkflow = newPostReleaseWorkflow(processRunner);
         String githubOrgRepo = getGithubOrgRepository();
         String githubRefName = getGithubRefName();
         String previousRefName = getPreviousRefName();
+        boolean testMode = Boolean.parseBoolean(getTestMode());
         // TRAIN OPTIONS
         String contextPropVersions = getContextPropVersions();
         String micrometerVersions = getMicrometerVersions();
         String tracingVersions = getTracingVersions();
         String docsGenVersions = getDocsGenVersions();
+        // META RELEASE OPTIONS
+        boolean metaReleaseEnabled = Boolean.parseBoolean(getMetaReleaseEnabled());
 
         log.info("""
                 @@@ MICROMETER RELEASE @@@
@@ -66,6 +56,7 @@ public class Main {
 
                 GITHUB_REPOSITORY [%s]
                 GITHUB_REF_NAME [%s]
+                TEST_MODE [%s]
 
                 POST RELEASE TASKS:
                 ------------------
@@ -78,19 +69,56 @@ public class Main {
                 MICROMETER_VERSIONS [%s]
                 TRACING_VERSIONS [%s]
                 DOCS_GEN_VERSIONS [%s]
-                """.formatted(githubOrgRepo, githubRefName, previousRefName, contextPropVersions, micrometerVersions,
-                tracingVersions, docsGenVersions));
 
-        if (isTrainRelease(githubOrgRepo, contextPropVersions, micrometerVersions, tracingVersions, docsGenVersions)) {
-            log.info("Will proceed with train release...");
-            ProjectSetup projectSetup = new TrainOptions().parse(githubOrgRepo, contextPropVersions, micrometerVersions,
-                    tracingVersions, docsGenVersions);
-            trainReleaseWorkflow(githubOrgRepo, postReleaseWorkflow, processRunner).run(projectSetup);
+                META RELEASE OPTIONS:
+                ------------------
+                META_RELEASE_ENABLED [%s]
+                """.formatted(githubOrgRepo, githubRefName, testMode, previousRefName, contextPropVersions,
+                micrometerVersions, tracingVersions, docsGenVersions, metaReleaseEnabled));
+
+        ProcessRunner processRunner = new ProcessRunner(githubOrgRepo);
+        PostReleaseWorkflow postReleaseWorkflow = newPostReleaseWorkflow(processRunner);
+
+        if (isMetaRelease(processRunner.getOrgRepo(), contextPropVersions, micrometerVersions, tracingVersions,
+                docsGenVersions, metaReleaseEnabled)) {
+            log.info("Will proceed with meta release...");
+            metaReleaseWorkflow(postReleaseWorkflow).run(parseMetaTrainOptions(testMode, contextPropVersions,
+                    micrometerVersions, tracingVersions, docsGenVersions));
+        }
+        else if (!metaReleaseEnabled && isTrainRelease(processRunner.getOrgRepo(), contextPropVersions,
+                micrometerVersions, tracingVersions, docsGenVersions)) {
+            log.info("Will proceed with train release for a single project [{}]...", processRunner.getOrgRepo());
+            ProjectSetup projectSetup = parseTrainOptions(testMode, processRunner.getOrgRepo(), contextPropVersions,
+                    micrometerVersions, tracingVersions, docsGenVersions);
+            trainReleaseWorkflow(postReleaseWorkflow, processRunner).run(projectSetup);
         }
         else {
-            log.info("Will proceed with single project post release workflow...");
-            postReleaseWorkflow.run(githubOrgRepo, githubRefName, previousRefName);
+            log.info("Will proceed with single project [{}] post release workflow...", processRunner.getOrgRepo());
+            postReleaseWorkflow.run(githubRefName, previousRefName);
         }
+    }
+
+    MetaTrainReleaseWorkflow metaReleaseWorkflow(PostReleaseWorkflow postReleaseWorkflow) {
+        return new MetaTrainReleaseWorkflow(postReleaseWorkflow);
+    }
+
+    private List<ProjectSetup> parseMetaTrainOptions(boolean testMode, String contextPropVersions,
+            String micrometerVersions, String tracingVersions, String docsGenVersions) {
+        return TrainOptions.withTestMode(testMode)
+            .parseForMetaTrain(contextPropVersions, micrometerVersions, tracingVersions, docsGenVersions);
+    }
+
+    private ProjectSetup parseTrainOptions(boolean testMode, String githubOrgRepo, String contextPropVersions,
+            String micrometerVersions, String tracingVersions, String docsGenVersions) {
+        return TrainOptions.withTestMode(testMode)
+            .parseForSingleProjectTrain(githubOrgRepo, contextPropVersions, micrometerVersions, tracingVersions,
+                    docsGenVersions);
+    }
+
+    private boolean isMetaRelease(String githubOrgRepo, String contextPropVersions, String micrometerVersions,
+            String tracingVersions, String docsGenVersions, boolean metaReleaseEnabled) {
+        return metaReleaseEnabled && isTrainRelease(githubOrgRepo, contextPropVersions, micrometerVersions,
+                tracingVersions, docsGenVersions);
     }
 
     private boolean isTrainRelease(String githubOrgRepo, String contextPropVersions, String micrometerVersions,
@@ -106,6 +134,10 @@ public class Main {
 
     private boolean hasText(String text) {
         return text != null && !text.isBlank();
+    }
+
+    String getTestMode() {
+        return Input.getTestMode();
     }
 
     String getDocsGenVersions() {
@@ -136,9 +168,13 @@ public class Main {
         return Input.getGithubRefName();
     }
 
-    ProjectTrainReleaseWorkflow trainReleaseWorkflow(String githubOrgRepo, PostReleaseWorkflow postReleaseWorkflow,
+    String getMetaReleaseEnabled() {
+        return Input.getMetaReleaseEnabled();
+    }
+
+    ProjectTrainReleaseWorkflow trainReleaseWorkflow(PostReleaseWorkflow postReleaseWorkflow,
             ProcessRunner processRunner) {
-        return new ProjectTrainReleaseWorkflow(githubOrgRepo, processRunner, postReleaseWorkflow);
+        return new ProjectTrainReleaseWorkflow(processRunner, postReleaseWorkflow);
     }
 
     PostReleaseWorkflow newPostReleaseWorkflow(ProcessRunner processRunner) {

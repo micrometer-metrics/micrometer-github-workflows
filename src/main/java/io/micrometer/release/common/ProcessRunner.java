@@ -30,7 +30,7 @@ public class ProcessRunner {
 
     public static final String JAVA_PATH_FOR_ECLIPSE_DOCKER_IMAGE = "/opt/java/openjdk";
 
-    private final String repo;
+    private final String orgRepo;
 
     private final File directory;
 
@@ -40,29 +40,33 @@ public class ProcessRunner {
         this((String) null, null);
     }
 
-    public ProcessRunner(String repo) {
-        this(repo, null);
+    public ProcessRunner(String orgRepo) {
+        this(orgRepo, null);
     }
 
-    public ProcessRunner(String repo, File directory) {
-        this.repo = repo;
+    public ProcessRunner(String orgRepo, File directory) {
+        this.orgRepo = orgRepo;
         this.directory = directory;
     }
 
     public ProcessRunner(File directory) {
-        this.repo = null;
+        this.orgRepo = null;
         this.directory = directory;
     }
 
     // E.g. Same repo, different branch
     public ProcessRunner(ProcessRunner processRunner, File directory) {
-        this.repo = processRunner.repo;
+        this.orgRepo = processRunner.orgRepo;
         this.directory = directory;
     }
 
     public ProcessRunner withEnvVars(Map<String, String> envVars) {
         this.envVars.putAll(envVars);
         return this;
+    }
+
+    public String getOrgRepo() {
+        return orgRepo;
     }
 
     public List<String> run(List<String> command) {
@@ -172,11 +176,11 @@ public class ProcessRunner {
 
     private String[] processCommand(String[] command) {
         String[] processedCommand = command;
-        if (repo != null && command.length > 2 && command[0].equalsIgnoreCase("gh")
+        if (orgRepo != null && command.length > 2 && command[0].equalsIgnoreCase("gh")
                 && !command[1].equalsIgnoreCase("api")) {
             List<String> commands = new LinkedList<>(Arrays.stream(command).toList());
             commands.add("--repo");
-            commands.add(repo);
+            commands.add(orgRepo);
             processedCommand = commands.toArray(new String[0]);
         }
         return processedCommand;

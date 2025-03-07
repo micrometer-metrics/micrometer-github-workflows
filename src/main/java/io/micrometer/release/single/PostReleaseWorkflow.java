@@ -36,10 +36,12 @@ public class PostReleaseWorkflow {
 
     private final NotificationSender notificationSender;
 
+    private final ProcessRunner processRunner;
+
     PostReleaseWorkflow(ChangelogGeneratorDownloader changelogGeneratorDownloader,
             ChangelogGenerator changelogGenerator, ChangelogFetcher changelogFetcher,
             ChangelogProcessor changelogProcessor, ReleaseNotesUpdater releaseNotesUpdater,
-            MilestoneUpdater milestoneUpdater, NotificationSender notificationSender) {
+            MilestoneUpdater milestoneUpdater, NotificationSender notificationSender, ProcessRunner processRunner) {
         this.changelogGeneratorDownloader = changelogGeneratorDownloader;
         this.changelogGenerator = changelogGenerator;
         this.changelogFetcher = changelogFetcher;
@@ -47,18 +49,21 @@ public class PostReleaseWorkflow {
         this.releaseNotesUpdater = releaseNotesUpdater;
         this.milestoneUpdater = milestoneUpdater;
         this.notificationSender = notificationSender;
+        this.processRunner = processRunner;
     }
 
     public PostReleaseWorkflow(ProcessRunner processRunner) {
         this(new ChangelogGeneratorDownloader(), new ChangelogGenerator(processRunner),
                 new ChangelogFetcher(processRunner), new ChangelogProcessor(processRunner),
-                new ReleaseNotesUpdater(processRunner), new MilestoneUpdater(processRunner), new NotificationSender());
+                new ReleaseNotesUpdater(processRunner), new MilestoneUpdater(processRunner), new NotificationSender(),
+                processRunner);
     }
 
     // micrometer-metrics/tracing
     // v1.3.1
     // v1.2.5 (optional)
-    public void run(String githubOrgRepo, String githubRefName, String previousRefName) {
+    public void run(String githubRefName, String previousRefName) {
+        String githubOrgRepo = processRunner.getOrgRepo();
         Input.assertInputs(githubOrgRepo, githubRefName, previousRefName);
         String githubRepo = githubOrgRepo.contains("/") ? githubOrgRepo.split("/")[1] : githubOrgRepo;
 
@@ -74,7 +79,7 @@ public class PostReleaseWorkflow {
         File oldChangelog = null;
         // If previousRefName present - fetch its changelog
         if (previousRefName != null && !previousRefName.isBlank()) {
-            oldChangelog = generateOldChangelog(previousRefName, githubOrgRepo);
+            oldChangelog = generateOldChangelog(previousRefName);
         }
 
         // Process changelog
@@ -96,8 +101,8 @@ public class PostReleaseWorkflow {
         }
     }
 
-    private File generateOldChangelog(String githubRefName, String githubOrgRepo) {
-        return changelogFetcher.fetchChangelog(githubRefName, githubOrgRepo);
+    private File generateOldChangelog(String githubRefName) {
+        return changelogFetcher.fetchChangelog(githubRefName);
     }
 
     private File generateChangelog(String githubRefName, String githubOrgRepo, File jarPath) {

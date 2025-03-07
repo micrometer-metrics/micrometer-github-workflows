@@ -16,8 +16,7 @@
 package io.micrometer.release.single;
 
 import static org.assertj.core.api.BDDAssertions.then;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import io.micrometer.release.common.ProcessRunner;
 
@@ -29,11 +28,11 @@ class ChangelogFetcherTests {
 
     @Test
     void should_fetch_changelog() {
-        ProcessRunner processRunner = mock();
+        ProcessRunner processRunner = stubProcessRunner();
         File output = new File(".");
         ChangelogFetcher changelogFetcher = new ChangelogFetcher(output, processRunner);
 
-        File changelog = changelogFetcher.fetchChangelog("v1.13.8", "micrometer-metrics/micrometer");
+        File changelog = changelogFetcher.fetchChangelog("v1.13.8");
 
         then(changelog).isSameAs(output);
         verify(processRunner).run("sh", "-c",
@@ -41,8 +40,14 @@ class ChangelogFetcherTests {
                         "micrometer-metrics", "micrometer", changelog.getAbsolutePath()));
     }
 
+    private static ProcessRunner stubProcessRunner() {
+        ProcessRunner processRunner = mock();
+        when(processRunner.getOrgRepo()).thenReturn("micrometer-metrics/micrometer");
+        return processRunner;
+    }
+
     static ChangelogFetcher testChangelogFetcher(File output) {
-        return new ChangelogFetcher(output, mock(ProcessRunner.class));
+        return new ChangelogFetcher(output, stubProcessRunner());
     }
 
 }

@@ -33,6 +33,10 @@ public class Input {
         }
     }
 
+    public static String getTestMode() {
+        return System.getenv("TEST_MODE");
+    }
+
     public static String getGithubOrgRepository() {
         return System.getenv("GITHUB_REPOSITORY");
     }
@@ -43,10 +47,6 @@ public class Input {
 
     public static String getGithubRefName() {
         return System.getenv("GITHUB_REF_NAME");
-    }
-
-    public static String getTrainVersions() {
-        return System.getenv("TRAIN_VERSIONS");
     }
 
     public static String getContextPropagationVersions() {
@@ -67,6 +67,26 @@ public class Input {
 
     public static String getGhToken() {
         return System.getenv("GH_TOKEN");
+    }
+
+    public static String getMetaReleaseEnabled() {
+        return System.getenv("META_RELEASE_ENABLED");
+    }
+
+    public static String getChangelogGeneratorVersion() {
+        return System.getenv("CHANGELOG_GENERATOR_VERSION");
+    }
+
+    public static String getGChatWebhookUrl() {
+        return System.getenv("SPRING_RELEASE_GCHAT_WEBHOOK_URL");
+    }
+
+    public static String getBlueSkyHandle() {
+        return System.getenv("BLUESKY_HANDLE");
+    }
+
+    public static String getBlueSkyPassword() {
+        return System.getenv("BLUESKY_PASSWORD");
     }
 
 }

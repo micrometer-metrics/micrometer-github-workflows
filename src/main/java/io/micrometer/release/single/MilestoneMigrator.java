@@ -33,9 +33,9 @@ class MilestoneMigrator {
 
     private final MilestoneIssueReassigner milestoneIssueReassigner;
 
-    MilestoneMigrator(ProcessRunner processRunner, String ghRepo, MilestoneIssueReassigner milestoneIssueReassigner) {
+    MilestoneMigrator(ProcessRunner processRunner, MilestoneIssueReassigner milestoneIssueReassigner) {
         this.processRunner = processRunner;
-        this.ghOrgRepo = ghRepo;
+        this.ghOrgRepo = processRunner.getOrgRepo();
         this.milestoneIssueReassigner = milestoneIssueReassigner;
     }
 

@@ -29,4 +29,11 @@ public class TestProjectSetup {
         return new ProjectSetup((List<ProjectWithDependencies>) list, "micrometer-metrics/micrometer");
     }
 
+    public static ProjectSetup forTracing(String... projectVersions) {
+        List<? extends ProjectWithDependencies> list = Arrays.stream(projectVersions)
+            .map(s -> Project.tracing(s).with(null, "1.0.0"))
+            .toList();
+        return new ProjectSetup((List<ProjectWithDependencies>) list, "micrometer-metrics/tracing");
+    }
+
 }

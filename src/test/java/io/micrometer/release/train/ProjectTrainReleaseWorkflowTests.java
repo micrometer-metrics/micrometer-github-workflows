@@ -41,7 +41,7 @@ class ProjectTrainReleaseWorkflowTests {
 
     @Test
     void should_construct_instance() {
-        thenNoException().isThrownBy(() -> new ProjectTrainReleaseWorkflow("foo/bar", new ProcessRunner(),
+        thenNoException().isThrownBy(() -> new ProjectTrainReleaseWorkflow(new ProcessRunner("foo/bar"),
                 new PostReleaseWorkflow(new ProcessRunner())));
     }
 

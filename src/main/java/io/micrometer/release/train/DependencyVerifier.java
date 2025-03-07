@@ -17,10 +17,7 @@ package io.micrometer.release.train;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micrometer.release.common.Dependency;
-import io.micrometer.release.common.GradleParser;
-import io.micrometer.release.common.Input;
-import io.micrometer.release.common.ProcessRunner;
+import io.micrometer.release.common.*;
 import io.micrometer.release.train.TrainOptions.ProjectSetup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,8 +47,11 @@ class DependencyVerifier {
 
     private final TimeUnit timeUnit;
 
+    private final Git git;
+
     DependencyVerifier(ProcessRunner processRunner, ObjectMapper objectMapper) {
         this.processRunner = processRunner;
+        this.git = new Git(processRunner);
         this.objectMapper = objectMapper;
         this.timeUnit = TimeUnit.SECONDS;
         this.initialWait = 15;
@@ -60,10 +60,11 @@ class DependencyVerifier {
     }
 
     // for tests
-    DependencyVerifier(ProcessRunner processRunner, ObjectMapper objectMapper, int initialWait, int timeout,
+    DependencyVerifier(ProcessRunner processRunner, ObjectMapper objectMapper, Git git, int initialWait, int timeout,
             int waitBetweenRuns, TimeUnit timeUnit) {
         this.processRunner = processRunner;
         this.objectMapper = objectMapper;
+        this.git = git;
         this.initialWait = initialWait;
         this.timeout = timeout;
         this.waitBetweenRuns = waitBetweenRuns;
@@ -71,7 +72,7 @@ class DependencyVerifier {
     }
 
     void verifyDependencies(String branch, String orgRepository, ProjectSetup projectSetup) {
-        File clonedRepo = cloneRepo(branch, orgRepository);
+        File clonedRepo = git.cloneRepo(branch, orgRepository);
         GradleParser gradleParser = getGradleParser(clonedRepo);
         log.info("Fetching all dependencies before dependabot...");
         Set<Dependency> dependenciesBeforeDependabot = micrometerOnly(gradleParser.fetchAllDependencies());
@@ -124,16 +125,6 @@ class DependencyVerifier {
 
     GradleParser gradleParser(ProcessRunner branchProcessRunner) {
         return new GradleParser(branchProcessRunner);
-    }
-
-    private File cloneRepo(String branch, String orgRepository) {
-        log.info("Cloning out {} branch to folder {}", branch, branch);
-        processRunner.run("gh", "repo", "clone", orgRepository, branch, "--", "-b", branch, "--single-branch");
-        return clonedDir(branch);
-    }
-
-    File clonedDir(String branch) {
-        return new File(branch);
     }
 
     private void pullTheLatestRepoChanges(File clonedRepo) {

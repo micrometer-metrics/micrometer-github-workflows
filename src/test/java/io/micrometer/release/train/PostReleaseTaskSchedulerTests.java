@@ -30,8 +30,7 @@ class PostReleaseTaskSchedulerTests {
 
     Git git = mock();
 
-    PostReleaseTaskScheduler scheduler = new PostReleaseTaskScheduler(postReleaseWorkflow, git,
-            "micrometer-metrics/micrometer");
+    PostReleaseTaskScheduler scheduler = new PostReleaseTaskScheduler(postReleaseWorkflow, git);
 
     @Test
     void should_schedule_release_tasks() {
@@ -39,11 +38,11 @@ class PostReleaseTaskSchedulerTests {
 
         InOrder inOrder = inOrder(git, postReleaseWorkflow);
         inOrder.verify(git).changeTag("v1.0.0");
-        inOrder.verify(postReleaseWorkflow).run("micrometer-metrics/micrometer", "v1.0.0", null);
+        inOrder.verify(postReleaseWorkflow).run("v1.0.0", null);
         inOrder.verify(git).changeTag("v1.1.0");
-        inOrder.verify(postReleaseWorkflow).run("micrometer-metrics/micrometer", "v1.1.0", "v1.0.0");
+        inOrder.verify(postReleaseWorkflow).run("v1.1.0", "v1.0.0");
         inOrder.verify(git).changeTag("v1.2.0");
-        inOrder.verify(postReleaseWorkflow).run("micrometer-metrics/micrometer", "v1.2.0", "v1.1.0");
+        inOrder.verify(postReleaseWorkflow).run("v1.2.0", "v1.1.0");
     }
 
 }

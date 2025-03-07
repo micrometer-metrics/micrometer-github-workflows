@@ -41,15 +41,12 @@ public class ProjectTrainReleaseWorkflow {
 
     private final MavenCentralSyncChecker mavenCentralSyncChecker;
 
-    public ProjectTrainReleaseWorkflow(String githubOrgRepo, ProcessRunner processRunner,
-            PostReleaseWorkflow postReleaseWorkflow) {
-        this.releaseScheduler = new ReleaseScheduler(
-                new CircleCiChecker(System.getenv("CIRCLE_CI_TOKEN"), githubOrgRepo, HTTP_CLIENT, OBJECT_MAPPER),
-                OBJECT_MAPPER, processRunner);
+    public ProjectTrainReleaseWorkflow(ProcessRunner processRunner, PostReleaseWorkflow postReleaseWorkflow) {
+        this.releaseScheduler = new ReleaseScheduler(new CircleCiChecker(System.getenv("CIRCLE_CI_TOKEN"),
+                processRunner.getOrgRepo(), HTTP_CLIENT, OBJECT_MAPPER), OBJECT_MAPPER, processRunner);
         this.versionToBranchConverter = new VersionToBranchConverter(Input.getGhToken(),
-                "https://api.github.com/repos/" + githubOrgRepo + "/branches/", HTTP_CLIENT);
-        this.postReleaseTaskScheduler = new PostReleaseTaskScheduler(postReleaseWorkflow, new Git(processRunner),
-                githubOrgRepo);
+                "https://api.github.com/repos/" + processRunner.getOrgRepo() + "/branches/", HTTP_CLIENT);
+        this.postReleaseTaskScheduler = new PostReleaseTaskScheduler(postReleaseWorkflow, new Git(processRunner));
         this.mavenCentralSyncChecker = new MavenCentralSyncChecker();
     }
 

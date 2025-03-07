@@ -41,6 +41,9 @@ class ProjectTrainReleaseWorkflowAcceptanceTests {
     static WireMockExtension wm1 = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
 
     ProcessRunner processRunner = mock(invocation -> {
+        if (invocation.getMethod().getName().equals("getOrgRepo")) {
+            return GITHUB_ORG_REPO;
+        }
         log.info("Process runner command {}", Arrays.toString(invocation.getArguments()));
         return null;
     });
@@ -57,7 +60,7 @@ class ProjectTrainReleaseWorkflowAcceptanceTests {
     ReleaseScheduler releaseScheduler = new ReleaseScheduler(circleCiChecker, processRunner, dependencyVerifier);
 
     PostReleaseTaskScheduler postReleaseTaskScheduler = new PostReleaseTaskScheduler(postReleaseWorkflow,
-            new Git(processRunner), GITHUB_ORG_REPO);
+            new Git(processRunner));
 
     VersionToBranchConverter versionToBranchConverter = new VersionToBranchConverter("foo",
             wm1.url("/repos/micrometer-metrics/micrometer/branches/"), HttpClient.newBuilder().build());

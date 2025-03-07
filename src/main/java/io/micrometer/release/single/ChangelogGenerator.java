@@ -15,6 +15,7 @@
  */
 package io.micrometer.release.single;
 
+import io.micrometer.release.common.Input;
 import io.micrometer.release.common.ProcessRunner;
 
 import java.io.File;
@@ -40,7 +41,7 @@ class ChangelogGenerator {
 
     public ChangelogGenerator(ProcessRunner processRunner) {
         this.githubApi = GITHUB_API_URL;
-        this.githubToken = System.getenv("GH_TOKEN");
+        this.githubToken = Input.getGhToken();
         this.outputFile = new File(INPUT_FILE);
         this.processRunner = processRunner;
     }
@@ -49,7 +50,7 @@ class ChangelogGenerator {
     ChangelogGenerator(String githubApi, File outputFile) {
         this.githubApi = githubApi;
         this.outputFile = outputFile;
-        this.githubToken = System.getenv("GH_TOKEN");
+        this.githubToken = Input.getGhToken();
         this.processRunner = new ProcessRunner();
     }
 

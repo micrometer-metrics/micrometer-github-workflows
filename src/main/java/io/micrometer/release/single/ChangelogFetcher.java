@@ -42,9 +42,10 @@ class ChangelogFetcher {
         this.processRunner = processRunner;
     }
 
-    File fetchChangelog(String githubRefName, String githubOrgRepo) {
+    File fetchChangelog(String githubRefName) {
         log.info("Fetching changelog for [{}]...", githubRefName);
         // TODO: Move to a util
+        String githubOrgRepo = processRunner.getOrgRepo();
         String orgName = githubOrgRepo.contains("/") ? githubOrgRepo.split("/")[0] : githubOrgRepo;
         String repoName = githubOrgRepo.contains("/") ? githubOrgRepo.split("/")[1] : githubOrgRepo;
         processRunner.run("sh", "-c", String.format("gh release view %s --repo %s/%s --json body --jq .body > %s",

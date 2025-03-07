@@ -27,6 +27,7 @@ import io.micrometer.release.single.MilestoneMigrator.Milestone;
 import java.time.LocalDate;
 import java.util.Collections;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class MilestoneMigratorTests {
@@ -37,7 +38,13 @@ class MilestoneMigratorTests {
 
     MilestoneIssueReassigner reasigner = mock();
 
-    MilestoneMigrator migrator = new MilestoneMigrator(runner, GH_REPO, reasigner);
+    MilestoneMigrator migrator;
+
+    @BeforeEach
+    void setup() {
+        when(runner.getOrgRepo()).thenReturn(GH_REPO);
+        migrator = new MilestoneMigrator(runner, reasigner);
+    }
 
     @Test
     void should_throw_exception_when_no_milestone_found() {

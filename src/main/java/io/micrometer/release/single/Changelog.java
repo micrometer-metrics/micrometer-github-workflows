@@ -28,10 +28,6 @@ class Changelog {
 
     private final Map<Section, ChangelogSection> sections = new LinkedHashMap<>();
 
-    void addSection(ChangelogSection section) {
-        sections.put(section.getSection(), section);
-    }
-
     ChangelogSection getSection(Section section) {
         return sections.computeIfAbsent(section, ChangelogSection::new);
     }

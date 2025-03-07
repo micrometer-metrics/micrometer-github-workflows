@@ -15,6 +15,7 @@
  */
 package io.micrometer.release.single;
 
+import io.micrometer.release.common.Input;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +67,7 @@ class NotificationSender {
         }
 
         GoogleChatNotifier() {
-            this.googleChatNotificationUrl = System.getenv("SPRING_RELEASE_GCHAT_WEBHOOK_URL");
+            this.googleChatNotificationUrl = Input.getGChatWebhookUrl();
         }
 
         @Override
@@ -133,8 +134,8 @@ class NotificationSender {
 
         BlueSkyNotifier() {
             this.uriRoot = "https://bsky.social";
-            this.identifier = System.getenv("BLUESKY_HANDLE");
-            this.password = System.getenv("BLUESKY_PASSWORD");
+            this.identifier = Input.getBlueSkyHandle();
+            this.password = Input.getBlueSkyPassword();
         }
 
         @Override

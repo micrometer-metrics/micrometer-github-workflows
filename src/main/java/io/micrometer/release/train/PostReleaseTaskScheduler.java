@@ -32,12 +32,9 @@ class PostReleaseTaskScheduler {
 
     private final Git git;
 
-    private final String githubOrgRepo;
-
-    PostReleaseTaskScheduler(PostReleaseWorkflow postReleaseWorkflow, Git git, String githubOrgRepo) {
+    PostReleaseTaskScheduler(PostReleaseWorkflow postReleaseWorkflow, Git git) {
         this.postReleaseWorkflow = postReleaseWorkflow;
         this.git = git;
-        this.githubOrgRepo = githubOrgRepo;
     }
 
     void runPostReleaseTasks(List<String> versions) {
@@ -47,8 +44,7 @@ class PostReleaseTaskScheduler {
         for (String version : sortedVersions) {
             git.changeTag("v" + version);
             log.info("Running post release task for version [{}] and previous version [{}]", version, previousVersion);
-            postReleaseWorkflow.run(githubOrgRepo, "v" + version,
-                    previousVersion != null ? ("v" + previousVersion) : null);
+            postReleaseWorkflow.run("v" + version, previousVersion != null ? ("v" + previousVersion) : null);
             previousVersion = version;
         }
         log.info("All post-release actions completed!");

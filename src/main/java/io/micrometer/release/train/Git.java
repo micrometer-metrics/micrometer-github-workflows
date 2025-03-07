@@ -14,6 +14,9 @@
 package io.micrometer.release.train;
 
 import io.micrometer.release.common.ProcessRunner;
+
+import java.io.File;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +34,16 @@ class Git {
         log.info("Changing git head to tag [{}]", tag);
         processRunner.run("git", "fetch", "origin", "refs/tags/" + tag);
         processRunner.run("git", "checkout", "FETCH_HEAD");
+    }
+
+    File cloneRepo(String branch, String orgRepository) {
+        log.info("Cloning out {} branch to folder {}", branch, branch);
+        processRunner.run("gh", "repo", "clone", orgRepository, branch, "--", "-b", branch, "--single-branch");
+        return clonedDir(branch);
+    }
+
+    File clonedDir(String branch) {
+        return new File(branch);
     }
 
 }

@@ -46,6 +46,14 @@ inputs:
   circle_ci_token:
     description: "Circle CI Token to query for build status"
     required: false
+  meta_release_enabled:
+    description: 'Is this a meta-release (all projects with versions should be released?)'
+    required: false
+    default: "true"
+    type: choice
+    options:
+      - true
+      - false
 
 outputs: {}
 
@@ -65,6 +73,7 @@ runs:
     MICROMETER_VERSIONS: ${{ inputs.micrometer_versions }}
     TRACING_VERSIONS: ${{ inputs.tracing_versions }}
     DOCS_GEN_VERSIONS: ${{ inputs.docs_gen_versions }}
+    META_RELEASE_ENABLED: ${{ inputs.meta_release_enabled }}
 
 branding:
   icon: "activity"

@@ -57,7 +57,7 @@ class PostReleaseWorkflowAcceptanceTests {
     void should_perform_full_post_release_process() throws Exception {
         PostReleaseWorkflow postReleaseWorkflow = testPostReleaseWorkflow(updater);
 
-        postReleaseWorkflow.run("micrometer-metrics/micrometer", "v1.14.0", "v1.13.9");
+        postReleaseWorkflow.run("v1.14.0", "v1.13.9");
 
         then(updater.wasCalled).as("ReleaseNotesUpdater must be called").isTrue();
         verify(milestoneUpdater).closeMilestone("v1.14.0");
@@ -70,7 +70,8 @@ class PostReleaseWorkflowAcceptanceTests {
                 ChangelogGeneratorTests.testChangelogGenerator(outputChangelog),
                 ChangelogFetcherTests.testChangelogFetcher(oldOutputChangelog),
                 ChangelogProcessorTests.testChangelogProcessor(outputChangelog), updater, milestoneUpdater,
-                NotificationSenderTests.testNotificationSender(wm1));
+                NotificationSenderTests.testNotificationSender(wm1),
+                new ProcessRunner("micrometer-metrics/micrometer"));
     }
 
     static class AssertingReleaseNotesUpdater extends ReleaseNotesUpdater {
@@ -81,7 +82,7 @@ class PostReleaseWorkflowAcceptanceTests {
         private boolean wasCalled;
 
         AssertingReleaseNotesUpdater() throws URISyntaxException {
-            super(new ProcessRunner());
+            super(new ProcessRunner("micrometer-metrics/micrometer"));
         }
 
         @Override

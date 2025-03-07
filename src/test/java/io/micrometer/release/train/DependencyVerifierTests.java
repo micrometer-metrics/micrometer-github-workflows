@@ -59,21 +59,13 @@ class DependencyVerifierTests {
 
     ProcessRunner processRunner = mock();
 
-    DependencyVerifier verifier = new DependencyVerifier(processRunner, ProjectTrainReleaseWorkflow.OBJECT_MAPPER, 1, 5,
-            1, TimeUnit.MILLISECONDS) {
+    Git git = mock();
+
+    DependencyVerifier verifier = new DependencyVerifier(processRunner, ProjectTrainReleaseWorkflow.OBJECT_MAPPER, git,
+            1, 5, 1, TimeUnit.MILLISECONDS) {
         @Override
         GradleParser gradleParser(ProcessRunner branchProcessRunner) {
             return new TestGradleParser();
-        }
-
-        @Override
-        File clonedDir(String branch) {
-            try {
-                return new File(DependencyVerifierTests.class.getResource("/main").toURI());
-            }
-            catch (URISyntaxException e) {
-                throw new RuntimeException(e);
-            }
         }
 
         @Override
@@ -96,6 +88,13 @@ class DependencyVerifierTests {
         given(processRunner.runSilently(dependabotUpdateJobStates)).willReturn(Files
             .readAllLines(new File(DependencyVerifierTests.class.getResource("/github/runs.json").toURI()).toPath()));
         given(processRunner.run(dependabotUpdateJobTime)).willReturn(List.of("2025-02-24T10:51:29Z"));
+        try {
+            File file = new File(DependencyVerifierTests.class.getResource("/main").toURI());
+            given(git.cloneRepo("main", "micrometer-metrics")).willReturn(file);
+        }
+        catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Test

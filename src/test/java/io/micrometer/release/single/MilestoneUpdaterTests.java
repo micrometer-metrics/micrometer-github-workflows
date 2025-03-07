@@ -29,12 +29,13 @@ class MilestoneUpdaterTests {
     @Test
     void should_call_gh_api_to_close_a_milestone() {
         ProcessRunner processRunner = mock();
+        String ghRepo = "micrometer-metrics/micrometer";
+        given(processRunner.getOrgRepo()).willReturn(ghRepo);
         given(processRunner.run("gh", "api", "--paginate", "/repos/micrometer-metrics/micrometer/milestones", "--jq",
                 String.format(".[] | select(.title == \"%s\") | {number: .number, title: .title}", "1.2.3")))
             .willReturn(List.of("{\"number\":100,\"title\":\"1.2.3\"}"));
-        String ghRepo = "micrometer-metrics/micrometer";
         MilestoneUpdater milestoneUpdater = new MilestoneUpdater(processRunner, ghRepo,
-                new MilestoneMigrator(processRunner, ghRepo, new MilestoneIssueReassigner(processRunner, ghRepo)));
+                new MilestoneMigrator(processRunner, new MilestoneIssueReassigner(processRunner)));
 
         milestoneUpdater.closeMilestone("v1.2.3");
 

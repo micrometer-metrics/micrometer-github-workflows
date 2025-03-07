@@ -16,7 +16,6 @@
 package io.micrometer.release.train;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micrometer.release.common.Input;
 import io.micrometer.release.common.ProcessRunner;
 import io.micrometer.release.train.TrainOptions.ProjectSetup;
 import org.slf4j.Logger;
@@ -63,7 +62,7 @@ class ReleaseScheduler {
 
     private void handleReleaseAndCI(String version, String branch, ProjectSetup projectSetup) {
         try {
-            dependencyVerifier.verifyDependencies(branch, getOrgRepository(), projectSetup);
+            dependencyVerifier.verifyDependencies(branch, processRunner.getOrgRepo(), projectSetup);
             createGithubRelease(version, branch);
             boolean buildSuccessful = circleCiChecker.checkBuildStatus(version);
             if (!buildSuccessful) {
@@ -73,10 +72,6 @@ class ReleaseScheduler {
         catch (IOException | InterruptedException e) {
             throw new IllegalStateException("Failed for version: " + version + ". Error: " + e.getMessage(), e);
         }
-    }
-
-    String getOrgRepository() {
-        return Input.getGithubOrgRepository();
     }
 
     private void createGithubRelease(String version, String branch) throws IOException, InterruptedException {

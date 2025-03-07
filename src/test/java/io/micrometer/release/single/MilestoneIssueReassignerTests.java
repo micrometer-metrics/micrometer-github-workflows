@@ -17,6 +17,7 @@ package io.micrometer.release.single;
 
 import io.micrometer.release.common.ProcessRunner;
 import io.micrometer.release.single.MilestoneMigrator.Milestone;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -38,17 +39,23 @@ class MilestoneIssueReassignerTests {
 
     ProcessRunner processRunner = mock();
 
-    MilestoneIssueReassigner reasigner = new MilestoneIssueReassigner(processRunner, GH_REPO) {
-        @Override
-        LocalDate currentDate() {
-            return LocalDate.of(2025, 1, 27); // Last monday of the month
-        }
-    };
+    MilestoneIssueReassigner reassigner;
 
     private void setupProcessRunner(String version) {
         when(processRunner.run("gh", "api", "/repos/" + GH_REPO + "/milestones", "-X", "POST", "-f", "title=" + version,
                 "-f", "due_on=" + LocalDate.of(2025, 2, 10) + "T17:00:00Z"))
             .thenReturn(Collections.singletonList("{\"number\":5,\"title\":\"1.0.2\"}"));
+    }
+
+    @BeforeEach
+    void setup() {
+        when(processRunner.getOrgRepo()).thenReturn(GH_REPO);
+        reassigner = new MilestoneIssueReassigner(processRunner) {
+            @Override
+            LocalDate currentDate() {
+                return LocalDate.of(2025, 1, 27); // Last monday of the month
+            }
+        };
     }
 
     @Test
@@ -57,7 +64,7 @@ class MilestoneIssueReassignerTests {
         Milestone concreteMilestone = new Milestone(1, version);
         setupProcessRunner("1.0.0-M2");
 
-        MilestoneWithDeadline milestoneWithDeadline = reasigner.reassignIssues(concreteMilestone, "v" + version,
+        MilestoneWithDeadline milestoneWithDeadline = reassigner.reassignIssues(concreteMilestone, "v" + version,
                 Collections.singletonList(CLOSED_ISSUE_ID), Collections.singletonList(OPEN_ISSUE_ID));
 
         thenMilestoneHasProperDeadline(milestoneWithDeadline, "1.0.0-M2");
@@ -69,7 +76,7 @@ class MilestoneIssueReassignerTests {
     void should_fail_for_non_matching_versions(String version) {
         Milestone concreteMilestone = new Milestone(1, version);
 
-        thenThrownBy(() -> reasigner.reassignIssues(concreteMilestone, "v" + version,
+        thenThrownBy(() -> reassigner.reassignIssues(concreteMilestone, "v" + version,
                 Collections.singletonList(CLOSED_ISSUE_ID), Collections.singletonList(OPEN_ISSUE_ID)))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining(
@@ -82,7 +89,7 @@ class MilestoneIssueReassignerTests {
         setupProcessRunner("1.0.2");
         Milestone concreteMilestone = new Milestone(1, version);
 
-        MilestoneWithDeadline milestoneWithDeadline = reasigner.reassignIssues(concreteMilestone, "v" + version,
+        MilestoneWithDeadline milestoneWithDeadline = reassigner.reassignIssues(concreteMilestone, "v" + version,
                 Collections.singletonList(CLOSED_ISSUE_ID), Collections.singletonList(OPEN_ISSUE_ID));
 
         thenMilestoneHasProperDeadline(milestoneWithDeadline, "1.0.2");
