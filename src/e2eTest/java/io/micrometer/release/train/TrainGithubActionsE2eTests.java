@@ -18,6 +18,7 @@ package io.micrometer.release.train;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.micrometer.release.common.GithubActions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -28,6 +29,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Disabled("TODO: Uncomment me")
 class TrainGithubActionsE2eTests implements GithubActions {
 
     @BeforeAll

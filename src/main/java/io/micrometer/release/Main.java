@@ -54,25 +54,34 @@ public class Main {
 
                 Processing following env variables:
 
+                ====================================
+                COMMON:
+                -----------------
                 GITHUB_REPOSITORY [%s]
                 GITHUB_REF_NAME [%s]
                 TEST_MODE [%s]
+                ====================================
 
+                ====================================
                 POST RELEASE TASKS:
                 ------------------
                 PREVIOUS_REF_NAME [%s]
+                ====================================
 
-
+                ====================================
                 TRAIN OPTIONS:
                 ------------------
                 CONTEXT_PROPAGATION_VERSIONS [%s]
                 MICROMETER_VERSIONS [%s]
                 TRACING_VERSIONS [%s]
                 DOCS_GEN_VERSIONS [%s]
+                ====================================
 
+                ====================================
                 META RELEASE OPTIONS:
                 ------------------
                 META_RELEASE_ENABLED [%s]
+                ====================================
                 """.formatted(githubOrgRepo, githubRefName, testMode, previousRefName, contextPropVersions,
                 micrometerVersions, tracingVersions, docsGenVersions, metaReleaseEnabled));
 
