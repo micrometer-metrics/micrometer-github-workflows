@@ -49,7 +49,7 @@ inputs:
   meta_release_enabled:
     description: 'Is this a meta-release (all projects with versions should be released?)'
     required: false
-    default: "true"
+    default: "false"
     type: choice
     options:
       - true

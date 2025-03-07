@@ -81,7 +81,7 @@ class VersionToBranchConverter {
         log.info("Will send a GET request to {}", branchUrl);
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         log.info("Got the following response status code: {}", response.statusCode());
-        log.info("Got the following response: {}", response.body());
+        // log.info("Got the following response: {}", response.body());
         return response.statusCode() == 200;
     }
 

@@ -119,7 +119,7 @@ class DependencyVerifier {
     }
 
     private GradleParser getGradleParser(File branch) {
-        ProcessRunner branchProcessRunner = new ProcessRunner(branch);
+        ProcessRunner branchProcessRunner = new ProcessRunner(processRunner, branch);
         return gradleParser(branchProcessRunner);
     }
 
