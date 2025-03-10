@@ -80,7 +80,8 @@ class NotificationSender {
             String version = refName.startsWith("v") ? refName.substring(1) : refName;
             String name = repoName.startsWith("micrometer") ? repoName : "micrometer-" + repoName;
             sendAnnouncingNotificationToReleaseChannel(name, version);
-            sendPlanningNotificationToReleaseChannel(name, version, newMilestone);
+            sendPlanningNotificationToReleaseChannel(name, ReleaseVersionCalculator.calculateNextVersion(version),
+                    newMilestone);
         }
 
         private void sendAnnouncingNotificationToReleaseChannel(String name, String version) {
