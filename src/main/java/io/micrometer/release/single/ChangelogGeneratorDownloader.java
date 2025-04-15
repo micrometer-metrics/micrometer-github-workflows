@@ -34,7 +34,7 @@ class ChangelogGeneratorDownloader {
 
     private static final String CHANGELOG_GENERATOR_JAR = "github-changelog-generator.jar";
 
-    private static final String DEFAULT_CHANGELOG_GENERATOR_VERSION = "0.0.11";
+    private static final String DEFAULT_CHANGELOG_GENERATOR_VERSION = "0.0.12";
 
     static final String CHANGELOG_GENERATOR_URL = "https://github.com/spring-io/github-changelog-generator/releases/download/v%s/github-changelog-generator.jar";
 
