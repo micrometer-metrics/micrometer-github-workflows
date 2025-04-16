@@ -1,11 +1,11 @@
-FROM gradle:8.12.1-jdk17-alpine as build
+FROM gradle:8.13.0-jdk21-alpine as build
 COPY gradle /app/gradle/
 COPY src /app/src/
 COPY config /app/config/
 COPY build.gradle settings.gradle gradle.properties dependencies.gradle /app/
 RUN cd /app && gradle -Dorg.gradle.welcome=never --no-daemon shadowJar
 
-FROM eclipse-temurin:17-jdk
+FROM eclipse-temurin:21-jdk
 COPY --from=build /app/build/libs/micrometer-release.jar /opt/action/micrometer-release.jar
 # Set JAVA_HOME explicitly to match the container's Java location
 ENV JAVA_HOME=/opt/java/openjdk

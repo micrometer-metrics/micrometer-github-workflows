@@ -24,10 +24,10 @@ pitestJunit5 = { module = "org.pitest:pitest-junit5-plugin", version.ref = "pite
 slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 wiremock = { module = "org.wiremock:wiremock-standalone", version.ref = "wiremock" }
 
-# plugin dependencies
-plugin-javaformat = { module = "io.spring.javaformat:spring-javaformat-gradle-plugin", version = "0.0.43" }
-plugin-jib = { module = "com.google.cloud.tools.jib:com.google.cloud.tools.jib.gradle.plugin", version = "3.4.4" }
-plugin-license = { module = "gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin", version = "0.16.1" }
-plugin-noHttp = { module = "io.spring.nohttp:nohttp-gradle", version = "0.0.11" }
-plugin-pitest = { module = "info.solidsoft.gradle.pitest:gradle-pitest-plugin", version = "1.15.0" }
-plugin-shadow = { module = "com.github.johnrengelman.shadow:com.github.johnrengelman.shadow.gradle.plugin", version = "8.1.1" }
+[plugins]
+javaformat = { id = "io.spring.javaformat", version = "0.0.43" }
+jib = { id = "com.google.cloud.tools.jib", version = "3.4.4" }
+license = { id = "com.github.hierynomus.license", version = "0.16.1" }
+noHttp = { id = "io.spring.nohttp", version = "0.0.11" }
+pitest = { id = "info.solidsoft.pitest", version = "1.15.0" }
+shadow = { id = "com.github.johnrengelman.shadow", version = "8.1.1" }
