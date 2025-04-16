@@ -1,0 +1,16 @@
+name: Pull Request Build
+
+on: pull_request
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Build
+        uses: ./.github/actions/setup-and-run-build
