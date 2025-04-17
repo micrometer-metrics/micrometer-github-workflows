@@ -15,9 +15,10 @@
  */
 package io.micrometer.release.single;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 
-import com.github.tomakehurst.wiremock.client.WireMock;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -46,22 +47,45 @@ class NotificationSenderTests {
     }
 
     static void assertThatNotificationGotSent(WireMockExtension wireMockExtension) {
-        wireMockExtension
-            .verify(WireMock.postRequestedFor(WireMock.urlEqualTo("/xrpc/com.atproto.server.createSession")));
-        wireMockExtension.verify(WireMock.postRequestedFor(WireMock.urlEqualTo("/")));
+        wireMockExtension.verify(postRequestedFor(urlEqualTo("/xrpc/com.atproto.server.createSession")));
+        wireMockExtension.verify(postRequestedFor(urlEqualTo("/xrpc/com.atproto.repo.createRecord")));
+        wireMockExtension.verify(postRequestedFor(urlEqualTo("/")));
     }
 
     static void assertThatNoNotificationGotSent(WireMockExtension wireMockExtension) {
-        wireMockExtension.verify(0,
-                WireMock.postRequestedFor(WireMock.urlEqualTo("/xrpc/com.atproto.server.createSession")));
-        wireMockExtension.verify(0, WireMock.postRequestedFor(WireMock.urlEqualTo("/")));
+        wireMockExtension.verify(0, postRequestedFor(urlEqualTo("/xrpc/com.atproto.server.createSession")));
+        wireMockExtension.verify(0, postRequestedFor(urlEqualTo("/xrpc/com.atproto.repo.createRecord")));
+        wireMockExtension.verify(0, postRequestedFor(urlEqualTo("/")));
     }
 
     static NotificationSender testNotificationSender(WireMockExtension extension) {
+        extension.stubFor(post("/xrpc/com.atproto.server.createSession").willReturn(okJson("""
+                {
+                  "accessJwt": "string",
+                  "refreshJwt": "string",
+                  "handle": "string",
+                  "did": "string",
+                  "didDoc": {},
+                  "email": "string",
+                  "emailConfirmed": true,
+                  "emailAuthFactor": true,
+                  "active": true,
+                  "status": "takendown"
+                }""")));
+        extension.stubFor(post("/xrpc/com.atproto.repo.createRecord").willReturn(okJson("""
+                {
+                  "uri": "string",
+                  "cid": "string",
+                  "commit": {
+                    "cid": "string",
+                    "rev": "string"
+                  },
+                  "validationStatus": "valid"
+                }""")));
         return new NotificationSender() {
             @Override
             BlueSkyNotifier blueSky() {
-                return new BlueSkyNotifier(extension.baseUrl(), "identifier", "password");
+                return new BlueSkyNotifier(new ObjectMapper(), extension.baseUrl(), "identifier", "password");
             }
 
             @Override
@@ -76,7 +100,7 @@ class NotificationSenderTests {
             @Override
             BlueSkyNotifier blueSky() {
                 super.blueSky(); // to ensure no exception is thrown
-                return new BlueSkyNotifier(extension.baseUrl(), "identifier", "");
+                return new BlueSkyNotifier(new ObjectMapper(), extension.baseUrl(), "identifier", "");
             }
 
             @Override
