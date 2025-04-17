@@ -15,6 +15,8 @@
  */
 package io.micrometer.release.single;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.release.common.Input;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +27,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -44,7 +47,7 @@ class NotificationSender {
 
     // for tests
     BlueSkyNotifier blueSky() {
-        return new BlueSkyNotifier();
+        return new BlueSkyNotifier(new ObjectMapper());
     }
 
     // for tests
@@ -106,8 +109,8 @@ class NotificationSender {
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(payload))
                 .build();
-            try {
-                HttpResponse<String> send = HttpClient.newHttpClient().send(chatRequest, BodyHandlers.ofString());
+            try (HttpClient httpClient = HttpClient.newHttpClient()) {
+                HttpResponse<String> send = httpClient.send(chatRequest, BodyHandlers.ofString());
                 if (send.statusCode() >= 400) {
                     throw new IllegalStateException("Unexpected response code: " + send.statusCode());
                 }
@@ -121,19 +124,25 @@ class NotificationSender {
 
     static class BlueSkyNotifier implements Notifier {
 
+        private static final Logger log = LoggerFactory.getLogger(BlueSkyNotifier.class);
+
+        private final ObjectMapper objectMapper;
+
         private final String uriRoot;
 
         private final String identifier;
 
         private final String password;
 
-        BlueSkyNotifier(String uriRoot, String identifier, String password) {
+        BlueSkyNotifier(ObjectMapper objectMapper, String uriRoot, String identifier, String password) {
+            this.objectMapper = objectMapper;
             this.uriRoot = uriRoot;
             this.identifier = identifier;
             this.password = password;
         }
 
-        BlueSkyNotifier() {
+        BlueSkyNotifier(ObjectMapper objectMapper) {
+            this.objectMapper = objectMapper;
             this.uriRoot = "https://bsky.social";
             this.identifier = Input.getBlueSkyHandle();
             this.password = Input.getBlueSkyPassword();
@@ -146,24 +155,88 @@ class NotificationSender {
                 return;
             }
 
-            HttpRequest blueskyRequest = HttpRequest.newBuilder()
+            String token = getToken();
+
+            createPost(token, createPostJson(repoName, refName));
+        }
+
+        private String getToken() {
+            HttpRequest createSessionRequest = HttpRequest.newBuilder()
                 .uri(URI.create(uriRoot + "/xrpc/com.atproto.server.createSession"))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers
                     .ofString("{\"identifier\":\"" + identifier + "\",\"password\":\"" + password + "\"}"))
                 .build();
 
-            try {
-                HttpResponse<String> blueskyResponse = HttpClient.newHttpClient()
-                    .send(blueskyRequest, HttpResponse.BodyHandlers.ofString());
-                log.info("Bluesky response: " + blueskyResponse.body());
-                if (blueskyResponse.statusCode() >= 400) {
-                    throw new IllegalStateException("Unexpected response code: " + blueskyResponse.statusCode());
+            try (HttpClient httpClient = HttpClient.newHttpClient()) {
+                HttpResponse<String> createSessionResponse = httpClient.send(createSessionRequest,
+                        HttpResponse.BodyHandlers.ofString());
+                if (createSessionResponse.statusCode() >= 400) {
+                    throw new IllegalStateException("Unexpected response code: " + createSessionResponse.statusCode());
                 }
+                JsonNode jsonNode = objectMapper.readTree(createSessionResponse.body());
+                if (!jsonNode.has("accessJwt")) {
+                    throw new IllegalStateException("Missing JWT in response");
+                }
+                return jsonNode.get("accessJwt").asText();
             }
             catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
+        }
+
+        private void createPost(String token, String postJson) {
+            String requestBody = """
+                    {
+                      "repo":"%s",
+                      "collection":"app.bsky.feed.post",
+                      "record":%s
+                    }""".formatted(identifier, postJson);
+            HttpRequest createRecordRequest = HttpRequest.newBuilder()
+                .uri(URI.create(uriRoot + "/xrpc/com.atproto.repo.createRecord"))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + token)
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+
+            try (HttpClient httpClient = HttpClient.newHttpClient()) {
+                HttpResponse<String> createRecordResponse = httpClient.send(createRecordRequest,
+                        BodyHandlers.ofString());
+                if (createRecordResponse.statusCode() >= 400) {
+                    log.error("Unexpected response code: {}\nResponse: {}\nRequest: {}",
+                            createRecordResponse.statusCode(), createRecordResponse.body(), requestBody);
+                    throw new IllegalStateException("Unexpected response code: " + createRecordResponse.statusCode());
+                }
+                else {
+                    log.debug("Created record: Request: {}, Response: {}", requestBody, createRecordResponse.body());
+                }
+                String postRevision = objectMapper.readTree(createRecordResponse.body()).at("/commit/rev").asText();
+                log.info("Bluesky post created: https://bsky.app/profile/{}/post/{}", identifier, postRevision);
+            }
+            catch (IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private String createPostJson(String projectName, String versionRef) {
+            String version = versionRef.startsWith("v") ? versionRef.substring(1) : versionRef;
+            String postText = "%s %s has been released!\\n\\nCheck out the changelog at https://github.com/%s/releases/tag/%s"
+                .formatted(projectName, version, projectName, versionRef);
+            String facetsJson = createFacetsJson(postText);
+            return """
+                    {
+                      "$type": "app.bsky.feed.post",
+                      "text": "%s",
+                      "createdAt": "%s",
+                      "facets": [
+                        %s
+                      ]
+                    }""".formatted(postText, ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT), facetsJson);
+        }
+
+        private String createFacetsJson(String postText) {
+            // TODO this is needed for the URL in the post to be a hyperlink
+            return "";
         }
 
     }
