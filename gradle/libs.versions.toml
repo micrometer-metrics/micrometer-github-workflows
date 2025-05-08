@@ -1,6 +1,6 @@
 [versions]
 assertj = "3.27.3"
-archunit = "1.4.0"
+archunit = "1.4.1"
 jackson = "2.18.3"
 javaFormatForPlugins = "0.0.43"
 junit = "5.12.2"
