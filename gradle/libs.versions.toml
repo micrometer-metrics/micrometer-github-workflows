@@ -9,7 +9,7 @@ mockito = "5.17.0"
 pitestJunit5="1.2.2"
 pmdTool="7.0.0"
 slf4j = "1.7.36"
-wiremock = "3.12.1"
+wiremock = "3.13.0"
 
 [libraries]
 assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
