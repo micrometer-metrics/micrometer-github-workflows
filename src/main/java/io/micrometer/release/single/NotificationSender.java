@@ -222,11 +222,8 @@ class NotificationSender {
         private String createPostJson(String projectName, String versionRef) {
             String version = versionRef.startsWith("v") ? versionRef.substring(1) : versionRef;
             String changelogUrl = getChangelogUrl(projectName, versionRef);
-            String postText = """
-                    %s %s has been released!
-
-                    Check out the changelog at %s\
-                    """.formatted(projectName, version, changelogUrl);
+            String postText = "%s %s has been released!\\n\\nCheck out the changelog at %s".formatted(projectName,
+                    version, changelogUrl);
             String facetsJson = createFacetsJson(postText, changelogUrl);
             return """
                     {
