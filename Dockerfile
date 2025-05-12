@@ -2,7 +2,7 @@ FROM gradle:8.13.0-jdk21-alpine as build
 COPY gradle /app/gradle/
 COPY src /app/src/
 COPY config /app/config/
-COPY build.gradle settings.gradle gradle.properties dependencies.gradle /app/
+COPY build.gradle settings.gradle gradle.properties /app/
 RUN cd /app && gradle -Dorg.gradle.welcome=never --no-daemon shadowJar
 
 FROM eclipse-temurin:21-jdk
