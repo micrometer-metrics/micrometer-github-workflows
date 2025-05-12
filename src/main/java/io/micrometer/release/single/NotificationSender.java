@@ -243,8 +243,13 @@ class NotificationSender {
         private String createFacetsJson(String postText, String changelogUrl) {
             int urlBytesLength = changelogUrl.getBytes(StandardCharsets.UTF_8).length;
             byte[] postBytes = postText.getBytes(StandardCharsets.UTF_8);
-            int bytesStart = postBytes.length - urlBytesLength;
-            int bytesEnd = postBytes.length;
+            int newLineBytes = "\n".getBytes(StandardCharsets.UTF_8).length;
+            int newLineLiteralBytes = "\\n".getBytes(StandardCharsets.UTF_8).length;
+            int newLineLiteralCount = postText.split("\\\\n", -1).length - 1;
+            // we send new line literals `\n` but the bytes are counted as newline chars
+            // subtract the difference in bytes for each new line in the post text
+            int postLength = postBytes.length - newLineLiteralCount * (newLineLiteralBytes - newLineBytes);
+            int bytesStart = postLength - urlBytesLength;
             return """
                     {
                         "index": {
@@ -257,7 +262,7 @@ class NotificationSender {
                                 "uri": "%s"
                             }
                         ]
-                    }""".formatted(bytesStart, bytesEnd, changelogUrl);
+                    }""".formatted(bytesStart, postLength, changelogUrl);
         }
 
     }
