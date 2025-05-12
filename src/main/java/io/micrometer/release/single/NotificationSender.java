@@ -219,7 +219,7 @@ class NotificationSender {
             }
         }
 
-        private String createPostJson(String projectName, String versionRef) {
+        private static String createPostJson(String projectName, String versionRef) {
             String version = versionRef.startsWith("v") ? versionRef.substring(1) : versionRef;
             String changelogUrl = getChangelogUrl(projectName, versionRef);
             String postText = "%s %s has been released!\\n\\nCheck out the changelog at %s".formatted(projectName,
@@ -236,20 +236,14 @@ class NotificationSender {
                     }""".formatted(postText, ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT), facetsJson);
         }
 
-        private String getChangelogUrl(String projectName, String versionRef) {
+        private static String getChangelogUrl(String projectName, String versionRef) {
             return "https://github.com/micrometer-metrics/%s/releases/tag/%s".formatted(projectName, versionRef);
         }
 
-        private String createFacetsJson(String postText, String changelogUrl) {
+        private static String createFacetsJson(String postText, String changelogUrl) {
             int urlBytesLength = changelogUrl.getBytes(StandardCharsets.UTF_8).length;
-            byte[] postBytes = postText.getBytes(StandardCharsets.UTF_8);
-            int newLineBytes = "\n".getBytes(StandardCharsets.UTF_8).length;
-            int newLineLiteralBytes = "\\n".getBytes(StandardCharsets.UTF_8).length;
-            int newLineLiteralCount = postText.split("\\\\n", -1).length - 1;
-            // we send new line literals `\n` but the bytes are counted as newline chars
-            // subtract the difference in bytes for each new line in the post text
-            int postLength = postBytes.length - newLineLiteralCount * (newLineLiteralBytes - newLineBytes);
-            int bytesStart = postLength - urlBytesLength;
+            int postBytesLength = getPostBytesLength(postText);
+            int bytesStart = postBytesLength - urlBytesLength;
             return """
                     {
                         "index": {
@@ -262,7 +256,17 @@ class NotificationSender {
                                 "uri": "%s"
                             }
                         ]
-                    }""".formatted(bytesStart, postLength, changelogUrl);
+                    }""".formatted(bytesStart, postBytesLength, changelogUrl);
+        }
+
+        private static int getPostBytesLength(String postText) {
+            byte[] postBytes = postText.getBytes(StandardCharsets.UTF_8);
+            int newLineBytes = "\n".getBytes(StandardCharsets.UTF_8).length;
+            int newLineLiteralBytes = "\\n".getBytes(StandardCharsets.UTF_8).length;
+            int newLineLiteralCount = postText.split("\\\\n", -1).length - 1;
+            // we send new line literals `\n` but the bytes are counted as newline chars
+            // subtract the difference in bytes for each new line in the post text
+            return postBytes.length - newLineLiteralCount * (newLineLiteralBytes - newLineBytes);
         }
 
     }
