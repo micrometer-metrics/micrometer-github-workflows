@@ -220,8 +220,11 @@ class NotificationSender {
 
         private String createPostJson(String projectName, String versionRef) {
             String version = versionRef.startsWith("v") ? versionRef.substring(1) : versionRef;
-            String postText = "%s %s has been released!\\n\\nCheck out the changelog at https://github.com/%s/releases/tag/%s"
-                .formatted(projectName, version, projectName, versionRef);
+            String postText = """
+                    %s %s has been released!
+
+                    Check out the changelog at https://github.com/micrometer-metrics/%s/releases/tag/%s\
+                    """.formatted(projectName, version, projectName, versionRef);
             String facetsJson = createFacetsJson(postText);
             return """
                     {
