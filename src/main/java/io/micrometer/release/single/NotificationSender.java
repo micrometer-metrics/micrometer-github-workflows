@@ -27,6 +27,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -220,12 +221,13 @@ class NotificationSender {
 
         private String createPostJson(String projectName, String versionRef) {
             String version = versionRef.startsWith("v") ? versionRef.substring(1) : versionRef;
+            String changelogUrl = getChangelogUrl(projectName, versionRef);
             String postText = """
                     %s %s has been released!
 
-                    Check out the changelog at https://github.com/micrometer-metrics/%s/releases/tag/%s\
-                    """.formatted(projectName, version, projectName, versionRef);
-            String facetsJson = createFacetsJson(postText);
+                    Check out the changelog at %s\
+                    """.formatted(projectName, version, changelogUrl);
+            String facetsJson = createFacetsJson(postText, changelogUrl);
             return """
                     {
                       "$type": "app.bsky.feed.post",
@@ -237,9 +239,28 @@ class NotificationSender {
                     }""".formatted(postText, ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT), facetsJson);
         }
 
-        private String createFacetsJson(String postText) {
-            // TODO this is needed for the URL in the post to be a hyperlink
-            return "";
+        private String getChangelogUrl(String projectName, String versionRef) {
+            return "https://github.com/micrometer-metrics/%s/releases/tag/%s".formatted(projectName, versionRef);
+        }
+
+        private String createFacetsJson(String postText, String changelogUrl) {
+            int urlBytesLength = changelogUrl.getBytes(StandardCharsets.UTF_8).length;
+            byte[] postBytes = postText.getBytes(StandardCharsets.UTF_8);
+            int bytesStart = postBytes.length - urlBytesLength;
+            int bytesEnd = postBytes.length;
+            return """
+                    {
+                        "index": {
+                            "byteStart": %d,
+                            "byteEnd": %d
+                        },
+                        "features": [
+                            {
+                                "$type": "app.bsky.richtext.facet#link",
+                                "uri": "%s"
+                            }
+                        ]
+                    }""".formatted(bytesStart, bytesEnd, changelogUrl);
         }
 
     }
