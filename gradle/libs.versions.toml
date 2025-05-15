@@ -25,7 +25,7 @@ slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 wiremock = { module = "org.wiremock:wiremock-standalone", version.ref = "wiremock" }
 
 [plugins]
-javaformat = { id = "io.spring.javaformat", version = "0.0.43" }
+javaformat = { id = "io.spring.javaformat", version = "0.0.44" }
 jib = { id = "com.google.cloud.tools.jib", version = "3.4.5" }
 license = { id = "com.github.hierynomus.license", version = "0.16.1" }
 noHttp = { id = "io.spring.nohttp", version = "0.0.11" }
