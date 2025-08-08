@@ -1,5 +1,5 @@
 [versions]
-assertj = "3.27.3"
+assertj = "3.27.4"
 archunit = "1.4.0"
 jackson = "2.18.3"
 javaFormatForPlugins = "0.0.43"
