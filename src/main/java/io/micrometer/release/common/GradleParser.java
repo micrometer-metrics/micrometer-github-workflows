@@ -22,10 +22,14 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class GradleParser {
 
     private static final Logger log = LoggerFactory.getLogger(GradleParser.class);
+
+    private static final Pattern PROJECTS_LINE_PATTERN = Pattern.compile("Project ':([\\w-]+)'");
 
     private final List<String> excludedDependencyScopes = List.of("testCompile", "testImplementation", "checkstyle",
             "runtime", "nohttp", "testRuntime", "optional");
@@ -39,10 +43,7 @@ public class GradleParser {
     public Set<Dependency> fetchAllDependencies() {
         log.info("Fetching test and optional dependencies...");
         List<String> projectLines = projectLines();
-        List<String> subprojects = projectLines.stream()
-            .filter(line -> line.contains("Project") && line.contains(":") && line.contains("'"))
-            .map(line -> line.substring(line.indexOf(":") + 1, line.lastIndexOf("'")).trim())
-            .toList();
+        List<String> subprojects = getSubprojects(projectLines);
 
         log.info("Subprojects: {}", subprojects);
 
@@ -84,6 +85,18 @@ public class GradleParser {
             }
         }
         return dependencies;
+    }
+
+    // Visible for testing
+    static List<String> getSubprojects(List<String> projectLines) {
+        return projectLines.stream()
+            .filter(line -> line.contains("Project") && line.contains(":") && line.contains("'"))
+            .map(line -> {
+                Matcher matcher = PROJECTS_LINE_PATTERN.matcher(line);
+                matcher.find();
+                return matcher.group(1);
+            })
+            .toList();
     }
 
     private static String extractVersion(String line) {
