@@ -63,4 +63,16 @@ class GradleParserTests {
         verify(runner).runSilently(List.of("./gradlew", "projects"));
     }
 
+    @Test
+    void should_get_subprojects_with_single_quote_in_description() {
+        var projectLines = List.of(
+                "+--- Project ':micrometer-registry-wavefront' - MeterRegistry implementation for Wavefront. This module is deprecated due to Wavefront's End of Life Announcement.",
+                "+--- Project ':micrometer-registry-signalfx' - MeterRegistry implementation for sending metrics to SignalFX. This module is deprecated in favor of the micrometer-registry-otlp module.",
+                "+--- Project ':micrometer-registry-statsd' - Application monitoring instrumentation facade");
+
+        then(GradleParser.getSubprojects(projectLines)).hasSize(3)
+            .containsExactlyInAnyOrder("micrometer-registry-wavefront", "micrometer-registry-signalfx",
+                    "micrometer-registry-statsd");
+    }
+
 }

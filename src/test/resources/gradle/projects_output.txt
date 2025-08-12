@@ -38,7 +38,7 @@ Root project 'micrometer'
 +--- Project ':micrometer-registry-signalfx' - Application monitoring instrumentation facade
 +--- Project ':micrometer-registry-stackdriver' - Application monitoring instrumentation facade
 +--- Project ':micrometer-registry-statsd' - Application monitoring instrumentation facade
-+--- Project ':micrometer-registry-wavefront' - Application monitoring instrumentation facade
++--- Project ':micrometer-registry-wavefront' - MeterRegistry implementation for Wavefront. This module is deprecated due to Wavefront's End of Life Announcement.
 +--- Project ':micrometer-samples-boot2' - Application monitoring instrumentation facade
 +--- Project ':micrometer-samples-boot2-reactive' - Application monitoring instrumentation facade
 +--- Project ':micrometer-samples-core' - Application monitoring instrumentation facade
