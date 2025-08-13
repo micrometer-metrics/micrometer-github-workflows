@@ -1,3 +1,11 @@
+## :notebook_with_decorative_cover: Documentation
+
+- Add docs for multiple MeterTag annotations [#5641](https://github.com/micrometer-metrics/micrometer/pull/5641)
+- Add docs for `@MeterTag` for `@Counted` [#5640](https://github.com/micrometer-metrics/micrometer/pull/5640)
+- Add docs for JvmThreadDeadlockMetrics [#5614](https://github.com/micrometer-metrics/micrometer/pull/5614)
+- Add docs for ForkJoinPool parallelism and pool size metrics [#5611](https://github.com/micrometer-metrics/micrometer/pull/5611)
+- Add docs for VirtualThreadMetrics [#5610](https://github.com/micrometer-metrics/micrometer/pull/5610)
+
 ## :hammer: Dependency Upgrades
 
 - Bump io.prometheus:prometheus-metrics-bom from 1.3.1 to 1.3.3 [#5649](https://github.com/micrometer-metrics/micrometer/pull/5649)
@@ -13,4 +21,4 @@
 
 Thank you to all the contributors who worked on this release:
 
-@izeye, @jonatan-ivanov, and @shakuzen
+@izeye

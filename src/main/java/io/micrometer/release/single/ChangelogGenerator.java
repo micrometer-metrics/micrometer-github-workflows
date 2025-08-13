@@ -27,7 +27,7 @@ class ChangelogGenerator {
 
     private static final Logger log = LoggerFactory.getLogger(ChangelogGenerator.class);
 
-    static final String INPUT_FILE = "changelog.md";
+    static final String DEFAULT_OUTPUT_FILE = "changelog.md";
 
     static final String GITHUB_API_URL = "https://api.github.com";
 
@@ -42,7 +42,7 @@ class ChangelogGenerator {
     public ChangelogGenerator(ProcessRunner processRunner) {
         this.githubApi = GITHUB_API_URL;
         this.githubToken = Input.getGhToken();
-        this.outputFile = new File(INPUT_FILE);
+        this.outputFile = new File(DEFAULT_OUTPUT_FILE);
         this.processRunner = processRunner;
     }
 
@@ -56,9 +56,27 @@ class ChangelogGenerator {
 
     File generateChangelog(String githubRefName, String githubOrgRepo, File jarPath) {
         log.info("Generating changelog...");
-        processRunner.run(getJava(), "-jar", jarPath.getAbsolutePath(), githubRefName.replace("v", ""),
-                outputFile.getAbsolutePath(), "--changelog.repository=" + githubOrgRepo,
-                "--github.api-url=" + githubApi, "--github.token=" + githubToken);
+        // @formatter:off
+        processRunner.run(getJava(), "-jar", jarPath.getAbsolutePath(),
+            githubRefName.replace("v", ""),
+            outputFile.getAbsolutePath(),
+            "--changelog.repository=" + githubOrgRepo,
+            "--changelog.contributors.exclude.names=shakuzen,jonatan-ivanov",
+            "--changelog.sections[0].title=:warning: Noteworthy",
+            "--changelog.sections[0].labels=release notes",
+            "--changelog.sections[1].title=:star: New Features",
+            "--changelog.sections[1].labels=enhancement",
+            "--changelog.sections[2].title=:lady_beetle: Bug Fixes",
+            "--changelog.sections[2].labels=bug, regression",
+            "--changelog.sections[3].title=:notebook_with_decorative_cover: Documentation",
+            "--changelog.sections[3].labels=doc-update, documentation",
+            "--changelog.sections[4].title=:hammer: Dependency Upgrades",
+            "--changelog.sections[4].labels=dependency-upgrade, dependencies",
+//            "--changelog.sections[5].title=:memo: Tasks",
+//            "--changelog.sections[5].labels=task",
+            "--github.api-url=" + githubApi,
+            "--github.token=" + githubToken);
+        // @formatter:on
         return outputFile;
     }
 

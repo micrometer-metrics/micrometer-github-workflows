@@ -5,6 +5,14 @@
 - Warn about gauge re-registration [#5688](https://github.com/micrometer-metrics/micrometer/pull/5688)
 - `executor.queued` metrics of ForkJoinPool does not include queued submissions [#5650](https://github.com/micrometer-metrics/micrometer/issues/5650)
 
+## :notebook_with_decorative_cover: Documentation
+
+- Add docs for ForkJoinPool parallelism and pool size metrics [#5611](https://github.com/micrometer-metrics/micrometer/pull/5611)
+- Add docs for JvmThreadDeadlockMetrics [#5614](https://github.com/micrometer-metrics/micrometer/pull/5614)
+- Add docs for VirtualThreadMetrics [#5610](https://github.com/micrometer-metrics/micrometer/pull/5610)
+- Add docs for `@MeterTag` for `@Counted` [#5640](https://github.com/micrometer-metrics/micrometer/pull/5640)
+- Add docs for multiple MeterTag annotations [#5641](https://github.com/micrometer-metrics/micrometer/pull/5641)
+
 ## :hammer: Dependency Upgrades
 
 - Bump com.google.auth:google-auth-library-oauth2-http from 1.28.0 to 1.29.0 [#5634](https://github.com/micrometer-metrics/micrometer/pull/5634)
@@ -20,4 +28,4 @@
 
 Thank you to all the contributors who worked on this release:
 
-@izeye, @jonatan-ivanov, and @shakuzen
+@izeye
