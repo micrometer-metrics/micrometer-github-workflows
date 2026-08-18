@@ -2,7 +2,7 @@
 assertj = "3.27.3"
 archunit = "1.5.0"
 jackson = "2.22.1"
-javaFormatForPlugins = "0.0.47"
+javaFormatForPlugins = "0.0.48"
 junit = "5.12.2"
 logback = "1.6.2"
 mockito = "5.17.0"
