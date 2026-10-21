@@ -1,7 +1,7 @@
 [versions]
 assertj = "3.27.3"
 archunit = "1.5.1"
-jackson = "2.22.3"
+jackson = "2.22.4"
 javaFormatForPlugins = "0.0.48"
 junit = "5.12.2"
 logback = "1.6.5"
